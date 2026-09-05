@@ -16,28 +16,74 @@ Work through this top to bottom. Each section depends on the one above it.
 
 ## 2. Root Monorepo
 
-- [ ] Create `package.json` at root (name: `angkop`, private, pnpm engine)
-- [ ] Create `pnpm-workspace.yaml` pointing to `apps/*` and `packages/*`
-- [ ] Create `turbo.json` with `dev`, `build`, `lint`, `type-check` tasks
-- [ ] Create `tsconfig.base.json` with shared strict TypeScript config
-- [ ] Run `pnpm install` from the root to initialize the workspace
+- [x] Create `package.json` at root (name: `angkop`, private, pnpm engine)
+- [x] Create `pnpm-workspace.yaml` pointing to `apps/*` and `packages/*`
+- [x] Create `turbo.json` with `dev`, `build`, `lint`, `type-check` tasks
+- [x] Create `tsconfig.base.json` with shared strict TypeScript config
+- [x] Run `pnpm install` from the root to initialize the workspace
 
 ---
 
-## 3. Shared Package (`packages/shared`)
+## 3. Next.js Dashboard (`apps/web`)
+
+- [ ] Scaffold with `pnpm create next-app@latest` inside `apps/web` (App Router, TypeScript)
+- [ ] `tsconfig.json` extending base (bundler module resolution)
+- [ ] `next.config.ts` — base config
+- [ ] Install and init shadcn/ui: `pnpm dlx shadcn@latest init`
+- [ ] Install base shadcn components needed across the app (button, input, card, dialog, etc.)
+
+---
+
+## 4. Web App Folder Structure (`apps/web`)
+
+Set up the folder structure following the module-based pattern:
+
+```
+apps/web/
+├── app/
+│   ├── layout.tsx                        # root layout
+│   ├── globals.css
+│   ├── (auth)/
+│   │   ├── login/page.tsx
+│   │   └── register/page.tsx
+│   └── (dashboard)/
+│       ├── layout.tsx
+│       ├── page.tsx                      # job feed / matches
+│       ├── profile/page.tsx
+│       ├── skill-gaps/page.tsx
+│       └── applications/page.tsx
+├── modules/                              # all page-specific components grouped by feature
+│   ├── login-page/
+│   ├── register-page/
+│   ├── dashboard-page/                   # job feed, match cards
+│   ├── profile-page/
+│   ├── skill-gaps-page/
+│   └── applications-page/
+├── components/                           # shared UI components used across pages
+├── hooks/                                # custom React hooks
+├── lib/                                  # apollo client, supabase client, utilities
+├── constants/                            # static data and config values
+└── providers/                            # React context providers
+```
+
+- [ ] Create all `app/` route folders and placeholder `page.tsx` files
+- [ ] Create empty `modules/`, `components/`, `hooks/`, `lib/`, `constants/`, `providers/` folders
+- [ ] `lib/apollo-client.ts` — Apollo Client pointed at the Express API
+- [ ] `.env.local.example` — document `NEXT_PUBLIC_API_URL` and Supabase keys
+- [ ] Run `pnpm --filter @angkop/web dev` and confirm dashboard loads
+
+---
+
+## 6. Shared Package (`packages/shared`)
 
 - [ ] `package.json` — name: `@angkop/shared`
 - [ ] `tsconfig.json` extending base
-- [ ] `src/index.ts` — define all shared TypeScript types:
-  - `Platform`, `BehaviorEventType`, `BehaviorEvent`
-  - `Job`, `UserProfile`, `Education`, `Experience`, `JobPreferences`
-  - `JobMatch`, `SkillGap`, `CourseRecommendation`
-  - ML API request/response contracts (`EmbedRequest`, `MatchScoreRequest`, etc.)
+- [ ] `src/index.ts` — shared TypeScript types (Platform, Job, UserProfile, JobMatch, SkillGap, ML contracts)
 - [ ] Run `pnpm --filter @angkop/shared build` to confirm it compiles
 
 ---
 
-## 4. Express API (`apps/server`)
+## 7. Express API (`apps/server`)
 
 - [ ] `package.json` — name: `@angkop/server`, add dependencies:
   - `express`, `@apollo/server`, `graphql`
@@ -55,34 +101,13 @@ Work through this top to bottom. Each section depends on the one above it.
 - [ ] `src/routes/auth.ts` — Supabase Auth endpoints
 - [ ] `src/routes/events.ts` — behavior event ingestion from extension
 - [ ] `src/index.ts` — Express + Apollo Server entry point
-- [ ] `prisma/schema.prisma` — define all models (see section 7)
+- [ ] `prisma/schema.prisma` — define all models (see section 8)
 - [ ] `.env.example` — document all required env vars
 - [ ] Run `pnpm --filter @angkop/server dev` and confirm server starts
 
 ---
 
-## 5. Next.js Dashboard (`apps/web`)
-
-- [ ] Scaffold with `pnpm create next-app@latest` (App Router, TypeScript)
-- [ ] Add dependencies: `@apollo/client`, `graphql`, `@angkop/shared`
-- [ ] `tsconfig.json` extending base (bundler module resolution)
-- [ ] `next.config.ts` — base config
-- [ ] `lib/apollo-client.ts` — Apollo Client pointed at the Express API
-- [ ] App Router folder structure:
-  - `app/layout.tsx` — root layout
-  - `app/(auth)/login/page.tsx`
-  - `app/(auth)/register/page.tsx`
-  - `app/(dashboard)/layout.tsx`
-  - `app/(dashboard)/page.tsx` — job feed / matches
-  - `app/(dashboard)/profile/page.tsx`
-  - `app/(dashboard)/skill-gaps/page.tsx`
-  - `app/(dashboard)/applications/page.tsx`
-- [ ] `.env.local.example` — document `NEXT_PUBLIC_API_URL`
-- [ ] Run `pnpm --filter @angkop/web dev` and confirm dashboard loads
-
----
-
-## 6. Browser Extension (`apps/extension`)
+## 8. Browser Extension (`apps/extension`)
 
 - [ ] `manifest.json` — Manifest V3, declare permissions and content scripts
 - [ ] `src/background/service-worker.js` — background service worker
@@ -96,7 +121,7 @@ Work through this top to bottom. Each section depends on the one above it.
 
 ---
 
-## 7. Database — Prisma Schema (`apps/server/prisma/schema.prisma`)
+## 9. Database — Prisma Schema (`apps/server/prisma/schema.prisma`)
 
 - [ ] Configure `datasource db` with `provider = "postgresql"` and `DATABASE_URL`
 - [ ] Define models (all use soft-delete: `deleted Boolean @default(false)`):
@@ -111,7 +136,7 @@ Work through this top to bottom. Each section depends on the one above it.
 
 ---
 
-## 8. ML Microservice (`ml/`)
+## 10. ML Microservice (`ml/`)
 
 - [ ] Create a Python virtual environment (`python -m venv .venv`)
 - [ ] `requirements.txt` — pin dependencies:
@@ -132,7 +157,7 @@ Work through this top to bottom. Each section depends on the one above it.
 
 ---
 
-## 9. External Services
+## 11. External Services
 
 - [ ] **Supabase** — create project, copy `DATABASE_URL` and anon/service keys
 - [ ] **Supabase Auth** — enable Email provider
@@ -141,7 +166,7 @@ Work through this top to bottom. Each section depends on the one above it.
 
 ---
 
-## 10. Environment Variables
+## 12. Environment Variables
 
 Fill in `.env` / `.env.local` for each app before running:
 
@@ -174,7 +199,7 @@ NCF_WEIGHTS_PATH=./weights/ncf.pt
 
 ---
 
-## 11. First Full Run Verification
+## 13. First Full Run Verification
 
 - [ ] `pnpm dev` from root starts all JS services via Turborepo
 - [ ] `uvicorn app.main:app --reload` starts the ML microservice
