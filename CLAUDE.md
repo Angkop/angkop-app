@@ -169,3 +169,10 @@ recommended_courses = CourseIndex.lookup(missing_skills)
 - Schema migrations and permission/auth changes require explicit user approval before proceeding
 - For data fix scripts, use `/script-maker` and wrap destructive ops behind a `DRY_RUN` guard
 - Before writing new code, check for an existing service — do not duplicate
+
+## Before Writing Code
+
+- **Any work** → read `.claude/rules/coding-style.md`
+- **Frontend / UI** → read `.claude/rules/design.md` first
+- **Data operations** → read `.claude/rules/data-safety.md`
+- **Commits / PRs** → follow `.claude/rules/git-workflow.md`
