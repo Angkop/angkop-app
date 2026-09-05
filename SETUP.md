@@ -6,11 +6,11 @@ Work through this top to bottom. Each section depends on the one above it.
 
 ## 1. Prerequisites
 
-- [ ] Node.js 24.x installed (`node -v`)
-- [ ] pnpm 9.x installed (`pnpm -v`) — install via `npm i -g pnpm`
-- [ ] Python 3.11 or 3.12 installed (`python --version`)
-- [ ] Docker Desktop installed (for running the ML microservice locally)
-- [ ] Git configured with your GitHub account
+- [x] Node.js 22.x installed — v22.22.3
+- [x] pnpm 11.x installed — v11.6.0
+- [x] Python 3.12 installed via pyenv — v3.12.0 (`pyenv local 3.12.0` set in project)
+- [x] Docker Desktop installed — v29.5.2
+- [x] Git configured with your GitHub account
 
 ---
 
