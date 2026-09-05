@@ -15,6 +15,7 @@ description: Data safety rules — soft deletes, query filters, and sensitive op
 
 ## Sensitive Operations
 - Schema migrations require a team decision before running — never run `prisma migrate` unilaterally
+- `prisma db push` and `prisma db pull` are blocked in Claude — run manually only when the team agrees
 - Auth and permission changes require explicit approval before implementing
 - One-off data fixes must use a script with a `DRY_RUN` guard before doing real writes
 

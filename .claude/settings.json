@@ -1,0 +1,67 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(echo:*)",
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(wc:*)",
+      "Bash(git:*)",
+      "Bash(pnpm:*)",
+      "Bash(node:*)",
+      "Bash(python3:*)",
+      "Bash(pip3:*)",
+      "Bash(uvicorn:*)",
+      "Bash(turbo:*)",
+      "Bash(prisma:*)",
+      "Bash(rg:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(tree:*)",
+      "Bash(sort:*)",
+      "Bash(uniq:*)",
+      "Bash(xargs:*)",
+      "Bash(diff:*)",
+      "Bash(jq:*)",
+      "Bash(source:*)",
+      "Bash(docker:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Bash(prisma migrate reset:*)",
+      "Bash(prisma migrate deploy:*)",
+      "Bash(prisma db push:*)",
+      "Bash(prisma db pull:*)",
+      "Bash(dropdb:*)",
+      "Bash(psql * DELETE:*)",
+      "Bash(psql * DROP:*)",
+      "Bash(psql * TRUNCATE:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-dangerous-git.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

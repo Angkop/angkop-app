@@ -33,10 +33,19 @@ pnpm type-check   # TypeScript check across all apps
 
 ## Database (run inside `apps/server`)
 
+> Claude can edit `prisma/schema.prisma` and run `db:generate`, but cannot run push, pull, or migrate commands — you must run those yourself.
+
 ```bash
-pnpm db:generate  # regenerate Prisma client after schema changes
-pnpm db:push      # apply schema to Supabase (dev only)
-pnpm db:studio    # open Prisma Studio to browse data
+pnpm db:generate        # regenerate Prisma client after schema changes
+pnpm db:studio          # open Prisma Studio to browse data
+```
+
+Run manually only — requires team agreement before executing:
+```bash
+npx prisma db push      # apply local schema to the database (dev only)
+npx prisma db pull      # sync schema.prisma from the actual database
+npx prisma migrate reset    # ⚠️  wipes and recreates the entire database
+npx prisma migrate deploy   # ⚠️  runs pending migrations against the real DB
 ```
 
 ## URLs (local)

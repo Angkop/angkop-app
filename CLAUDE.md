@@ -176,3 +176,4 @@ recommended_courses = CourseIndex.lookup(missing_skills)
 - **Frontend / UI** → read `.claude/rules/design.md` first
 - **Data operations** → read `.claude/rules/data-safety.md`
 - **Commits / PRs** → follow `.claude/rules/git-workflow.md`
+- **Reviewing AI output** → read `.claude/rules/ai-collaboration.md`
