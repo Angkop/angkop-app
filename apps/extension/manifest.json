@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Angkop Job Match Overlay",
+  "version": "0.1.0",
+  "description": "Shows real-time Angkop match scores on supported job listing pages (local MVP build).",
+  "permissions": [],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "http://localhost:4000/*",
+    "https://www.jobstreet.com.ph/*",
+    "https://www.linkedin.com/*",
+    "https://www.indeed.com/*"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/demo/*",
+        "https://www.jobstreet.com.ph/job/*",
+        "https://www.linkedin.com/jobs/view/*",
+        "https://www.indeed.com/viewjob*"
+      ],
+      "js": ["src/overlay/overlay.js", "src/content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html"
+  }
+}
