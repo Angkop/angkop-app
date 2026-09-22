@@ -41,6 +41,8 @@ export type Job = {
   description: string
   requiredSkills: string[]
   url: string
+  sourceName?: string | null
+  sourceUrl?: string | null
 }
 
 export type JobMatch = {
