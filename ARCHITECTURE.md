@@ -203,6 +203,45 @@ Express API directly rather than relaying through it.
 
 ---
 
+## Real listings pipeline — sourcing job data without a ToS problem
+
+The demo page (`public/demo/job-listing.html`) proves the extension *can* scrape reliably,
+but it's one static fixture with hand-written text. Scraping the real JobStreet/LinkedIn/
+Indeed DOM to get real data would mean depending on selectors that can change without
+notice and, more importantly, operating against those platforms' own Terms of Service —
+which generally prohibit automated scraping outright. Directly calling a job-board API
+from Express would avoid the ToS problem but would stop demonstrating the actual thing the
+extension is supposed to do (read a job listing page in the browser).
+
+The middle path implemented here: ingest real listings from public job-board APIs into our
+own Postgres, then **re-serve them on our own site** (`apps/web/app/listings/[jobId]`) for
+the extension to scrape. Scraping content you serve yourself carries no third-party ToS
+risk at all — the only remaining obligation is the source API's own terms, which for these
+two is just "link back to the original posting," satisfied via the `sourceUrl` shown on
+each listing page.
+
+- `apps/server/src/scripts/ingest-jobs.ts` (`pnpm --filter @angkop/server run ingest:jobs`)
+  — pulls up to 5 listings each from RemoteOK (`remoteok.com/api`, no auth) and Arbeitnow
+  (`arbeitnow.com/api/job-board-api`, no auth), strips HTML from descriptions, computes a
+  real embedding per listing via the ML service, and upserts them as `Job` rows with
+  `platform: 'demo'` (this is still the "we control this page" tier — CLAUDE.md's 6
+  supported platforms are unchanged) plus `sourceName`/`sourceUrl` for attribution. Safe to
+  re-run — upserts on a deterministic id (`angkop-remoteok-<id>`, `angkop-arbeitnow-<slug>`).
+- `GET /api/jobs`, `GET /api/jobs/:id` (`apps/server/src/routes/jobs.ts`) — unauthenticated
+  on purpose, only return jobs with `sourceName` set (real ingested listings, not the
+  seeded/hand-written demo jobs), since these back a public-facing page rather than the
+  authenticated dashboard.
+- `/listings` and `/listings/[jobId]` (`apps/web/modules/listings-page`,
+  `listing-detail-page`) — server-rendered, so the full HTML (including the
+  `data-angkop-platform`/`.job-title`/`.job-company`/`.job-description`/`.job-skill`
+  scraper contract shared with the static demo page) is present without waiting on
+  client-side JS.
+- `apps/extension/manifest.json` matches `http://localhost:3000/listings/*` in addition to
+  `/demo/*` — `content.js` needed no change since it already routes any `localhost` host to
+  the same reliable scraper.
+
+---
+
 ## End-to-end request flow (dashboard job feed)
 
 ```

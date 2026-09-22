@@ -18,6 +18,7 @@
     {
       "matches": [
         "http://localhost:3000/demo/*",
+        "http://localhost:3000/listings/*",
         "https://www.jobstreet.com.ph/job/*",
         "https://www.linkedin.com/jobs/view/*",
         "https://www.indeed.com/viewjob*"

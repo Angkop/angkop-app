@@ -40,6 +40,14 @@ pnpm db:generate        # regenerate Prisma client after schema changes
 pnpm db:studio          # open Prisma Studio to browse data
 ```
 
+## Real listings (run inside `apps/server`, after `db push` + `seed`)
+
+```bash
+pnpm run ingest:jobs    # pull real postings from RemoteOK/Arbeitnow into Postgres
+```
+
+Browse them at http://localhost:3000/listings — same pages the browser extension scrapes.
+
 Run manually only — requires team agreement before executing:
 ```bash
 npx prisma db push      # apply local schema to the database (dev only)
@@ -53,5 +61,6 @@ npx prisma migrate deploy   # ⚠️  runs pending migrations against the real D
 | Service | URL |
 |---|---|
 | Dashboard | http://localhost:3000 |
+| Real listings (extension demo target) | http://localhost:3000/listings |
 | GraphQL API | http://localhost:4000/graphql |
 | ML Service | http://localhost:8000/docs |

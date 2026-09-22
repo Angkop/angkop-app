@@ -44,6 +44,11 @@ model Job {
   requiredSkills String[]
   url            String
   embedding      Float[]
+  // Attribution for jobs ingested from a real public job API (RemoteOK, Arbeitnow) and
+  // re-served on our own /listings pages — null for hand-written seed/demo jobs. Most
+  // free job-board APIs require linking back to the original posting; this is that link.
+  sourceName     String?
+  sourceUrl      String?
   interactions   Interaction[]
   skillGaps      SkillGapRecord[]
   deleted        Boolean          @default(false)
