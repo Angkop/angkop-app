@@ -9,6 +9,7 @@ import { verifySessionToken } from './middleware/authenticate'
 import { authRouter } from './routes/auth'
 import { eventsRouter } from './routes/events'
 import { matchScoreRouter } from './routes/match-score'
+import { jobsRouter } from './routes/jobs'
 import { logger } from './lib/logger'
 
 const PORT = Number(process.env.PORT ?? 4000)
@@ -26,6 +27,7 @@ async function main() {
   app.use('/auth', authRouter)
   app.use('/api/events', eventsRouter)
   app.use('/api/match-score', matchScoreRouter)
+  app.use('/api/jobs', jobsRouter)
 
   const apolloServer = new ApolloServer<GraphQLContext>({ typeDefs, resolvers })
   await apolloServer.start()
