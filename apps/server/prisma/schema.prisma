@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String           @id
+  email        String           @unique
+  name         String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  deleted      Boolean          @default(false)
+  profile      UserProfile?
+  interactions Interaction[]
+  skillGaps    SkillGapRecord[]
+}
+
+model UserProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  skills      String[]
+  skillsText  String
+  embedding   Float[]
+  education   Json
+  experience  Json
+  preferences Json
+  deleted     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Job {
+  id             String           @id
+  platformJobId  String
+  platform       String
+  title          String
+  company        String
+  description    String
+  requiredSkills String[]
+  url            String
+  embedding      Float[]
+  // Attribution for jobs ingested from a real public job API (RemoteOK, Arbeitnow) and
+  // re-served on our own /listings pages — null for hand-written seed/demo jobs. Most
+  // free job-board APIs require linking back to the original posting; this is that link.
+  sourceName     String?
+  sourceUrl      String?
+  interactions   Interaction[]
+  skillGaps      SkillGapRecord[]
+  deleted        Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([platform, platformJobId])
+}
+
+model Interaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id])
+  eventType String
+  weight    Float
+  platform  String
+  deleted   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SkillGapRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  jobId      String
+  job        Job      @relation(fields: [jobId], references: [id])
+  skill      String
+  confidence Float
+  courses    Json
+  deleted    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "job-1",
+    "platformJobId": "demo-job-1",
+    "platform": "demo",
+    "title": "Front-End Developer",
+    "company": "Manila Web Studio",
+    "description": "We are looking for a Front-End Developer to build and maintain user-facing features for our web applications. You will work closely with designers and back-end engineers to ship responsive, accessible interfaces.",
+    "requiredSkills": ["React", "JavaScript", "TypeScript", "CSS", "Git"],
+    "url": "http://localhost:3000/demo/job-listing.html"
+  },
+  {
+    "id": "job-2",
+    "platformJobId": "linkedin-job-2",
+    "platform": "linkedin",
+    "title": "Front-End Engineer",
+    "company": "Cloud Nine Tech",
+    "description": "As a Front-End Engineer, you'll turn Figma designs into pixel-perfect, responsive interfaces using modern JavaScript frameworks and component-driven development practices.",
+    "requiredSkills": ["React.js", "HTML", "CSS", "JavaScript ES6", "Responsive Design"],
+    "url": "https://www.linkedin.com/jobs/view/example-2"
+  },
+  {
+    "id": "job-3",
+    "platformJobId": "demo-job-3",
+    "platform": "demo",
+    "title": "Backend Engineer",
+    "company": "Angkop Systems",
+    "description": "Design and maintain REST APIs and database schemas that power our core product. You'll work primarily in Node.js and PostgreSQL with a focus on reliability and clean data modeling.",
+    "requiredSkills": ["Node.js", "Express", "PostgreSQL", "REST APIs", "Git"],
+    "url": "http://localhost:3000/demo/job-listing.html"
+  },
+  {
+    "id": "job-4",
+    "platformJobId": "indeed-job-4",
+    "platform": "indeed",
+    "title": "Full Stack Developer",
+    "company": "Bright Path Solutions",
+    "description": "Join our small team building a SaaS product end to end, from React front end to Node.js back end, with MongoDB for storage and Docker for local development.",
+    "requiredSkills": ["JavaScript", "React", "Node.js", "MongoDB", "Docker"],
+    "url": "https://www.indeed.com/viewjob?jk=example-4"
+  },
+  {
+    "id": "job-5",
+    "platformJobId": "demo-job-5",
+    "platform": "demo",
+    "title": "Data Analyst",
+    "company": "Insight Analytics PH",
+    "description": "Analyze business data to produce actionable insights. You'll write SQL queries, build dashboards, and present findings to stakeholders using data visualization tools.",
+    "requiredSkills": ["SQL", "Python", "Excel", "Data Visualization", "Statistics"],
+    "url": "http://localhost:3000/demo/job-listing.html"
+  },
+  {
+    "id": "job-6",
+    "platformJobId": "demo-job-6",
+    "platform": "demo",
+    "title": "UX/UI Designer",
+    "company": "Studio Alon",
+    "description": "Own the end-to-end design process for our mobile and web products, from user research and wireframing to high-fidelity prototypes in Figma.",
+    "requiredSkills": ["Figma", "User Research", "Wireframing", "Prototyping", "Adobe XD"],
+    "url": "http://localhost:3000/demo/job-listing.html"
+  },
+  {
+    "id": "job-7",
+    "platformJobId": "demo-job-7",
+    "platform": "demo",
+    "title": "DevOps Engineer",
+    "company": "Nimbus Cloud PH",
+    "description": "Maintain and improve our CI/CD pipelines and cloud infrastructure. Strong background in containerization and AWS is essential.",
+    "requiredSkills": ["Docker", "Kubernetes", "CI/CD", "AWS", "Linux"],
+    "url": "http://localhost:3000/demo/job-listing.html"
+  },
+  {
+    "id": "job-8",
+    "platformJobId": "demo-job-8",
+    "platform": "demo",
+    "title": "Machine Learning Engineer",
+    "company": "DataCraft Labs",
+    "description": "Build and deploy machine learning models for production use cases. Experience with PyTorch and data preprocessing pipelines is required.",
+    "requiredSkills": ["Python", "PyTorch", "Machine Learning", "Data Preprocessing", "Statistics"],
+    "url": "http://localhost:3000/demo/job-listing.html"
+  },
+  {
+    "id": "job-9",
+    "platformJobId": "jobstreet-job-9",
+    "platform": "jobstreet",
+    "title": "QA Engineer",
+    "company": "Reliable Software Co.",
+    "description": "Ensure product quality through manual and automated testing. You'll write test plans, track bugs, and build out our Selenium test suite alongside the engineering team using Git for version control.",
+    "requiredSkills": ["Manual Testing", "Test Automation", "Selenium", "Bug Tracking", "Git"],
+    "url": "https://www.jobstreet.com.ph/job/example-9"
+  },
+  {
+    "id": "job-10",
+    "platformJobId": "demo-job-10",
+    "platform": "demo",
+    "title": "Customer Support Representative",
+    "company": "HelpDesk PH",
+    "description": "Provide friendly, timely support to customers via chat and email. Strong communication skills and patience are a must.",
+    "requiredSkills": ["Communication", "Customer Service", "Ticketing Systems", "Patience", "Problem Solving"],
+    "url": "http://localhost:3000/demo/job-listing.html"
+  }
+]
