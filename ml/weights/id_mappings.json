@@ -1,0 +1,28 @@
+{
+  "userIndex": {
+    "demo-user-1": 0,
+    "synthetic-user-2": 1,
+    "synthetic-user-3": 2,
+    "synthetic-user-4": 3,
+    "synthetic-user-5": 4
+  },
+  "itemIndex": {
+    "job-1": 0,
+    "job-2": 1,
+    "job-3": 2,
+    "job-4": 3,
+    "job-5": 4,
+    "job-6": 5,
+    "job-7": 6,
+    "job-8": 7,
+    "job-9": 8,
+    "job-10": 9
+  },
+  "numUsers": 5,
+  "numItems": 10,
+  "embeddingDim": 8,
+  "mlpLayerSizes": [
+    16,
+    8
+  ]
+}
