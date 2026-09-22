@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "turbo dev",
+    "dev:all": "bash scripts/dev.sh",
     "build": "turbo build",
     "lint": "turbo lint",
     "type-check": "turbo type-check"
