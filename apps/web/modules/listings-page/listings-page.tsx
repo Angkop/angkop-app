@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+import { API_URL } from '@/constants/api'
 
 type ListingSummary = {
   id: string

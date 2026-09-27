@@ -1,5 +1,6 @@
+import { API_URL } from '@/constants/api'
+
 const TOKEN_STORAGE_KEY = 'angkop_session_token'
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
 
 export function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null

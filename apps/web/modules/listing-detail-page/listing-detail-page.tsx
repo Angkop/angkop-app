@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'
+import { API_URL } from '@/constants/api'
 
 type ListingDetail = {
   id: string
