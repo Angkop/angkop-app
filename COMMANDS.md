@@ -2,10 +2,20 @@
 
 All commands run from the **project root** unless noted.
 
+## Docker (Postgres + Redis)
+
+```bash
+docker compose up -d    # start local Postgres + Redis containers
+docker compose down     # stop them (data persists in the named volume)
+```
+
+`pnpm run dev:all` runs this automatically — only needed standalone if you're not using that.
+
 ## Development
 
 ```bash
 pnpm dev          # start all JS services (web + server) in parallel
+pnpm run dev:all  # one command: docker + ML service + web + server
 ```
 
 For the ML microservice (separate terminal, inside `ml/`):
