@@ -6,6 +6,8 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input, Textarea } from '@/components/ui/input'
+import { LoadingSkeleton } from '@/components/loading-skeleton'
+import { ErrorMessage } from '@/components/error-message'
 
 const ME_QUERY = gql`
   query Me {
@@ -67,8 +69,8 @@ export function ProfilePage() {
     setSavedMessage('Profile saved. New match scores will reflect this on next load.')
   }
 
-  if (loading) return <div className="h-48 animate-pulse rounded-lg border border-border bg-muted" />
-  if (error) return <p className="text-sm text-destructive">Could not load profile: {error.message}</p>
+  if (loading) return <LoadingSkeleton heightClassName="h-48" />
+  if (error) return <ErrorMessage>Could not load profile: {error.message}</ErrorMessage>
 
   return (
     <Card className="max-w-xl">

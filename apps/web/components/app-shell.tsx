@@ -4,16 +4,11 @@ import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { NAV_LINKS } from '@/constants/nav'
 import { clearStoredToken, getStoredToken } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 
-const NAV_LINKS = [
-  { href: '/', label: 'Job Feed' },
-  { href: '/skill-gaps', label: 'Skill Gaps' },
-  { href: '/profile', label: 'Profile' }
-]
-
-export function DashboardShell({ children }: { children: ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const [isChecking, setIsChecking] = useState(true)

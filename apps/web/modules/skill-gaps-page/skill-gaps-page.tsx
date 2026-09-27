@@ -4,6 +4,8 @@ import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
 import type { SkillGap } from '@angkop/shared'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingSkeleton } from '@/components/loading-skeleton'
+import { ErrorMessage } from '@/components/error-message'
 
 const SKILL_GAPS_QUERY = gql`
   query SkillGaps {
@@ -23,17 +25,11 @@ export function SkillGapsPage() {
   const { data, loading, error } = useQuery<{ skillGaps: SkillGap[] }>(SKILL_GAPS_QUERY)
 
   if (loading) {
-    return (
-      <div className="flex flex-col gap-4">
-        {[1, 2].map((key) => (
-          <div key={key} className="h-24 animate-pulse rounded-lg border border-border bg-muted" />
-        ))}
-      </div>
-    )
+    return <LoadingSkeleton rows={2} heightClassName="h-24" />
   }
 
   if (error) {
-    return <p className="text-sm text-destructive">Could not load skill gaps: {error.message}</p>
+    return <ErrorMessage>Could not load skill gaps: {error.message}</ErrorMessage>
   }
 
   const gaps = data?.skillGaps ?? []

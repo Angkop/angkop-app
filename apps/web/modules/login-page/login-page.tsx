@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { ErrorMessage } from '@/components/error-message'
 import { devLogin } from '@/lib/auth'
 
 export function LoginPage() {
@@ -38,7 +39,7 @@ export function LoginPage() {
           <Button onClick={handleContinueAsDemoUser} disabled={isLoading}>
             {isLoading ? 'Signing in…' : 'Continue as Demo User'}
           </Button>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <ErrorMessage>{error}</ErrorMessage>}
         </CardContent>
       </Card>
     </main>

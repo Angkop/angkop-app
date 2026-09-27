@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { MatchScoreBadge } from '@/components/match-score-badge'
+import { LoadingSkeleton } from '@/components/loading-skeleton'
+import { ErrorMessage } from '@/components/error-message'
 
 const JOB_MATCHES_QUERY = gql`
   query JobMatches {
@@ -43,17 +45,11 @@ export function DashboardPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex flex-col gap-4">
-        {[1, 2, 3].map((key) => (
-          <div key={key} className="h-32 animate-pulse rounded-lg border border-border bg-muted" />
-        ))}
-      </div>
-    )
+    return <LoadingSkeleton rows={3} heightClassName="h-32" />
   }
 
   if (error) {
-    return <p className="text-sm text-destructive">Could not load job matches: {error.message}</p>
+    return <ErrorMessage>Could not load job matches: {error.message}</ErrorMessage>
   }
 
   const matches = data?.jobMatches ?? []
