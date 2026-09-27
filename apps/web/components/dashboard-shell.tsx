@@ -25,7 +25,6 @@ export function DashboardShell({ children }: { children: ReactNode }) {
     }
     // Client-only auth gate reading localStorage (a browser API, not derivable from
     // props/state) — there's no non-effect way to know this on first client render.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsChecking(false)
   }, [router])
 

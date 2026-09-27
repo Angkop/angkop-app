@@ -1,6 +1,7 @@
 'use client'
 
-import { gql, useQuery } from '@apollo/client'
+import { gql } from '@apollo/client'
+import { useQuery } from '@apollo/client/react'
 import type { SkillGap } from '@angkop/shared'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 

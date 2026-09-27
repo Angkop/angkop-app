@@ -7,6 +7,10 @@ const prisma = new PrismaClient()
 const SEED_DIR = join(__dirname, '../../../seed')
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL ?? 'http://localhost:8000'
 
+type SeedEducation = { school: string; degree: string; year: number }
+type SeedExperience = { title: string; company: string; months: number }
+type SeedPreferences = { desiredRole?: string; location?: string }
+
 type SeedUser = {
   id: string
   email: string
@@ -14,9 +18,9 @@ type SeedUser = {
   isLoginUser: boolean
   skills: string[]
   skillsText: string
-  education: unknown
-  experience: unknown
-  preferences: unknown
+  education: SeedEducation[]
+  experience: SeedExperience[]
+  preferences: SeedPreferences
 }
 
 type SeedJob = {
@@ -73,26 +77,45 @@ async function main() {
     })
 
     const embedding = await embed(user.skillsText)
-    await prisma.userProfile.upsert({
+    const profile = await prisma.userProfile.upsert({
       where: { userId: user.id },
       update: {
         skills: user.skills,
         skillsText: user.skillsText,
         embedding,
-        education: user.education as object,
-        experience: user.experience as object,
-        preferences: user.preferences as object
+        desiredRole: user.preferences.desiredRole,
+        location: user.preferences.location
       },
       create: {
         userId: user.id,
         skills: user.skills,
         skillsText: user.skillsText,
         embedding,
-        education: user.education as object,
-        experience: user.experience as object,
-        preferences: user.preferences as object
+        desiredRole: user.preferences.desiredRole,
+        location: user.preferences.location
       }
     })
+
+    // Re-running the seed shouldn't duplicate education/experience rows, and hard deletes
+    // are off-limits — soft-delete the previous rows for this profile before recreating them.
+    await prisma.education.updateMany({
+      where: { userProfileId: profile.id, deleted: false },
+      data: { deleted: true }
+    })
+    await prisma.workExperience.updateMany({
+      where: { userProfileId: profile.id, deleted: false },
+      data: { deleted: true }
+    })
+    if (user.education.length > 0) {
+      await prisma.education.createMany({
+        data: user.education.map((entry) => ({ ...entry, userProfileId: profile.id }))
+      })
+    }
+    if (user.experience.length > 0) {
+      await prisma.workExperience.createMany({
+        data: user.experience.map((entry) => ({ ...entry, userProfileId: profile.id }))
+      })
+    }
   }
 
   for (const job of jobs) {

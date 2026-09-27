@@ -58,7 +58,13 @@ export const resolvers = {
   Query: {
     me: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
       const user = await prisma.user.findFirstOrThrow({ where: { id: context.userId, deleted: false } })
-      const profile = await prisma.userProfile.findUnique({ where: { userId: context.userId } })
+      const profile = await prisma.userProfile.findUnique({
+        where: { userId: context.userId },
+        include: {
+          education: { where: { deleted: false } },
+          experience: { where: { deleted: false } }
+        }
+      })
       return {
         id: user.id,
         email: user.email,
@@ -68,9 +74,10 @@ export const resolvers = {
               id: profile.id,
               skills: profile.skills,
               skillsText: profile.skillsText,
-              education: JSON.stringify(profile.education),
-              experience: JSON.stringify(profile.experience),
-              preferences: JSON.stringify(profile.preferences)
+              desiredRole: profile.desiredRole,
+              location: profile.location,
+              education: profile.education,
+              experience: profile.experience
             }
           : null
       }
@@ -129,10 +136,11 @@ export const resolvers = {
           userId: context.userId,
           skills: args.input.skills,
           skillsText: args.input.skillsText,
-          embedding: [],
-          education: {},
-          experience: {},
-          preferences: {}
+          embedding: []
+        },
+        include: {
+          education: { where: { deleted: false } },
+          experience: { where: { deleted: false } }
         }
       })
 
@@ -144,9 +152,10 @@ export const resolvers = {
         id: profile.id,
         skills: profile.skills,
         skillsText: profile.skillsText,
-        education: JSON.stringify(profile.education),
-        experience: JSON.stringify(profile.experience),
-        preferences: JSON.stringify(profile.preferences)
+        desiredRole: profile.desiredRole,
+        location: profile.location,
+        education: profile.education,
+        experience: profile.experience
       }
     },
 

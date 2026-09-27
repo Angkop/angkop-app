@@ -15,6 +15,7 @@ AI is great at producing plausible-looking code. In Angkop, "plausible-looking" 
 - `any`, `as any`, `// @ts-ignore`, `console.log` — CI will reject the PR.
 - Redefining a type that already exists in `@angkop/shared`.
 - Hardcoded Tailwind colors or hex values instead of CSS variable tokens.
+- Sending email via the Gmail API without a prior, explicit user-approval step on the draft.
 
 If you genuinely need one of the above, leave a `// SAFE: <reason>` comment so a reviewer can audit it deliberately.
 

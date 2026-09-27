@@ -1,6 +1,7 @@
 'use client'
 
-import { gql, useMutation, useQuery } from '@apollo/client'
+import { gql } from '@apollo/client'
+import { useMutation, useQuery } from '@apollo/client/react'
 import type { JobMatch } from '@angkop/shared'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

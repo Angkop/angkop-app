@@ -22,14 +22,27 @@ export function getMatchLabel(score: number): MatchLabel {
   return 'Weak Match'
 }
 
+export type Education = {
+  school: string
+  degree: string
+  year: number
+}
+
+export type WorkExperience = {
+  title: string
+  company: string
+  months: number
+}
+
 export type UserProfile = {
   id: string
   userId: string
   skills: string[]
   skillsText: string
-  education: unknown
-  experience: unknown
-  preferences: unknown
+  desiredRole: string | null
+  location: string | null
+  education: Education[]
+  experience: WorkExperience[]
 }
 
 export type Job = {

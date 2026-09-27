@@ -20,18 +20,43 @@ model User {
 }
 
 model UserProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
+  id          Int              @id @default(autoincrement())
+  userId      String           @unique
+  user        User             @relation(fields: [userId], references: [id])
   skills      String[]
   skillsText  String
   embedding   Float[]
-  education   Json
-  experience  Json
-  preferences Json
-  deleted     Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  desiredRole String?
+  location    String?
+  education   Education[]
+  experience  WorkExperience[]
+  deleted     Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Education {
+  id            Int         @id @default(autoincrement())
+  userProfileId Int
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id])
+  school        String
+  degree        String
+  year          Int
+  deleted       Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model WorkExperience {
+  id            Int         @id @default(autoincrement())
+  userProfileId Int
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id])
+  title         String
+  company       String
+  months        Int
+  deleted       Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model Job {
@@ -59,7 +84,7 @@ model Job {
 }
 
 model Interaction {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   jobId     String
@@ -72,7 +97,7 @@ model Interaction {
 }
 
 model SkillGapRecord {
-  id         String   @id @default(cuid())
+  id         Int      @id @default(autoincrement())
   userId     String
   user       User     @relation(fields: [userId], references: [id])
   jobId      String

@@ -1,5 +1,3 @@
-// Simplification: profile.education/experience/preferences are exposed as JSON-encoded
-// strings rather than a custom JSON scalar, to avoid an extra dependency for this MVP.
 export const typeDefs = `#graphql
   type Job {
     id: ID!
@@ -31,13 +29,26 @@ export const typeDefs = `#graphql
     courses: [Course!]!
   }
 
+  type Education {
+    school: String!
+    degree: String!
+    year: Int!
+  }
+
+  type WorkExperience {
+    title: String!
+    company: String!
+    months: Int!
+  }
+
   type UserProfile {
     id: ID!
     skills: [String!]!
     skillsText: String!
-    education: String!
-    experience: String!
-    preferences: String!
+    desiredRole: String
+    location: String
+    education: [Education!]!
+    experience: [WorkExperience!]!
   }
 
   type Me {

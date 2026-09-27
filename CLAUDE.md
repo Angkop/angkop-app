@@ -24,34 +24,66 @@ Angkop operates as **two coordinated services** plus a browser extension:
 
 ### 1. Browser Extension (Data Capture Layer)
 - Built with **Manifest V3** (content scripts + background service worker)
-- Scrapes job posting text in real time from: **JobStreet, Indeed, LinkedIn, Kalibrr, PhilJobNet, Glassdoor**
-- Injects a match-score overlay directly onto listing pages
+- Operates **exclusively on Angkop's own job listing pages** — reads job posting text from listings Angkop has already ingested and hosts itself; it never visits or scrapes any third-party job platform directly
+- Injects a match-score overlay directly onto those listing pages
 - Logs weighted implicit feedback events:
   - Application > Save > View > Dismissal
-- Sends scraped data and behavior events to the Express API
+- Sends the read job data and behavior events to the Express API
 
-### 2. Express API (Application Layer)
+### 2. Data Sourcing Layer (Job Ingestion)
+- A scheduled ingestion process pulls job postings from **public, no-authentication job-listing APIs** (e.g. RemoteOK, Arbeitnow) — sources explicitly built for external reuse
+- Ingested postings are written into Angkop's own PostgreSQL database and served through Angkop's own listing pages
+- Angkop does **not** scrape or otherwise access any third-party job platform (JobStreet, LinkedIn, Indeed, etc.) directly
+- Any candidate source is checked against the **Data Source Vetting Criteria** (below) before being added
+
+### 3. Express API (Application Layer)
 - **Node.js + Express.js** REST + **GraphQL (Apollo Server)**
-- Handles: auth, profile CRUD, job tracking, application tracking
-- Orchestrates calls to the FastAPI ML microservice
+- Handles: Google OAuth authentication, profile CRUD, job ingestion/tracking, application tracking (status + custom tags)
+- Orchestrates calls to the FastAPI ML microservice, including the Gemini-based application draft generator
+- Sends approved application drafts through the Gmail API (see **Application Drafts & Sending** below)
 - Data access via **Prisma ORM** → **PostgreSQL (Supabase)**
 
-### 3. FastAPI ML Microservice (Intelligence Layer)
+### 4. FastAPI ML Microservice (Intelligence Layer)
 - **Python + FastAPI**
-- Hosts three sub-components:
+- Hosts four sub-components:
   - **Embedding Generator**: loads `all-MiniLM-L6-v2` (Sentence-BERT), outputs 768-dimensional vectors
   - **Hybrid Ranking Engine**: combines Sentence-BERT cosine similarity score + NCF collaborative score
   - **Skill Gap Analyzer**: vector subtraction (job embedding − user embedding), maps missing dimensions to course recommendations
+  - **Application Draft Generator**: calls the Gemini API with the job description + user profile to draft a cover letter and application email
 
-### 4. Web Dashboard (Presentation Layer)
+### 5. Web Dashboard (Presentation Layer)
 - **React.js** SPA, queries Express API via GraphQL
 - Shows: ranked job matches, skill gap roadmap, course recommendations, application history
+- Save, dismiss, or delete job listings; track application status (pending, applied, awaiting interview, ongoing interview, interviewed, successful, unsuccessful) with custom tags
+- Review, edit, and approve AI-generated cover letters/emails before they're sent
 - Accessible on both desktop and mobile browsers (no native app)
 
-### 5. Data & Caching Layer
+### 6. Data & Caching Layer
 - **PostgreSQL on Supabase** + **pgvector extension** for storing 768-dim embeddings
 - **Prisma ORM** for schema management (soft-deletes only — no hard deletes)
 - **Redis** for caching computed match scores and recommendation lists (TTL = 24h)
+
+---
+
+## Data Source Vetting Criteria
+
+Any additional public API considered for the ingestion process is evaluated against every criterion below before it's added as a data source:
+- Publicly accessible, no login required to view
+- No sensitive or personal information is collected
+- Where published, `robots.txt` permits automated access to the relevant endpoints
+- Terms of Service explicitly permit, or do not prohibit, automated/programmatic access
+- Intended use (powering job recommendations for job seekers) is consistent with what the source permits
+- Data is exposed through a stable, documented interface — not one designed only for manual browsing
+- Requests are made at a reasonable frequency that doesn't place undue load on the source
+- No bypassing authentication, CAPTCHA, or other access controls
+- Only structured fields needed for matching (title, description, location, etc.) are stored — retrieved content is never republished wholesale
+
+## Application Drafts & Sending
+
+- The FastAPI microservice's Application Draft Generator calls the **Gemini API** with the job description and the user's profile to produce a tailored cover letter and application email
+- Drafts are returned to the web dashboard as **editable text** and are **never sent automatically**
+- Sending requires the user's **explicit approval** of the draft; the Express API then sends it through the **Gmail API** using the user's own Gmail account
+- Sending requires an additional, separate `gmail.send` OAuth scope granted through **incremental consent** — distinct from the basic Google sign-in scope used at login
 
 ---
 
@@ -86,7 +118,7 @@ recommended_courses = CourseIndex.lookup(missing_skills)
 
 ## Real-Time Match Score Flow
 
-1. Browser extension scrapes job listing text
+1. Browser extension reads job posting text from Angkop's own listing pages
 2. Express API checks Redis cache for `(user_id, job_id)` pair
 3. Cache miss → FastAPI embeds job text + user skills text
 4. FastAPI computes cosine similarity + NCF score → returns hybrid score
@@ -106,19 +138,22 @@ recommended_courses = CourseIndex.lookup(missing_skills)
 | Primary DB | PostgreSQL (Supabase) + pgvector |
 | ORM | Prisma |
 | Cache | Redis |
-| Auth | Supabase Auth + JWT |
+| Auth | Google OAuth 2.0 via Supabase Auth (web) / Chrome Identity API (extension) — single Supabase-issued session JWT |
+| AI Draft Generation | Google Gemini API |
+| Email Sending | Gmail API (`gmail.send`, incremental OAuth consent) |
 | Model Training | Google Colab |
 
 ---
 
-## Supported Job Platforms (Browser Extension)
+## Job Data Sources
 
-1. JobStreet
-2. Indeed
-3. LinkedIn
-4. Kalibrr
-5. PhilJobNet
-6. Glassdoor
+Angkop never scrapes or accesses third-party job platforms directly. All job listings come from **public, no-authentication job-listing APIs**, vetted against the Data Source Vetting Criteria above, ingested into Angkop's own database, and served through Angkop's own listing pages — which is what the browser extension actually reads.
+
+Current sources (see `apps/server/src/scripts/ingest-jobs.ts`):
+1. RemoteOK
+2. Arbeitnow
+
+Future expansion is limited to adding more vetted public, no-authentication APIs to this list — it does not involve visiting or scraping additional third-party websites.
 
 ---
 
@@ -126,14 +161,17 @@ recommended_courses = CourseIndex.lookup(missing_skills)
 
 **In scope:**
 - Hybrid semantic + collaborative recommendation
-- Browser extension with overlay for 6 platforms
+- Browser extension with match-score overlay on Angkop's own listing pages
+- Job ingestion from vetted, public, no-authentication job-listing APIs
 - Web dashboard (desktop + mobile browser)
 - Skill gap detection mapped to course recommendations
-- Profile, application, and interaction tracking
+- Profile, application (status + custom tags), and interaction tracking
+- AI-generated cover letter/application email drafts (Gemini), sent only after explicit user approval via Gmail
 
 **Out of scope:**
 - Native mobile app (no push notifications, no offline)
-- Platforms outside the 6 listed integrations
+- Scraping or otherwise directly accessing any third-party job platform (JobStreet, LinkedIn, Indeed, etc.)
+- Sending application emails without the user's explicit approval of the draft
 - Hosting/creating learning content (maps to third-party courses only)
 - Free-tier API/hosting limits apply
 
@@ -169,6 +207,7 @@ recommended_courses = CourseIndex.lookup(missing_skills)
 - Schema migrations and permission/auth changes require explicit user approval before proceeding
 - For data fix scripts, use `/script-maker` and wrap destructive ops behind a `DRY_RUN` guard
 - Before writing new code, check for an existing service — do not duplicate
+- **Gmail sending is consent-gated**: never send an application email automatically — always require the user's explicit approval of the AI-generated draft first, and always request `gmail.send` via incremental OAuth, never bundled into basic sign-in
 
 ## Before Writing Code
 
