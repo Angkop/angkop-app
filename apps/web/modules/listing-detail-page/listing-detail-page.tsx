@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { API_URL } from '@/constants/api'
 
@@ -28,6 +30,14 @@ export async function ListingDetailPage({ jobId }: { jobId: string }) {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
+      <Link
+        href="/listings"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3.5" />
+        Back to Listings
+      </Link>
+
       <div
         className="job-listing rounded-lg border border-border bg-card p-6 shadow-sm"
         data-angkop-platform="demo"

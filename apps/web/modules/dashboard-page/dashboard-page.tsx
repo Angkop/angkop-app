@@ -2,11 +2,11 @@
 
 import { gql } from '@apollo/client'
 import { useMutation, useQuery } from '@apollo/client/react'
-import type { JobMatch } from '@angkop/shared'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { MatchScoreBadge } from '@/components/match-score-badge'
+import { Sparkles, Target } from 'lucide-react'
+import { MATCH_SCORE_THRESHOLDS, type JobMatch } from '@angkop/shared'
+import { PageHeader } from '@/components/page-header'
+import { StatCard } from '@/components/stat-card'
+import { JobRow } from '@/components/job-row'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
 
@@ -45,7 +45,7 @@ export function DashboardPage() {
   }
 
   if (loading) {
-    return <LoadingSkeleton rows={3} heightClassName="h-32" />
+    return <LoadingSkeleton rows={3} heightClassName="h-16" />
   }
 
   if (error) {
@@ -53,46 +53,42 @@ export function DashboardPage() {
   }
 
   const matches = data?.jobMatches ?? []
-
-  if (matches.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No job matches yet. Run the seed script to load sample postings, then refresh.
-      </p>
-    )
-  }
+  const strongMatches = matches.filter((match) => match.hybridScore >= MATCH_SCORE_THRESHOLDS.STRONG)
 
   return (
-    <div className="flex flex-col gap-4">
-      {matches.map((match) => (
-        <Card key={match.job.id}>
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
-            <div>
-              <CardTitle>{match.job.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {match.job.company} · {match.job.platform}
-              </p>
-            </div>
-            <MatchScoreBadge score={match.hybridScore} />
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">{match.job.description}</p>
-            <div className="flex flex-wrap gap-1.5">
-              {match.job.requiredSkills.map((skill) => (
-                <Badge key={skill}>{skill}</Badge>
-              ))}
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button size="sm" onClick={() => handleInteraction(match.job.id, 'save')}>
-              Save Job
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => handleInteraction(match.job.id, 'dismiss')}>
-              Dismiss Job
-            </Button>
-          </CardFooter>
-        </Card>
-      ))}
+    <div>
+      <PageHeader title="Your matches" description="Jobs ranked by how well they fit your profile." />
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label="New Matches" value={matches.length} caption="From ingested listings" icon={Sparkles} />
+        <StatCard
+          label="Strong Matches"
+          value={strongMatches.length}
+          caption="70% hybrid score or higher"
+          icon={Target}
+        />
+      </div>
+
+      <section className="mt-8">
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Top Matches</h2>
+        {matches.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No job matches yet. Run the seed script to load sample postings, then refresh.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {matches.map((match) => (
+              <JobRow
+                key={match.job.id}
+                job={match.job}
+                score={match.hybridScore}
+                onSave={(jobId) => handleInteraction(jobId, 'save')}
+                onDismiss={(jobId) => handleInteraction(jobId, 'dismiss')}
+              />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }
