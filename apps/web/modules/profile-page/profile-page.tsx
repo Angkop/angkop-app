@@ -3,11 +3,14 @@
 import { useState } from 'react'
 import { gql } from '@apollo/client'
 import { useMutation, useQuery } from '@apollo/client/react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input, Textarea } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { PageHeader } from '@/components/page-header'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
+import { getInitials } from '@/lib/utils'
 
 const ME_QUERY = gql`
   query Me {
@@ -72,33 +75,48 @@ export function ProfilePage() {
   if (loading) return <LoadingSkeleton heightClassName="h-48" />
   if (error) return <ErrorMessage>Could not load profile: {error.message}</ErrorMessage>
 
+  const email = data?.me.email ?? ''
+  const name = data?.me.name ?? null
+
   return (
-    <Card className="max-w-xl">
-      <CardHeader>
-        <CardTitle>{data?.me.name ?? data?.me.email}</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="max-w-xl">
+      <PageHeader title="Profile" description="This is what powers your matches — keep it up to date." />
+
+      <div className="mb-6 flex items-center gap-4 rounded-lg border border-border p-5">
+        <Avatar className="size-14">
+          <AvatarFallback className="bg-primary/10 text-lg font-medium text-primary">
+            {email ? getInitials(name, email) : ''}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-base font-semibold text-foreground">{name ?? email}</p>
+          <p className="truncate text-sm text-muted-foreground">{email}</p>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border p-5">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">Skills (comma-separated)</span>
-            <Input value={skillsInput} onChange={(event) => setSkillsInput(event.target.value)} />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">About your experience</span>
+          <div className="space-y-1.5">
+            <Label htmlFor="skills">Skills (comma-separated)</Label>
+            <Input id="skills" value={skillsInput} onChange={(event) => setSkillsInput(event.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="skills-text">About your experience</Label>
             <Textarea
+              id="skills-text"
               value={skillsText}
               onChange={(event) => setSkillsText(event.target.value)}
               rows={5}
             />
-          </label>
-          <div className="flex items-center gap-3">
+          </div>
+          <div className="flex items-center gap-3 border-t border-border pt-4">
             <Button type="submit" disabled={isSaving}>
               {isSaving ? 'Saving…' : 'Save Profile'}
             </Button>
             {savedMessage && <p className="text-sm text-muted-foreground">{savedMessage}</p>}
           </div>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
