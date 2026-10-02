@@ -91,7 +91,7 @@ function ChipList({
             type="button"
             aria-label={`Remove ${item}`}
             onClick={() => onRemove(item)}
-            className="rounded-full p-0.5 hover:bg-foreground/10"
+            className="cursor-pointer rounded-full p-0.5 hover:bg-foreground/10"
           >
             <X className="size-3" />
           </button>
@@ -117,7 +117,7 @@ function ChipList({
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+          className="inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-foreground/30 hover:text-foreground"
         >
           <Plus className="size-3" />
           Add
@@ -266,7 +266,7 @@ export function OnboardingPage() {
                   onClick={() => index <= step && setStep(index)}
                   disabled={index > step}
                   className={cn(
-                    'flex items-center gap-2.5 rounded-lg border border-transparent px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed',
+                    'flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed',
                     isActive && 'bg-primary-foreground/10 font-medium text-primary-foreground',
                     !isActive && isDone && 'text-primary-foreground hover:bg-primary-foreground/5',
                     !isActive && !isDone && 'text-primary-foreground/50'
@@ -307,7 +307,7 @@ export function OnboardingPage() {
           <button
             type="button"
             onClick={handleSkip}
-            className="text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground"
+            className="cursor-pointer text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground"
           >
             Skip onboarding
           </button>

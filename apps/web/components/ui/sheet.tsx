@@ -35,7 +35,7 @@ export function SheetContent({
           <button
             type="button"
             aria-label="Close"
-            className="absolute top-3 right-3 rounded-sm p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            className="absolute top-3 right-3 cursor-pointer rounded-sm p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
           >
             <XIcon className="size-4" />
           </button>
