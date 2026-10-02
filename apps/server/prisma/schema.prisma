@@ -17,6 +17,8 @@ model User {
   profile      UserProfile?
   interactions Interaction[]
   skillGaps    SkillGapRecord[]
+  savedJobs    SavedJob[]
+  savedCourses SavedCourse[]
 }
 
 model UserProfile {
@@ -76,6 +78,7 @@ model Job {
   sourceUrl      String?
   interactions   Interaction[]
   skillGaps      SkillGapRecord[]
+  savedBy        SavedJob[]
   deleted        Boolean          @default(false)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -107,4 +110,43 @@ model SkillGapRecord {
   courses    Json
   deleted    Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPLIED
+  AWAITING_INTERVIEW
+  ONGOING_INTERVIEW
+  INTERVIEWED
+  SUCCESSFUL
+  UNSUCCESSFUL
+}
+
+model SavedJob {
+  id            Int               @id @default(autoincrement())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id])
+  jobId         String
+  job           Job               @relation(fields: [jobId], references: [id])
+  status        ApplicationStatus @default(PENDING)
+  tags          String[]          @default([])
+  interviewDate DateTime?
+  deleted       Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([userId, jobId])
+}
+
+model SavedCourse {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  provider  String
+  url       String
+  deleted   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, url])
 }

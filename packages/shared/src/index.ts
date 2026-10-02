@@ -77,6 +77,41 @@ export type Course = {
   url: string
 }
 
+export type ApplicationStatus =
+  | 'PENDING'
+  | 'APPLIED'
+  | 'AWAITING_INTERVIEW'
+  | 'ONGOING_INTERVIEW'
+  | 'INTERVIEWED'
+  | 'SUCCESSFUL'
+  | 'UNSUCCESSFUL'
+
+export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
+  PENDING: 'Pending',
+  APPLIED: 'Applied',
+  AWAITING_INTERVIEW: 'Awaiting interview',
+  ONGOING_INTERVIEW: 'Ongoing interview',
+  INTERVIEWED: 'Interviewed',
+  SUCCESSFUL: 'Successful',
+  UNSUCCESSFUL: 'Unsuccessful'
+}
+
+export type SavedJob = {
+  id: number
+  job: Job
+  status: ApplicationStatus
+  tags: string[]
+  interviewDate: string | null
+  createdAt: string
+}
+
+export type SavedCourse = {
+  id: number
+  title: string
+  provider: string
+  url: string
+}
+
 export type EmbedRequest = {
   text: string
 }

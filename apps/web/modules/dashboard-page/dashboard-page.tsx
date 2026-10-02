@@ -35,12 +35,26 @@ const LOG_INTERACTION_MUTATION = gql`
   }
 `
 
+const SAVE_JOB_MUTATION = gql`
+  mutation SaveJob($jobId: ID!) {
+    saveJob(jobId: $jobId) {
+      id
+    }
+  }
+`
+
 export function DashboardPage() {
   const { data, loading, error, refetch } = useQuery<{ jobMatches: JobMatch[] }>(JOB_MATCHES_QUERY)
   const [logInteraction] = useMutation(LOG_INTERACTION_MUTATION)
+  const [saveJob] = useMutation(SAVE_JOB_MUTATION)
 
-  async function handleInteraction(jobId: string, eventType: 'save' | 'dismiss') {
-    await logInteraction({ variables: { jobId, eventType } })
+  async function handleSave(jobId: string) {
+    await saveJob({ variables: { jobId } })
+    await refetch()
+  }
+
+  async function handleDismiss(jobId: string) {
+    await logInteraction({ variables: { jobId, eventType: 'dismiss' } })
     await refetch()
   }
 
@@ -82,8 +96,8 @@ export function DashboardPage() {
                 key={match.job.id}
                 job={match.job}
                 score={match.hybridScore}
-                onSave={(jobId) => handleInteraction(jobId, 'save')}
-                onDismiss={(jobId) => handleInteraction(jobId, 'dismiss')}
+                onSave={handleSave}
+                onDismiss={handleDismiss}
               />
             ))}
           </div>

@@ -124,13 +124,17 @@ apps/web/
 ## 9. Database — Prisma Schema (`apps/server/prisma/schema.prisma`)
 
 - [ ] Configure `datasource db` with `provider = "postgresql"` and `DATABASE_URL`
-- [ ] Define models (all use soft-delete: `deleted Boolean @default(false)`):
+- [x] Define models (all use soft-delete: `deleted Boolean @default(false)`) — defined in
+      `schema.prisma`; `SavedJob`/`SavedCourse` added but not yet migrated:
   - `User` — id, email, name, createdAt, updatedAt, deleted
   - `UserProfile` — skills, education (Json), experience (Json), preferences (Json)
   - `Job` — platformJobId, platform, title, company, description, url, embedding (Float[])
   - `Interaction` — userId, jobId, eventType, weight, platform
-  - `Application` — userId, jobId, status, appliedAt
   - `SkillGapRecord` — userId, jobId, skill, confidence, courses (Json)
+  - `SavedJob` — userId, jobId, status (`ApplicationStatus` enum: PENDING → APPLIED →
+    AWAITING_INTERVIEW → ONGOING_INTERVIEW → INTERVIEWED → SUCCESSFUL/UNSUCCESSFUL), tags
+    (String[]), interviewDate — Epic 8's application tracking
+  - `SavedCourse` — userId, title, provider, url — Epic 8's "save a course for later"
 - [ ] Run `prisma generate` to generate the client
 - [ ] Run `prisma db push` to apply schema to Supabase
 

@@ -1,4 +1,9 @@
-import { INTERACTION_WEIGHTS, type InteractionEventType, type JobMatch } from '@angkop/shared'
+import {
+  INTERACTION_WEIGHTS,
+  type ApplicationStatus,
+  type InteractionEventType,
+  type JobMatch
+} from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { getOrSetMatchScore, invalidateMatchScoresForUser } from '../../lib/redis'
 import { recommend, skillGap as skillGapRequest } from '../../lib/ml-client'
@@ -14,6 +19,35 @@ const ML_REQUEST_CONCURRENCY = 3
 
 export type GraphQLContext = {
   userId: string
+}
+
+type SavedJobWithJob = {
+  id: number
+  job: {
+    id: string
+    platformJobId: string
+    platform: string
+    title: string
+    company: string
+    description: string
+    requiredSkills: string[]
+    url: string
+  }
+  status: string
+  tags: string[]
+  interviewDate: Date | null
+  createdAt: Date
+}
+
+function serializeSavedJob(savedJob: SavedJobWithJob) {
+  return {
+    id: savedJob.id,
+    job: savedJob.job,
+    status: savedJob.status,
+    tags: savedJob.tags,
+    interviewDate: savedJob.interviewDate ? savedJob.interviewDate.toISOString() : null,
+    createdAt: savedJob.createdAt.toISOString()
+  }
 }
 
 async function computeJobMatches(userId: string): Promise<JobMatch[]> {
@@ -120,6 +154,22 @@ export const resolvers = {
       }
 
       return result.missingSkills
+    },
+
+    savedJobs: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
+      const savedJobs = await prisma.savedJob.findMany({
+        where: { userId: context.userId, deleted: false, job: { deleted: false } },
+        include: { job: true },
+        orderBy: { createdAt: 'desc' }
+      })
+      return savedJobs.map(serializeSavedJob)
+    },
+
+    savedCourses: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
+      return prisma.savedCourse.findMany({
+        where: { userId: context.userId, deleted: false },
+        orderBy: { createdAt: 'desc' }
+      })
     }
   },
 
@@ -184,6 +234,119 @@ export const resolvers = {
       // just this one.
       await invalidateMatchScoresForUser(context.userId)
 
+      return true
+    },
+
+    saveJob: async (_parent: unknown, args: { jobId: string }, context: GraphQLContext) => {
+      const job = await prisma.job.findFirstOrThrow({ where: { id: args.jobId, deleted: false } })
+
+      const savedJob = await prisma.savedJob.upsert({
+        where: { userId_jobId: { userId: context.userId, jobId: job.id } },
+        update: { deleted: false },
+        create: { userId: context.userId, jobId: job.id },
+        include: { job: true }
+      })
+
+      // Saving also counts as the existing 'save' interaction signal the NCF model trains
+      // on, so this records both instead of making the frontend call two mutations.
+      await prisma.interaction.create({
+        data: {
+          userId: context.userId,
+          jobId: job.id,
+          eventType: 'save',
+          weight: INTERACTION_WEIGHTS.save,
+          platform: job.platform
+        }
+      })
+      await invalidateMatchScoresForUser(context.userId)
+
+      return serializeSavedJob(savedJob)
+    },
+
+    unsaveJob: async (_parent: unknown, args: { jobId: string }, context: GraphQLContext) => {
+      await prisma.savedJob.updateMany({
+        where: { userId: context.userId, jobId: args.jobId, deleted: false },
+        data: { deleted: true }
+      })
+      return true
+    },
+
+    updateSavedJobStatus: async (
+      _parent: unknown,
+      args: { jobId: string; status: ApplicationStatus },
+      context: GraphQLContext
+    ) => {
+      const savedJob = await prisma.savedJob.update({
+        where: { userId_jobId: { userId: context.userId, jobId: args.jobId } },
+        data: { status: args.status },
+        include: { job: true }
+      })
+      return serializeSavedJob(savedJob)
+    },
+
+    setSavedJobInterviewDate: async (
+      _parent: unknown,
+      args: { jobId: string; interviewDate: string | null },
+      context: GraphQLContext
+    ) => {
+      const savedJob = await prisma.savedJob.update({
+        where: { userId_jobId: { userId: context.userId, jobId: args.jobId } },
+        data: { interviewDate: args.interviewDate ? new Date(args.interviewDate) : null },
+        include: { job: true }
+      })
+      return serializeSavedJob(savedJob)
+    },
+
+    addSavedJobTag: async (
+      _parent: unknown,
+      args: { jobId: string; tag: string },
+      context: GraphQLContext
+    ) => {
+      const existing = await prisma.savedJob.findUniqueOrThrow({
+        where: { userId_jobId: { userId: context.userId, jobId: args.jobId } }
+      })
+      const tags = existing.tags.includes(args.tag) ? existing.tags : [...existing.tags, args.tag]
+      const savedJob = await prisma.savedJob.update({
+        where: { userId_jobId: { userId: context.userId, jobId: args.jobId } },
+        data: { tags },
+        include: { job: true }
+      })
+      return serializeSavedJob(savedJob)
+    },
+
+    removeSavedJobTag: async (
+      _parent: unknown,
+      args: { jobId: string; tag: string },
+      context: GraphQLContext
+    ) => {
+      const existing = await prisma.savedJob.findUniqueOrThrow({
+        where: { userId_jobId: { userId: context.userId, jobId: args.jobId } }
+      })
+      const savedJob = await prisma.savedJob.update({
+        where: { userId_jobId: { userId: context.userId, jobId: args.jobId } },
+        data: { tags: existing.tags.filter((tag: string) => tag !== args.tag) },
+        include: { job: true }
+      })
+      return serializeSavedJob(savedJob)
+    },
+
+    saveCourse: async (
+      _parent: unknown,
+      args: { title: string; provider: string; url: string },
+      context: GraphQLContext
+    ) => {
+      return prisma.savedCourse.upsert({
+        where: { userId_url: { userId: context.userId, url: args.url } },
+        update: { deleted: false, title: args.title, provider: args.provider },
+        create: { userId: context.userId, title: args.title, provider: args.provider, url: args.url }
+      })
+    },
+
+    unsaveCourse: async (_parent: unknown, args: { url: string }, context: GraphQLContext) => {
+      await prisma.savedCourse.updateMany({
+        where: { userId: context.userId, url: args.url, deleted: false },
+        data: { deleted: true }
+      })
       return true
     }
   }

@@ -29,6 +29,32 @@ export const typeDefs = `#graphql
     courses: [Course!]!
   }
 
+  enum ApplicationStatus {
+    PENDING
+    APPLIED
+    AWAITING_INTERVIEW
+    ONGOING_INTERVIEW
+    INTERVIEWED
+    SUCCESSFUL
+    UNSUCCESSFUL
+  }
+
+  type SavedJob {
+    id: ID!
+    job: Job!
+    status: ApplicationStatus!
+    tags: [String!]!
+    interviewDate: String
+    createdAt: String!
+  }
+
+  type SavedCourse {
+    id: ID!
+    title: String!
+    provider: String!
+    url: String!
+  }
+
   type Education {
     school: String!
     degree: String!
@@ -62,6 +88,8 @@ export const typeDefs = `#graphql
     me: Me!
     jobMatches: [JobMatch!]!
     skillGaps: [SkillGap!]!
+    savedJobs: [SavedJob!]!
+    savedCourses: [SavedCourse!]!
   }
 
   input UpdateProfileInput {
@@ -72,5 +100,13 @@ export const typeDefs = `#graphql
   type Mutation {
     updateProfile(input: UpdateProfileInput!): UserProfile!
     logInteraction(jobId: ID!, eventType: String!): Boolean!
+    saveJob(jobId: ID!): SavedJob!
+    unsaveJob(jobId: ID!): Boolean!
+    updateSavedJobStatus(jobId: ID!, status: ApplicationStatus!): SavedJob!
+    setSavedJobInterviewDate(jobId: ID!, interviewDate: String): SavedJob!
+    addSavedJobTag(jobId: ID!, tag: String!): SavedJob!
+    removeSavedJobTag(jobId: ID!, tag: String!): SavedJob!
+    saveCourse(title: String!, provider: String!, url: String!): SavedCourse!
+    unsaveCourse(url: String!): Boolean!
   }
 `

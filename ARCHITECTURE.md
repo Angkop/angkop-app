@@ -70,8 +70,13 @@ history / conversation for context), not part of the original design.
 ## Where Postgres/Prisma fits in
 
 Postgres is the single source of truth for everything structured: `User`, `UserProfile`,
-`Job`, `Interaction`, `SkillGapRecord` (`apps/server/prisma/schema.prisma`). All soft
-delete (`deleted Boolean @default(false)`), all queries filtered on it — no hard deletes.
+`Job`, `Interaction`, `SkillGapRecord`, `SavedJob`, `SavedCourse`
+(`apps/server/prisma/schema.prisma`). All soft delete (`deleted Boolean @default(false)`),
+all queries filtered on it — no hard deletes. `SavedJob` carries the `ApplicationStatus`
+enum (`PENDING` → `APPLIED` → `AWAITING_INTERVIEW` → `ONGOING_INTERVIEW` → `INTERVIEWED` →
+`SUCCESSFUL`/`UNSUCCESSFUL`) plus free-text `tags` and an optional `interviewDate` — this
+is Epic 8's data model, drafted but **not yet migrated** (see `SETUP.md`/commit history for
+the manual `prisma migrate` step).
 
 Prisma is only ever driven from `apps/server` — the ML service has no database client at
 all (see below). `apps/server/prisma/seed.ts` loads the fixtures in `seed/*.json`
@@ -163,8 +168,13 @@ simultaneously — a second layer of protection against the same problem.
   (`CLAUDE.md`); this is explicitly a stand-in, flagged with a `// SAFE:` comment in
   `src/routes/auth.ts`.
 - **GraphQL** (`/graphql`, requires `Authorization: Bearer <token>`): `me`, `jobMatches`,
-  `skillGaps` queries; `updateProfile`, `logInteraction` mutations. This is what the
-  dashboard talks to.
+  `skillGaps`, `savedJobs`, `savedCourses` queries; `updateProfile`, `logInteraction`,
+  `saveJob`, `unsaveJob`, `updateSavedJobStatus`, `setSavedJobInterviewDate`,
+  `addSavedJobTag`, `removeSavedJobTag`, `saveCourse`, `unsaveCourse` mutations. This is
+  what the dashboard talks to. `saveJob` both upserts the `SavedJob` row and records the
+  same `Interaction('save')` event `logInteraction` would, so the NCF signal isn't lost —
+  only the dashboard's Save button goes through it, though; the extension's Save (via
+  `POST /api/events` below) still only logs an `Interaction`, not a `SavedJob`.
 - **REST**: `POST /api/events` (interaction logging — used by the extension, which isn't
   behind the dashboard's JWT flow) and `GET /api/match-score/:jobId` (single-job score
   lookup, also for the extension's overlay).
@@ -182,6 +192,12 @@ Client (`lib/apollo-client.ts`) attaches the JWT from `localStorage` to every Gr
 request via a `setContext` auth link. Match score display follows
 `.claude/rules/design.md`: always a %, always paired with a label, green/yellow/red at
 70%/40% thresholds (`packages/shared`'s `getMatchLabel`).
+
+Pages: `/dashboard` (job matches), `/skill-gaps`, `/applications` (Epic 8 — saved jobs
+with status/tags/interview date, backed by the `savedJobs` query above), `/profile`.
+Profile's onboarding-derived fields (location, education, experience, desired roles,
+resume filename) are still mock data rendered client-side — there's no backend field for
+them yet, unlike `SavedJob`/`SavedCourse` which are real, migrated-pending tables.
 
 `public/demo/job-listing.html` is a static fixture bundled into the app specifically so
 the extension has something to scrape that's guaranteed to work, independent of whether
@@ -268,8 +284,11 @@ Browser (dashboard)
 - ML service has no direct DB/Redis access (stateless, Express-mediated)
 - Skill-gap uses per-skill cosine similarity instead of literal embedding-dimension
   subtraction
-- No `Application` model / status tracking (Epic 8) or Gemini cover letters (Epic 7) —
-  out of scope for this MVP pass
+- Epic 8 (saved jobs/status/tags/interview date/saved courses) is drafted — schema,
+  GraphQL, resolvers, and the `/applications` page all exist — but the Prisma migration
+  hasn't been run yet, and only the dashboard's Save button is wired to it; the browser
+  extension's Save still only logs an `Interaction`, not a `SavedJob`
+- Gemini cover letters / Gmail send (Epic 7) — out of scope, not started
 - Permissive CORS
 - Extension's real-platform selectors are unverified (no live browser testing available
   while building)

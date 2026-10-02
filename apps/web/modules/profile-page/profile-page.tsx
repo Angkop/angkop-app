@@ -3,7 +3,8 @@
 import { useRef, useState } from 'react'
 import { gql } from '@apollo/client'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Briefcase, FileText, GraduationCap, Mail, MapPin, PencilLine, Sparkles } from 'lucide-react'
+import { Briefcase, ClipboardList, FileText, GraduationCap, Mail, MapPin, PencilLine, Sparkles } from 'lucide-react'
+import type { ApplicationStatus } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -73,6 +74,15 @@ const UPDATE_PROFILE_MUTATION = gql`
   }
 `
 
+const SAVED_JOBS_STATUS_QUERY = gql`
+  query SavedJobsStatus {
+    savedJobs {
+      id
+      status
+    }
+  }
+`
+
 type MeQueryResult = {
   me: {
     id: string
@@ -80,6 +90,10 @@ type MeQueryResult = {
     name: string | null
     profile: { skills: string[]; skillsText: string } | null
   }
+}
+
+type SavedJobsStatusQueryResult = {
+  savedJobs: { id: number; status: ApplicationStatus }[]
 }
 
 function Timeline({ children }: { children: React.ReactNode }) {
@@ -129,6 +143,7 @@ function TimelineItem({
 
 export function ProfilePage() {
   const { data, loading, error } = useQuery<MeQueryResult>(ME_QUERY)
+  const { data: savedJobsData } = useQuery<SavedJobsStatusQueryResult>(SAVED_JOBS_STATUS_QUERY)
   const [updateProfile, { loading: isSaving }] = useMutation(UPDATE_PROFILE_MUTATION)
   const [skillsInput, setSkillsInput] = useState('')
   const [skillsText, setSkillsText] = useState('')
@@ -168,6 +183,7 @@ export function ProfilePage() {
     .filter(Boolean)
   const headline = [onboarding.desiredRoles[0], STATUS_LABELS[onboarding.status]].filter(Boolean).join(' · ')
   const isOpenToWork = OPEN_TO_WORK_STATUSES.has(onboarding.status)
+  const jobsAppliedCount = (savedJobsData?.savedJobs ?? []).filter((saved) => saved.status !== 'PENDING').length
 
   function scrollToEdit() {
     editSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -228,7 +244,7 @@ export function ProfilePage() {
 
       <div className="mt-4 grid grid-cols-3 gap-3">
         <StatCard label="Skills listed" value={skills.length} icon={Sparkles} />
-        <StatCard label="Education" value={onboarding.education.length} icon={GraduationCap} />
+        <StatCard label="Jobs applied" value={jobsAppliedCount} icon={ClipboardList} />
         <StatCard label="Experience" value={onboarding.experience.length} icon={Briefcase} />
       </div>
 
