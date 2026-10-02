@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getStoredToken } from '@/lib/auth'
+import type { EducationEntry, ExperienceEntry } from '@/lib/onboarding-profile'
 import { cn, getInitials } from '@/lib/utils'
 
 const ME_QUERY = gql`
@@ -57,9 +58,6 @@ const STATUS_OPTIONS = [
   { value: 'career-shifter', label: 'Career shifter' },
   { value: 'employed', label: 'Currently employed, exploring' }
 ]
-
-type EducationEntry = { school: string; degree: string; period: string }
-type ExperienceEntry = { title: string; company: string; period: string }
 
 function ChipList({
   items,
@@ -209,10 +207,6 @@ export function OnboardingPage() {
     setStep((current) => Math.max(current - 1, 0))
   }
 
-  // Onboarding keeps everything in local state only — the current updateProfile
-  // mutation accepts just { skills, skillsText }, not desired role, education,
-  // experience, or a resume file. Wiring this up for real needs a schema/resolver
-  // change, which isn't part of this pass.
   function handleFinish() {
     router.push('/dashboard')
   }
