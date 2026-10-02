@@ -222,8 +222,8 @@ export function OnboardingPage() {
   }
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-2">
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-primary p-8 text-primary-foreground sm:p-12 lg:flex lg:p-16">
+    <div className="grid min-h-screen bg-background lg:grid-cols-[380px_1fr]">
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-primary p-8 text-primary-foreground sm:p-12 lg:flex lg:p-12">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 opacity-[0.07]"
