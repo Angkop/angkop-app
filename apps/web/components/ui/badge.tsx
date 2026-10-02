@@ -6,6 +6,8 @@ const badgeVariants = cva('inline-flex items-center rounded-full px-2.5 py-0.5 t
   variants: {
     variant: {
       default: 'bg-secondary text-secondary-foreground',
+      outline: 'border border-border text-foreground',
+      secondary: 'gap-1 bg-secondary pr-1 text-secondary-foreground',
       strong: 'bg-match-strong text-match-strong-foreground',
       partial: 'bg-match-partial text-match-partial-foreground',
       weak: 'bg-match-weak text-match-weak-foreground'
