@@ -1,0 +1,45 @@
+import Link from 'next/link'
+import { Bookmark, X } from 'lucide-react'
+import type { Job } from '@angkop/shared'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { MatchScoreBadge } from '@/components/match-score-badge'
+
+type JobRowProps = {
+  job: Job
+  score: number
+  onSave?: (jobId: string) => void
+  onDismiss?: (jobId: string) => void
+}
+
+export function JobRow({ job, score, onSave, onDismiss }: JobRowProps) {
+  return (
+    <div className="flex items-center gap-4 rounded-lg border border-border p-3 transition-colors hover:border-foreground/20">
+      <Link href={`/listings/${job.id}`} className="flex min-w-0 flex-1 items-center gap-4">
+        <MatchScoreBadge score={score} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">{job.title}</p>
+          <p className="truncate text-xs text-muted-foreground">{job.company}</p>
+        </div>
+        <Badge variant="outline" className="hidden shrink-0 sm:inline-flex">
+          {job.platform}
+        </Badge>
+      </Link>
+
+      {onSave || onDismiss ? (
+        <div className="flex shrink-0 items-center gap-1">
+          {onSave ? (
+            <Button variant="ghost" size="icon-sm" aria-label="Save job" onClick={() => onSave(job.id)}>
+              <Bookmark className="size-4" />
+            </Button>
+          ) : null}
+          {onDismiss ? (
+            <Button variant="ghost" size="icon-sm" aria-label="Dismiss job" onClick={() => onDismiss(job.id)}>
+              <X className="size-4" />
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
