@@ -16,11 +16,10 @@ const PORT = Number(process.env.PORT ?? 4000)
 
 async function main() {
   const app = express()
-  // Permissive CORS: local-only MVP, and /api/events needs to accept requests from the
-  // browser extension's content-script origin (varies by target job platform, plus the
-  // extension's own chrome-extension:// origin), not just the dashboard. Would need to
-  // be locked down to specific origins before any real deployment.
-  app.use(cors())
+  // The extension's content script only runs on Angkop's own listing pages (see
+  // CLAUDE.md), so its fetch() calls to /api/events and /api/match-score carry the
+  // dashboard's own origin — one allowed origin covers both the dashboard and the extension.
+  app.use(cors({ origin: process.env.WEB_URL }))
   app.use(express.json())
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))

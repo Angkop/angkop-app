@@ -89,12 +89,12 @@ from research but wasn't pursued here).
 
 ---
 
-## Phase 5 — Vercel: Web Dashboard (`apps/web`)
+## Phase 5 — Vercel: Web Dashboard (`apps/web`) ✅ DONE
 
-- [ ] Import repo into Vercel, root directory `apps/web`
-- [ ] Env vars: `NEXT_PUBLIC_API_URL` (Render API URL from Phase 3),
+- [x] Import repo into Vercel, root directory `apps/web`
+- [x] Env vars: `NEXT_PUBLIC_API_URL` (Render API URL from Phase 3),
       `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- [ ] First deploy succeeds, dashboard loads at the Vercel URL
+- [x] First deploy succeeds, dashboard loads at `https://angkop-app.vercel.app/`
 
 ---
 
