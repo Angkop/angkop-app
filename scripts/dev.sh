@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# One-command local dev: brings up Postgres + Redis (Docker), the FastAPI ML service,
-# then the Next.js dashboard + Express API (via turbo). Ctrl+C stops the JS apps and the
-# ML service; Docker containers are left running (cheap, and speeds up the next start).
+# One-command local dev: the FastAPI ML service, then the Next.js dashboard + Express API
+# (via turbo). Postgres + Redis are the cloud Supabase/Upstash instances configured in
+# apps/server/.env and ml/.env, not local Docker containers — see DEPLOYMENT.md.
+# Ctrl+C stops the JS apps and the ML service.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -17,19 +18,6 @@ cleanup() {
   fi
 }
 trap cleanup EXIT INT TERM
-
-echo "==> Starting Postgres + Redis (docker compose)..."
-docker compose up -d
-
-echo "==> Waiting for Postgres..."
-until docker compose exec -T db pg_isready -U angkop >/dev/null 2>&1; do
-  sleep 1
-done
-
-echo "==> Waiting for Redis..."
-until docker compose exec -T redis redis-cli ping >/dev/null 2>&1; do
-  sleep 1
-done
 
 if [ ! -d "$REPO_ROOT/ml/.venv" ]; then
   echo "!! ml/.venv not found — run the ML setup first (see ml/README.md), then re-run this." >&2
