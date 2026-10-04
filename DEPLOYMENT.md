@@ -98,12 +98,12 @@ from research but wasn't pursued here).
 
 ---
 
-## Phase 6 — Wire services together
+## Phase 6 — Wire services together ✅ DONE
 
-- [ ] Set `apps/server`'s `WEB_URL` (Render) to the real Vercel domain
-- [ ] Set `apps/server`'s `ML_SERVICE_URL` (Render) to the real ML service Render domain
-- [ ] Tighten `cors()` in `apps/server/src/index.ts` to `cors({ origin: process.env.WEB_URL })`
-      instead of wide-open — **small code change, flag to Claude when ready**
+- [x] Set `apps/server`'s `WEB_URL` (Render) to `https://angkop-app.vercel.app`
+- [x] `ML_SERVICE_URL` already pointed at the ngrok domain back in Phase 4
+- [x] Tightened `cors()` in `apps/server/src/index.ts` to `cors({ origin: process.env.WEB_URL })`
+      — committed and pushed (`fix cors`)
 
 ---
 
@@ -118,9 +118,13 @@ from research but wasn't pursued here).
 
 ---
 
-## Phase 8 — Browser Extension
+## Phase 8 — Browser Extension (on hold, come back later)
 
 - [ ] Local defense demo: `chrome://extensions` → Developer mode → Load unpacked
       (`apps/extension`) — no hosting needed
 - [ ] (Optional) Chrome Web Store listing, $5 one-time dev fee — only if needed beyond the
       thesis defense
+- [ ] Note for whenever this resumes: `apps/extension/manifest.json` and `content.js` are
+      still hardcoded to `http://localhost:4000` — will need pointing at the real Render API
+      (and the extension's own auth story, Chrome Identity API, is still unbuilt — see the
+      "explicitly out of scope" note in the Google OAuth plan)
