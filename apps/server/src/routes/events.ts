@@ -25,8 +25,8 @@ type EventPayload = {
 export const eventsRouter = Router()
 
 // Trusts a client-supplied userId instead of requiring a session — the browser extension
-// scrapes pages independently of the dashboard's dev-login flow. Fine for a local MVP;
-// would need to move behind real auth before handling untrusted traffic.
+// runs independently of the dashboard's Google sign-in. Fine for a local MVP; would need
+// to move behind real auth (Chrome Identity API, per CLAUDE.md) before handling untrusted traffic.
 eventsRouter.post('/', async (req, res) => {
   const body = req.body as Partial<EventPayload>
 

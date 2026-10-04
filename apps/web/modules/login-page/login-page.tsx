@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ErrorMessage } from '@/components/error-message'
-import { devLogin } from '@/lib/auth'
+import { supabaseClient } from '@/lib/supabase-client'
 
 // Google's fixed brand mark — not a themeable icon, so its colors stay literal rather than tokens.
 function GoogleIcon({ className }: { className?: string }) {
@@ -31,19 +30,20 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 export function LoginPage() {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleContinueAsDemoUser() {
+  async function handleGoogleSignIn() {
     setIsLoading(true)
     setError(null)
-    try {
-      await devLogin()
-      router.push('/onboarding')
-    } catch {
-      setError('Could not sign in. Confirm the Express API is running and seeded, then try again.')
-    } finally {
+    const { error: signInError } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/onboarding` }
+    })
+    // A successful call navigates the whole page away to Google — this only still runs
+    // when signInWithOAuth itself failed before that redirect could happen.
+    if (signInError) {
+      setError('Could not start Google sign-in. Please try again.')
       setIsLoading(false)
     }
   }
@@ -98,17 +98,13 @@ export function LoginPage() {
           <Button
             variant="outline"
             className="mt-6 w-full border-foreground/15 shadow-sm hover:bg-accent/60"
-            onClick={handleContinueAsDemoUser}
+            onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
             <GoogleIcon className="size-4" />
             {isLoading ? 'Signing in…' : 'Continue with Google'}
           </Button>
           {error && <ErrorMessage>{error}</ErrorMessage>}
-
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            Demo build — this signs you in as a sample user instead of your real Google account.
-          </p>
         </div>
       </div>
     </div>

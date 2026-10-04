@@ -1,37 +1,25 @@
-import type { NextFunction, Request, Response } from 'express'
-import { jwtVerify, SignJWT } from 'jose'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? 'dev-secret')
+const SUPABASE_URL = process.env.SUPABASE_URL ?? ''
 
-export async function signSessionToken(userId: string): Promise<string> {
-  return new SignJWT({ userId })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('7d')
-    .sign(JWT_SECRET)
+// Lazy singleton: createRemoteJWKSet caches Supabase's public keys internally and only
+// refetches on a kid it hasn't seen, so one instance should live for the process lifetime.
+const jwks = createRemoteJWKSet(new URL('/auth/v1/.well-known/jwks.json', SUPABASE_URL))
+
+export type VerifiedSupabaseUser = {
+  userId: string
+  email: string
+  name: string | null
 }
 
-export async function verifySessionToken(token: string): Promise<string> {
-  const { payload } = await jwtVerify(token, JWT_SECRET)
-  if (typeof payload.userId !== 'string') {
-    throw new Error('Session token is missing userId')
-  }
-  return payload.userId
-}
-
-export type AuthenticatedRequest = Request & { userId?: string }
-
-export async function authenticate(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
-  const header = req.headers.authorization
-  if (!header?.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Missing bearer token' })
-    return
+export async function verifySupabaseToken(token: string): Promise<VerifiedSupabaseUser> {
+  const { payload } = await jwtVerify(token, jwks)
+  if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
+    throw new Error('Session token is missing sub or email')
   }
 
-  try {
-    req.userId = await verifySessionToken(header.slice('Bearer '.length))
-    next()
-  } catch {
-    res.status(401).json({ error: 'Invalid or expired session token' })
-  }
+  const metadata = payload.user_metadata as Record<string, unknown> | undefined
+  const name = (metadata?.full_name ?? metadata?.name ?? null) as string | null
+
+  return { userId: payload.sub, email: payload.email, name }
 }

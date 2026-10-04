@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { NAV_LINKS } from '@/constants/nav'
 import { clearStoredToken, getStoredToken } from '@/lib/auth'
+import { supabaseClient } from '@/lib/supabase-client'
 import { cn, getInitials } from '@/lib/utils'
 
 const ME_QUERY = gql`
@@ -59,7 +60,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const name = data?.me.name ?? null
   const initials = email ? getInitials(name, email) : ''
 
-  function handleSignOut() {
+  async function handleSignOut() {
+    await supabaseClient.auth.signOut()
     clearStoredToken()
     router.replace('/')
   }

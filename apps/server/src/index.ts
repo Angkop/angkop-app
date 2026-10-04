@@ -5,12 +5,12 @@ import { ApolloServer } from '@apollo/server'
 import { expressMiddleware } from '@as-integrations/express5'
 import { typeDefs } from './graphql/schema'
 import { resolvers, type GraphQLContext } from './graphql/resolvers'
-import { verifySessionToken } from './middleware/authenticate'
-import { authRouter } from './routes/auth'
+import { verifySupabaseToken } from './middleware/authenticate'
 import { eventsRouter } from './routes/events'
 import { matchScoreRouter } from './routes/match-score'
 import { jobsRouter } from './routes/jobs'
 import { logger } from './lib/logger'
+import { prisma } from './lib/prisma'
 
 const PORT = Number(process.env.PORT ?? 4000)
 
@@ -23,7 +23,6 @@ async function main() {
   app.use(express.json())
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))
-  app.use('/auth', authRouter)
   app.use('/api/events', eventsRouter)
   app.use('/api/match-score', matchScoreRouter)
   app.use('/api/jobs', jobsRouter)
@@ -37,9 +36,18 @@ async function main() {
       context: async ({ req }) => {
         const header = req.headers.authorization
         if (!header?.startsWith('Bearer ')) {
-          throw new Error('Missing bearer token — call POST /auth/dev-login first')
+          throw new Error('Missing bearer token — sign in with Google first')
         }
-        const userId = await verifySessionToken(header.slice('Bearer '.length))
+        const { userId, email, name } = await verifySupabaseToken(header.slice('Bearer '.length))
+
+        // First request after a real Google sign-in — mirrors the upsert pattern already
+        // used in prisma/seed.ts, since User.id has no default and must be supplied.
+        await prisma.user.upsert({
+          where: { id: userId },
+          update: { email, name },
+          create: { id: userId, email, name }
+        })
+
         return { userId }
       }
     })
