@@ -109,12 +109,19 @@ from research but wasn't pursued here).
 
 ## Phase 7 — Google Cloud Console
 
-- [ ] OAuth client for Google sign-in (Supabase Auth → Providers → Google), redirect URI from
-      Supabase pasted into Google Cloud's authorized redirect URIs
-- [ ] Separate incremental-consent OAuth config for `gmail.send` scope (must stay separate from
-      basic sign-in scope, per `CLAUDE.md`)
-- [ ] Gemini API key obtained, added to whichever service calls the Application Draft
-      Generator
+- [x] OAuth client for Google sign-in created, redirect URI set to Supabase's callback
+- [x] Supabase → Authentication → Providers → Google enabled with that client's ID/secret
+- [x] Redirect URLs registered (`/onboarding` for both local and the deployed Vercel domain)
+- [x] Real Google sign-in replacing dev-login — built and working (see git history: "feat:
+      replace dev-login with real Google OAuth via Supabase Auth")
+- [x] Found + closed a critical gap along the way: RLS was disabled on all 9 Supabase tables,
+      meaning the public anon key could read/write everything directly via PostgREST,
+      bypassing the Express API entirely. Fixed with `ALTER TABLE ... ENABLE ROW LEVEL
+      SECURITY` on every table, no policies needed since Express/Prisma uses the
+      RLS-bypassing `service_role` key.
+- [ ] Separate incremental-consent OAuth config for `gmail.send` scope — explicitly deferred,
+      out of scope for now (see git history for the scoping decision)
+- [ ] Gemini API key + Application Draft Generator — explicitly deferred, out of scope for now
 
 ---
 
