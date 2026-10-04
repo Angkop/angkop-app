@@ -35,16 +35,22 @@ Stack: Supabase (DB) → Upstash (Redis) → Render (Express API + FastAPI ML se
 
 ---
 
-## Phase 3 — Render: Express API (`apps/server`)
+## Phase 3 — Render: Express API (`apps/server`) ✅ DONE
 
-- [ ] Create Render account, connect GitHub repo
-- [ ] New Web Service, root directory `apps/server`
-- [ ] Build command: `cd ../.. && pnpm install && pnpm --filter @angkop/server build`
-- [ ] Start command: `pnpm --filter @angkop/server start`
-- [ ] Env vars set in Render dashboard: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`,
-      `REDIS_URL`, `JWT_SECRET`, `ML_SERVICE_URL` (filled in after Phase 4), `WEB_URL` (filled
-      in after Phase 5)
-- [ ] First deploy succeeds, `/graphql` reachable at the Render URL
+- [x] Create Render account, connect GitHub repo
+- [x] New Web Service, root directory left blank (monorepo root), region Singapore
+- [x] Build command: `pnpm install && pnpm --filter @angkop/server build`
+- [x] Start command: `pnpm --filter @angkop/server start`
+- [x] Env vars set in Render dashboard: `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`,
+      `REDIS_URL`, `JWT_SECRET` (real generated secret, not the local dev one),
+      `ML_SERVICE_URL`/`WEB_URL` set as placeholders, to be updated after Phases 4 and 5
+- [x] First deploy succeeds
+- [x] Fixed along the way (committed to repo, not just Render config):
+  - `apps/server/package.json` — added `"postinstall": "prisma generate"` (Render's fresh
+    install never generated the Prisma client, causing `job is of type 'unknown'` TS errors)
+  - `apps/server/package.json` — fixed `start` script from `node dist/index.js` to
+    `node dist/src/index.js` (tsc's `rootDir: "."` nests output under `dist/src/`, bug existed
+    before this deploy but was never exercised since local dev uses `tsx` directly)
 
 ---
 

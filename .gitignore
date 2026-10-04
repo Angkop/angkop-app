@@ -20,10 +20,12 @@ __pycache__/
 .venv/
 venv/
 
-# ML model weights (large binaries — store separately)
+# ML model weights + their id mappings — generated together per training run, fetched
+# from Supabase Storage at ML service boot, never committed (see ml/app/services/weights_fetcher.py)
 ml/weights/*.pt
 ml/weights/*.bin
 ml/weights/*.safetensors
+ml/weights/id_mappings.json
 
 # Misc
 .DS_Store

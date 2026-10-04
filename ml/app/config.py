@@ -8,6 +8,12 @@ MODEL_NAME = os.getenv("MODEL_NAME", "all-MiniLM-L6-v2")
 NCF_WEIGHTS_PATH = os.getenv("NCF_WEIGHTS_PATH", "./weights/ncf.pt")
 NCF_ID_MAPPING_PATH = os.getenv("NCF_ID_MAPPING_PATH", "./weights/id_mappings.json")
 
+# Lets a retrained model ship by uploading to this bucket + restarting the service,
+# instead of committing weights to git or redeploying code — see DEPLOYMENT.md Phase 4.
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+NCF_WEIGHTS_BUCKET = os.getenv("NCF_WEIGHTS_BUCKET", "ml-weights")
+
 # Weight given to the collaborative score in the hybrid blend ramps up with how much
 # interaction history a user has, per the thesis's stated design (cold-start users lean
 # on the semantic score; established users lean more on collaborative signal).
