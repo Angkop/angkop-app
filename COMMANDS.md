@@ -117,3 +117,5 @@ See `DEPLOYMENT.md` for the full setup history and rationale behind this split.
 | ML Service | (local machine, via ngrok tunnel) | No free-tier cloud host could run Torch + Sentence-Transformers — runs on a laptop with `uvicorn` + `ngrok` both kept running, see `DEPLOYMENT.md` Phase 4. Only reachable while that laptop is on. |
 | Database | Supabase (pooler connection) | — |
 | Redis | Upstash | — |
+
+.
