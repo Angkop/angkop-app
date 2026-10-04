@@ -54,19 +54,38 @@ Stack: Supabase (DB) → Upstash (Redis) → Render (Express API + FastAPI ML se
 
 ---
 
-## Phase 4 — Render: ML Microservice (`ml/`)
+## Phase 4 — ML Microservice (`ml/`) ✅ DONE (local + ngrok tunnel, not cloud-hosted)
 
-- [ ] New Web Service, root directory `ml`
-- [ ] Build command: `pip install -r requirements.txt`
-- [ ] Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- [ ] Env vars: `DATABASE_URL`, `REDIS_URL`, `MODEL_NAME`, `NCF_WEIGHTS_PATH`,
-      `NCF_ID_MAPPING_PATH`
-- [ ] Resolve `ml/weights/ncf.pt` delivery — it's gitignored (correctly, per
-      `data-safety.md`: no model weights in git), so the deployed instance needs another way
-      to get it (upload to Supabase Storage / GitHub Release + fetch-on-boot). **Needs a small
-      code change before this phase can finish — flag to Claude when ready.**
-- [ ] First deploy succeeds, `/health` returns `{"status": "ok"}` without OOM
-      (512MB free-tier RAM is tight for Torch + Sentence-Transformers — watch the boot logs)
+Free-tier cloud hosting didn't pan out for this one — tried in order:
+- Render free Web Service: OOM-killed on boot (512MB ceiling, Torch + Sentence-Transformers
+  need more)
+- Hugging Face Spaces: Docker/Gradio SDKs (anything that runs compute) now require a PRO
+  subscription — only Static Spaces are free, which can't run a FastAPI backend
+- Fly.io: no free tier at all for new accounts as of 2026 (legacy free allowances only)
+
+Landed on: run it locally, expose it with an ngrok tunnel so the Render-hosted
+`apps/server` can reach it.
+
+- [x] `ml/app/services/weights_fetcher.py` added — fetches `ncf.pt` + `id_mappings.json`
+      from Supabase Storage (`ml-weights` bucket) if not already on disk. Not strictly needed
+      for the local setup (files are already on disk locally), but keeps the retrain workflow
+      (Colab → upload to bucket → restart) intact if this ever moves to real cloud hosting
+- [x] `ml/Dockerfile` + Space metadata in `ml/README.md` committed but unused for now —
+      left in place in case HF PRO or another host becomes viable later
+- [x] ngrok account created, static free domain claimed:
+      `refining-domestic-cough.ngrok-free.dev`
+- [x] Local `uvicorn` + `ngrok http --url=...` running concurrently
+- [x] Render's `apps/server` → `ML_SERVICE_URL` updated to the ngrok domain
+- [x] `apps/server/.env` (local) left as `http://localhost:8000` — no tunnel needed when
+      both services run on the same machine
+- [x] Verified `https://refining-domestic-cough.ngrok-free.dev/health` responds `{"status":"ok"}`
+- [ ] The unused `angkop-ml` Render service — suspend or delete, your call
+
+**Known limitation, not a blocker right now**: this only works while your laptop, `uvicorn`,
+and `ngrok` are all running simultaneously. Fine for dev/demo use. Revisit before the
+40-respondent evaluation phase — local+tunnel won't survive that unattended (options then:
+pay for Render/HF, or a Google Cloud Run free-tier attempt, which looked genuinely viable
+from research but wasn't pursued here).
 
 ---
 

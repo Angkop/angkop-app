@@ -1,3 +1,12 @@
+---
+title: Angkop ML Microservice
+emoji: 🧠
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+---
+
 # Angkop ML Microservice
 
 FastAPI service hosting Sentence-BERT embeddings, the hybrid (semantic + collaborative)
