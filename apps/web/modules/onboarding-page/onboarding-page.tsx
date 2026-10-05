@@ -26,8 +26,9 @@ import { Button } from '@/components/ui/button'
 import { ChipList } from '@/components/chip-list'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PageLoader } from '@/components/page-loader'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { getStoredToken } from '@/lib/auth'
+import { supabaseClient } from '@/lib/supabase-client'
 import type { EducationEntry, ExperienceEntry } from '@/lib/onboarding-profile'
 import { cn, getInitials } from '@/lib/utils'
 
@@ -94,14 +95,26 @@ export function OnboardingPage() {
   const [resumeFileName, setResumeFileName] = useState('')
 
   useEffect(() => {
-    if (!getStoredToken()) {
-      router.replace('/')
-      return
+    let isMounted = true
+
+    // Right after the Google redirect lands here, Supabase is still parsing the auth
+    // tokens out of the URL — getSession() awaits that before resolving, so this won't
+    // bounce the user back to "/" while the session is still being established.
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return
+      if (!session) {
+        router.replace('/')
+        return
+      }
+      setIsChecking(false)
+    })
+
+    return () => {
+      isMounted = false
     }
-    setIsChecking(false)
   }, [router])
 
-  if (isChecking) return null
+  if (isChecking) return <PageLoader label="Setting up your account…" />
 
   const email = data?.me.email ?? ''
   const name = data?.me.name ?? null
