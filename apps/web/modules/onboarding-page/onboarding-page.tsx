@@ -61,6 +61,7 @@ export function OnboardingPage() {
               onAboutChange={wizard.setAbout}
               resumeFileName={wizard.resumeFileName}
               onResumeFileNameChange={wizard.setResumeFileName}
+              onImportParsedResume={wizard.importParsedResume}
             />
           ) : null}
 

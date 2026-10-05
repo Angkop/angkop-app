@@ -1,4 +1,4 @@
-import { Mail, MapPin, PencilLine, Sparkles } from 'lucide-react'
+import { Mail, MapPin, PencilLine, Sparkles, Upload } from 'lucide-react'
 import { CAREER_LEVEL_LABELS, type CareerLevel } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,8 @@ export function ProfileHeader({
   headline,
   careerLevel,
   location,
-  onEditClick
+  onEditClick,
+  onImportResumeClick
 }: {
   email: string
   name: string | null
@@ -20,6 +21,7 @@ export function ProfileHeader({
   careerLevel: CareerLevel | null | undefined
   location: string | null | undefined
   onEditClick: () => void
+  onImportResumeClick: () => void
 }) {
   const isOpenToWork = careerLevel ? OPEN_TO_WORK_LEVELS.has(careerLevel) : false
   const headlineLine = [headline, careerLevel ? CAREER_LEVEL_LABELS[careerLevel] : null].filter(Boolean).join(' · ')
@@ -37,16 +39,22 @@ export function ProfileHeader({
         </div>
 
         <div className="mt-4">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <h1 className="text-xl font-semibold tracking-tight text-foreground">{name ?? email}</h1>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Edit profile"
-              onClick={onEditClick}
-              className="text-muted-foreground"
-            >
-              <PencilLine className="size-3.5" />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">{name ?? email}</h1>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Edit profile"
+                onClick={onEditClick}
+                className="text-muted-foreground"
+              >
+                <PencilLine className="size-3.5" />
+              </Button>
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={onImportResumeClick} className="gap-1.5">
+              <Upload className="size-3.5" />
+              Import resume
             </Button>
           </div>
           {headlineLine ? <p className="mt-1 text-sm text-muted-foreground">{headlineLine}</p> : null}

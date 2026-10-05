@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { gql } from '@apollo/client'
 import { useMutation, useQuery } from '@apollo/client/react'
-import type { CareerLevel, UserProfile as SharedUserProfile } from '@angkop/shared'
+import type { CareerLevel, ParsedResumeProfile, UserProfile as SharedUserProfile } from '@angkop/shared'
 import {
   EMPTY_CERTIFICATION,
   EMPTY_EDUCATION,
@@ -12,6 +12,7 @@ import {
   buildCompleteOnboardingInput,
   makeArrayHelpers,
   monthInputFromIso,
+  profileEntriesFromParsedResume,
   type CertificationEntry,
   type EducationEntry,
   type ExperienceEntry,
@@ -233,6 +234,22 @@ export function useProfileEditor() {
     await refetch()
   }
 
+  // Fills in-memory form state from a parsed resume — same as a user typing into every
+  // field by hand. Nothing is persisted until submit() runs via the normal Save/Finish flow.
+  function importParsedResume(parsed: ParsedResumeProfile) {
+    const fields = profileEntriesFromParsedResume(parsed)
+    setHeadline(fields.headline)
+    setAbout(fields.about)
+    setCareerLevel(fields.careerLevel)
+    setLocation(fields.location)
+    setSkills(fields.skills)
+    educationHelpers.replaceAll(fields.education)
+    experienceHelpers.replaceAll(fields.experience)
+    certificationHelpers.replaceAll(fields.certifications)
+    projectHelpers.replaceAll(fields.projects)
+    languageHelpers.replaceAll(fields.languages)
+  }
+
   return {
     email: data?.me.email ?? '',
     name: data?.me.name ?? null,
@@ -265,7 +282,8 @@ export function useProfileEditor() {
     setResumeFileName,
     isSaving,
     saveError,
-    submit
+    submit,
+    importParsedResume
   }
 }
 

@@ -1,5 +1,12 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { CareerLevel, EmploymentType, LanguageProficiency, SkillLevel, WorkSetup } from '@angkop/shared'
+import type {
+  CareerLevel,
+  EmploymentType,
+  LanguageProficiency,
+  ParsedResumeProfile,
+  SkillLevel,
+  WorkSetup
+} from '@angkop/shared'
 
 export type ProfileSkillEntry = {
   name: string
@@ -115,6 +122,77 @@ export const EMPTY_PREFERENCES: PreferencesEntry = {
   willingToRemote: true
 }
 
+// Same shape-mapping useProfileEditor does when loading a saved profile into form state
+// (ISO dates -> month inputs, null -> empty string) — a resume import lands in exactly the
+// same editable, unsaved form state, not a direct profile write.
+export function profileEntriesFromParsedResume(parsed: ParsedResumeProfile) {
+  return {
+    headline: parsed.headline ?? '',
+    about: parsed.about ?? '',
+    careerLevel: parsed.careerLevel ?? ('' as const),
+    location: parsed.location ?? '',
+    skills: parsed.skills.map(
+      (skill): ProfileSkillEntry => ({
+        name: skill.name,
+        category: skill.category ?? undefined,
+        level: skill.level ?? undefined,
+        years: skill.years ?? undefined
+      })
+    ),
+    education:
+      parsed.education.length > 0
+        ? parsed.education.map(
+            (entry): EducationEntry => ({
+              school: entry.school,
+              degree: entry.degree ?? '',
+              fieldOfStudy: entry.fieldOfStudy ?? '',
+              startYear: entry.startYear ? String(entry.startYear) : '',
+              endYear: entry.endYear ? String(entry.endYear) : '',
+              description: entry.description ?? ''
+            })
+          )
+        : [EMPTY_EDUCATION],
+    experience: parsed.experience.map(
+      (entry): ExperienceEntry => ({
+        title: entry.title,
+        company: entry.company,
+        location: entry.location ?? '',
+        employmentType: entry.employmentType ?? undefined,
+        description: entry.description ?? '',
+        startDate: monthInputFromIso(entry.startDate),
+        endDate: monthInputFromIso(entry.endDate),
+        current: entry.current
+      })
+    ),
+    certifications: parsed.certifications.map(
+      (entry): CertificationEntry => ({
+        name: entry.name,
+        issuer: entry.issuer,
+        issueDate: monthInputFromIso(entry.issueDate),
+        expirationDate: monthInputFromIso(entry.expirationDate),
+        credentialId: entry.credentialId ?? '',
+        credentialUrl: entry.credentialUrl ?? ''
+      })
+    ),
+    projects: parsed.projects.map(
+      (entry): ProjectEntry => ({
+        name: entry.name,
+        description: entry.description,
+        technologies: entry.technologies,
+        url: entry.url ?? '',
+        startDate: monthInputFromIso(entry.startDate),
+        endDate: monthInputFromIso(entry.endDate)
+      })
+    ),
+    languages: parsed.languages.map(
+      (entry): LanguageEntry => ({
+        language: entry.language,
+        proficiency: entry.proficiency ?? undefined
+      })
+    )
+  }
+}
+
 export function monthInputFromIso(iso: string | null): string {
   return iso ? iso.slice(0, 7) : ''
 }
@@ -128,7 +206,10 @@ export function makeArrayHelpers<T>(setState: Dispatch<SetStateAction<T[]>>, emp
     update: <K extends keyof T>(index: number, field: K, value: T[K]) =>
       setState((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))),
     add: () => setState((prev) => [...prev, empty]),
-    remove: (index: number) => setState((prev) => prev.filter((_, i) => i !== index))
+    remove: (index: number) => setState((prev) => prev.filter((_, i) => i !== index)),
+    // Bulk-replace the whole list in one shot — used by the resume import flow, which has
+    // no per-row context to merge into and should just overwrite with what was extracted.
+    replaceAll: (items: T[]) => setState(items)
   }
 }
 
