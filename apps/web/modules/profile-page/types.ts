@@ -1,15 +1,6 @@
-import type { ApplicationStatus, UserProfile as SharedUserProfile } from '@angkop/shared'
+import type { ApplicationStatus } from '@angkop/shared'
 
-export type MeProfile = Omit<SharedUserProfile, 'id' | 'userId' | 'skillsText'>
-
-export type MeQueryResult = {
-  me: {
-    id: string
-    email: string
-    name: string | null
-    profile: MeProfile | null
-  }
-}
+export type { MeProfile } from '@/hooks/use-profile-editor'
 
 export type SavedJobsStatusQueryResult = {
   savedJobs: { id: number; status: ApplicationStatus }[]
