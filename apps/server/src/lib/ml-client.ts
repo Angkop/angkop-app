@@ -1,8 +1,10 @@
 import type {
   EmbedRequest,
   EmbedResponse,
+  ParsedResumeProfile,
   RecommendRequest,
   RecommendResponse,
+  ResumeParseRequest,
   SkillGapRequest,
   SkillGapResponse
 } from '@angkop/shared'
@@ -17,7 +19,8 @@ async function postJson<TResponse>(path: string, body: unknown): Promise<TRespon
   })
 
   if (!response.ok) {
-    throw new Error(`ML service request to ${path} failed with status ${response.status}`)
+    const detail = await response.text()
+    throw new Error(`ML service request to ${path} failed with status ${response.status}: ${detail}`)
   }
 
   return response.json() as Promise<TResponse>
@@ -33,4 +36,8 @@ export function recommend(request: RecommendRequest): Promise<RecommendResponse>
 
 export function skillGap(request: SkillGapRequest): Promise<SkillGapResponse> {
   return postJson<SkillGapResponse>('/skill-gap', request)
+}
+
+export function parseResume(request: ResumeParseRequest): Promise<ParsedResumeProfile> {
+  return postJson<ParsedResumeProfile>('/resume/parse', request)
 }

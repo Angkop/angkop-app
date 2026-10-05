@@ -9,6 +9,7 @@ import { verifySupabaseToken } from './middleware/authenticate'
 import { eventsRouter } from './routes/events'
 import { matchScoreRouter } from './routes/match-score'
 import { jobsRouter } from './routes/jobs'
+import { resumeRouter } from './routes/resume'
 import { logger } from './lib/logger'
 import { prisma } from './lib/prisma'
 
@@ -26,6 +27,7 @@ async function main() {
   app.use('/api/events', eventsRouter)
   app.use('/api/match-score', matchScoreRouter)
   app.use('/api/jobs', jobsRouter)
+  app.use('/api/resume', resumeRouter)
 
   const apolloServer = new ApolloServer<GraphQLContext>({ typeDefs, resolvers })
   await apolloServer.start()
