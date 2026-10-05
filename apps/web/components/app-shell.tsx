@@ -5,16 +5,11 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
-import { Menu, X } from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
+import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { ProfilePage } from '@/modules/profile-page/profile-page'
 import { NAV_LINKS } from '@/constants/nav'
 import { clearStoredToken, getStoredToken } from '@/lib/auth'
 import { supabaseClient } from '@/lib/supabase-client'
@@ -42,6 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const [isChecking, setIsChecking] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const { data } = useQuery<MeQueryResult>(ME_QUERY, { skip: isChecking })
 
   useEffect(() => {
@@ -69,7 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-background">
-        <div className="mx-auto flex h-14 max-w-4xl items-center gap-2 px-4">
+        <div className="flex h-14 w-full items-center gap-2 px-4 sm:px-6 lg:px-8">
           <Link href="/dashboard" className="flex items-center gap-2">
             <span className="flex size-7 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
               A
@@ -94,30 +90,57 @@ export function AppShell({ children }: { children: ReactNode }) {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex cursor-pointer items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="size-8">
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen(true)}
+              className="flex cursor-pointer flex-col items-center gap-0.5 rounded-md px-2 py-1 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Avatar className="size-7">
+                <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <span className="hidden text-xs leading-none font-normal text-foreground sm:block">Account</span>
+            </button>
+
+            <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+              <SheetContent showCloseButton={false}>
+                <SheetHeader>
+                  <Avatar className="size-9">
                     <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-medium text-foreground">{name ?? email}</p>
-                  <p className="truncate text-xs text-muted-foreground">{email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={handleSignOut}>Sign out</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <div className="min-w-0 flex-1">
+                    <SheetTitle className="truncate">{name ?? email}</SheetTitle>
+                    <p className="truncate text-xs text-muted-foreground">{email}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSignOut}
+                    aria-label="Sign out"
+                    className="gap-1.5"
+                  >
+                    <LogOut className="size-3.5" />
+                    <span className="hidden sm:inline">Sign out</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Close"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="text-muted-foreground"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </SheetHeader>
+                <SheetBody>
+                  <ProfilePage />
+                </SheetBody>
+              </SheetContent>
+            </Sheet>
             <Button
               variant="ghost"
               size="icon"

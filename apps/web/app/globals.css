@@ -80,3 +80,47 @@ body {
     animation: none !important;
   }
 }
+
+/* Sheet (components/ui/sheet.tsx) — slide-over panel open/close + overlay fade. */
+@keyframes angkop-sheet-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes angkop-sheet-slide-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes angkop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes angkop-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .angkop-sheet-overlay,
+  .angkop-sheet-content {
+    animation: none !important;
+  }
+}
