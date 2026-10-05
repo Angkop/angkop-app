@@ -195,9 +195,11 @@ request via a `setContext` auth link. Match score display follows
 
 Pages: `/dashboard` (job matches), `/skill-gaps`, `/applications` (Epic 8 — saved jobs
 with status/tags/interview date, backed by the `savedJobs` query above), `/profile`.
-Profile's onboarding-derived fields (location, education, experience, desired roles,
-resume filename) are still mock data rendered client-side — there's no backend field for
-them yet, unlike `SavedJob`/`SavedCourse` which are real, migrated-pending tables.
+Profile's onboarding-derived fields (location, education, experience, certifications,
+projects, languages, preferences, resume filename) are real, migrated `UserProfile`
+columns/relations (`apps/server/prisma/schema.prisma`), not mock data — same as
+`SavedJob`/`SavedCourse`. The Profile page also supports importing a resume (PDF/DOCX)
+to prefill these fields via Gemini — see `RESUME_EXTRACTOR.md` for that flow.
 
 `public/demo/job-listing.html` is a static fixture bundled into the app specifically so
 the extension has something to scrape that's guaranteed to work, independent of whether
