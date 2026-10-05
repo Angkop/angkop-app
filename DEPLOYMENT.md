@@ -112,6 +112,11 @@ from research but wasn't pursued here).
 - [x] OAuth client for Google sign-in created, redirect URI set to Supabase's callback
 - [x] Supabase → Authentication → Providers → Google enabled with that client's ID/secret
 - [x] Redirect URLs registered (`/onboarding` for both local and the deployed Vercel domain)
+- [ ] **Needs re-registering**: the OAuth redirect target moved from `/onboarding` to
+      `/auth/callback` (which now checks for an existing profile and routes to
+      `/dashboard` or `/onboarding` accordingly, instead of always landing on
+      `/onboarding`) — add `/auth/callback` to Supabase's Redirect URLs allow-list for
+      both local and the deployed Vercel domain
 - [x] Real Google sign-in replacing dev-login — built and working (see git history: "feat:
       replace dev-login with real Google OAuth via Supabase Auth")
 - [x] Found + closed a critical gap along the way: RLS was disabled on all 9 Supabase tables,

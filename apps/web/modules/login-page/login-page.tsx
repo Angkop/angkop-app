@@ -38,7 +38,7 @@ export function LoginPage() {
     setError(null)
     const { error: signInError } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/onboarding` }
+      options: { redirectTo: `${window.location.origin}/auth/callback` }
     })
     // A successful call navigates the whole page away to Google — this only still runs
     // when signInWithOAuth itself failed before that redirect could happen.

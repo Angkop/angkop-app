@@ -25,7 +25,9 @@ pnpm run dev:all  # one command: ML service + web + server (against cloud Postgr
 > removed in favor of real Google OAuth via Supabase Auth. While the Google OAuth consent
 > screen is in "Testing" mode, only accounts added as **Test users** in Google Cloud
 > Console can sign in (see `DEPLOYMENT.md` Phase 7). Local sign-in works the same way as
-> production — `http://localhost:3000/onboarding` is registered as a redirect URL for it.
+> production — `http://localhost:3000/auth/callback` is registered as a redirect URL for it
+> (that route checks whether the signed-in user already has a profile and sends them to
+> `/dashboard` if so, `/onboarding` if not).
 
 ## ML Microservice (`ml/`)
 
