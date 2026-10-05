@@ -11,7 +11,7 @@ NCF_ID_MAPPING_PATH = os.getenv("NCF_ID_MAPPING_PATH", "./weights/id_mappings.js
 # Powers the Application Draft Generator and the Resume Parser (both call Gemini with a
 # document/profile and expect structured output back).
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 # Lets a retrained model ship by uploading to this bucket + restarting the service,
 # instead of committing weights to git or redeploying code — see DEPLOYMENT.md Phase 4.

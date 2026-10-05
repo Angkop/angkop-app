@@ -1,18 +1,17 @@
-import base64
-import binascii
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.config import GEMINI_API_KEY
-from app.services.resume_parser import ParsedResumeProfile, parse_resume
+from app.services.resume_parser import ContactHints, ParsedResumeProfile, parse_resume
 
 router = APIRouter()
 
 
 class ResumeParseRequest(BaseModel):
-    fileBase64: str
-    mimeType: str = "application/pdf"
+    resumeText: str
+    email: str | None = None
+    phone: str | None = None
+    links: list[dict[str, str]] = []
 
 
 @router.post("/resume/parse", response_model=ParsedResumeProfile)
@@ -20,9 +19,8 @@ def parse_resume_endpoint(request: ResumeParseRequest) -> ParsedResumeProfile:
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY is not configured")
 
-    try:
-        file_bytes = base64.b64decode(request.fileBase64, validate=True)
-    except binascii.Error:
-        raise HTTPException(status_code=400, detail="fileBase64 is not valid base64") from None
+    if not request.resumeText.strip():
+        raise HTTPException(status_code=400, detail="resumeText is empty")
 
-    return parse_resume(file_bytes, request.mimeType)
+    hints = ContactHints(email=request.email, phone=request.phone, links=request.links)
+    return parse_resume(request.resumeText, hints)
