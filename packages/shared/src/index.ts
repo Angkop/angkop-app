@@ -248,8 +248,10 @@ export type SkillGapResponse = {
 }
 
 export type ResumeParseRequest = {
-  fileBase64: string
-  mimeType: string
+  resumeText: string
+  email?: string | null
+  phone?: string | null
+  links?: { label: string; url: string }[]
 }
 
 // The subset of UserProfile a resume parse can plausibly populate — no id/userId/
@@ -261,6 +263,12 @@ export type ParsedResumeProfile = {
   about: string | null
   careerLevel: CareerLevel | null
   location: string | null
+  // Regex-extracted locally in Express and merged over whatever Gemini found — not
+  // currently wired into any profile field (UserProfile has no phone/links columns),
+  // returned for display and future use (e.g. the cover-letter generator).
+  email: string | null
+  phone: string | null
+  links: { label: string; url: string }[]
   skills: {
     name: string
     category: string | null
