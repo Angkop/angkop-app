@@ -26,10 +26,10 @@ export function ResumeUploadControl({
     <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-border p-8 text-center hover:border-foreground/30 hover:bg-muted/40">
       <Upload className="size-5 text-muted-foreground" />
       <span className="text-sm font-medium text-foreground">Click to upload, or drag and drop</span>
-      <span className="text-xs text-muted-foreground">PDF, up to 10MB</span>
+      <span className="text-xs text-muted-foreground">PDF or DOCX, up to 10MB</span>
       <input
         type="file"
-        accept=".pdf"
+        accept=".pdf,.docx"
         className="sr-only"
         onChange={(event) => {
           const file = event.target.files?.[0]
