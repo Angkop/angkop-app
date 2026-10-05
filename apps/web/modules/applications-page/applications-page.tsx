@@ -1,80 +1,19 @@
 'use client'
 
-import { gql } from '@apollo/client'
 import { useMutation, useQuery } from '@apollo/client/react'
-import { Calendar, X } from 'lucide-react'
-import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type SavedJob } from '@angkop/shared'
-import { Button } from '@/components/ui/button'
-import { ChipList } from '@/components/chip-list'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { ApplicationStatus, SavedJob } from '@angkop/shared'
 import { PageHeader } from '@/components/page-header'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
-
-const STATUS_ORDER: ApplicationStatus[] = [
-  'PENDING',
-  'APPLIED',
-  'AWAITING_INTERVIEW',
-  'ONGOING_INTERVIEW',
-  'INTERVIEWED',
-  'SUCCESSFUL',
-  'UNSUCCESSFUL'
-]
-
-const SAVED_JOBS_QUERY = gql`
-  query SavedJobs {
-    savedJobs {
-      id
-      status
-      tags
-      interviewDate
-      job {
-        id
-        title
-        company
-      }
-    }
-  }
-`
-
-const UPDATE_STATUS_MUTATION = gql`
-  mutation UpdateSavedJobStatus($jobId: ID!, $status: ApplicationStatus!) {
-    updateSavedJobStatus(jobId: $jobId, status: $status) {
-      id
-    }
-  }
-`
-
-const SET_INTERVIEW_DATE_MUTATION = gql`
-  mutation SetSavedJobInterviewDate($jobId: ID!, $interviewDate: String) {
-    setSavedJobInterviewDate(jobId: $jobId, interviewDate: $interviewDate) {
-      id
-    }
-  }
-`
-
-const ADD_TAG_MUTATION = gql`
-  mutation AddSavedJobTag($jobId: ID!, $tag: String!) {
-    addSavedJobTag(jobId: $jobId, tag: $tag) {
-      id
-    }
-  }
-`
-
-const REMOVE_TAG_MUTATION = gql`
-  mutation RemoveSavedJobTag($jobId: ID!, $tag: String!) {
-    removeSavedJobTag(jobId: $jobId, tag: $tag) {
-      id
-    }
-  }
-`
-
-const UNSAVE_JOB_MUTATION = gql`
-  mutation UnsaveJob($jobId: ID!) {
-    unsaveJob(jobId: $jobId)
-  }
-`
+import { SavedJobCard } from './components/saved-job-card'
+import {
+  ADD_TAG_MUTATION,
+  REMOVE_TAG_MUTATION,
+  SAVED_JOBS_QUERY,
+  SET_INTERVIEW_DATE_MUTATION,
+  UNSAVE_JOB_MUTATION,
+  UPDATE_STATUS_MUTATION
+} from './queries'
 
 type SavedJobsQueryResult = {
   savedJobs: SavedJob[]
@@ -129,59 +68,15 @@ export function ApplicationsPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {savedJobs.map((savedJob) => (
-            <div key={savedJob.id} className="rounded-lg border border-border p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{savedJob.job.title}</p>
-                  <p className="text-xs text-muted-foreground">{savedJob.job.company}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Unsave job"
-                  onClick={() => handleUnsave(savedJob.job.id)}
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Select
-                  value={savedJob.status}
-                  onValueChange={(value) => handleStatusChange(savedJob.job.id, value as ApplicationStatus)}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_ORDER.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {APPLICATION_STATUS_LABELS[status]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <div className="inline-flex items-center gap-1.5">
-                  <Calendar className="size-3.5 text-muted-foreground" />
-                  <Input
-                    type="date"
-                    value={savedJob.interviewDate ? savedJob.interviewDate.slice(0, 10) : ''}
-                    onChange={(event) => handleInterviewDateChange(savedJob.job.id, event.target.value)}
-                    className="h-8 w-36 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-3">
-                <ChipList
-                  items={savedJob.tags}
-                  onAdd={(tag) => handleAddTag(savedJob.job.id, tag)}
-                  onRemove={(tag) => handleRemoveTag(savedJob.job.id, tag)}
-                  placeholder="e.g. Dream job"
-                />
-              </div>
-            </div>
+            <SavedJobCard
+              key={savedJob.id}
+              savedJob={savedJob}
+              onStatusChange={handleStatusChange}
+              onInterviewDateChange={handleInterviewDateChange}
+              onAddTag={handleAddTag}
+              onRemoveTag={handleRemoveTag}
+              onUnsave={handleUnsave}
+            />
           ))}
         </div>
       )}
