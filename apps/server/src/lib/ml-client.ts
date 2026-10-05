@@ -11,6 +11,17 @@ import type {
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL ?? 'http://localhost:8000'
 
+// Carries the HTTP status so callers (like the resume route's retry/circuit-breaker
+// logic) can tell a transient 429/5xx apart from a permanent 400 without re-parsing text.
+export class MlServiceError extends Error {
+  constructor(
+    public readonly status: number,
+    detail: string
+  ) {
+    super(detail)
+  }
+}
+
 async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
   const response = await fetch(`${ML_SERVICE_URL}${path}`, {
     method: 'POST',
@@ -20,7 +31,7 @@ async function postJson<TResponse>(path: string, body: unknown): Promise<TRespon
 
   if (!response.ok) {
     const detail = await response.text()
-    throw new Error(`ML service request to ${path} failed with status ${response.status}: ${detail}`)
+    throw new MlServiceError(response.status, `ML service request to ${path} failed with status ${response.status}: ${detail}`)
   }
 
   return response.json() as Promise<TResponse>
