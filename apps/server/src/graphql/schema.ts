@@ -55,26 +55,120 @@ export const typeDefs = `#graphql
     url: String!
   }
 
+  enum CareerLevel {
+    STUDENT
+    ENTRY_LEVEL
+    JUNIOR
+    MID_LEVEL
+    SENIOR
+    LEAD
+    MANAGER
+  }
+
+  enum WorkSetup {
+    REMOTE
+    HYBRID
+    ONSITE
+  }
+
+  enum EmploymentType {
+    FULL_TIME
+    PART_TIME
+    CONTRACT
+    INTERNSHIP
+    FREELANCE
+  }
+
+  enum SkillLevel {
+    BEGINNER
+    INTERMEDIATE
+    ADVANCED
+  }
+
+  enum LanguageProficiency {
+    BASIC
+    CONVERSATIONAL
+    PROFESSIONAL
+    NATIVE
+  }
+
+  type ProfileSkill {
+    name: String!
+    category: String
+    level: SkillLevel
+    years: Float
+  }
+
   type Education {
     school: String!
-    degree: String!
-    year: Int!
+    degree: String
+    fieldOfStudy: String
+    startYear: Int
+    endYear: Int
+    description: String
   }
 
   type WorkExperience {
     title: String!
     company: String!
-    months: Int!
+    location: String
+    employmentType: EmploymentType
+    description: String
+    startDate: String!
+    endDate: String
+    current: Boolean!
+  }
+
+  type Certification {
+    name: String!
+    issuer: String!
+    issueDate: String
+    expirationDate: String
+    credentialId: String
+    credentialUrl: String
+  }
+
+  type Project {
+    name: String!
+    description: String!
+    technologies: [String!]!
+    url: String
+    startDate: String
+    endDate: String
+  }
+
+  type Language {
+    language: String!
+    proficiency: LanguageProficiency
+  }
+
+  type UserPreference {
+    desiredRoles: [String!]!
+    preferredLocations: [String!]!
+    preferredJobTypes: [EmploymentType!]!
+    preferredIndustries: [String!]!
+    workSetup: WorkSetup
+    minimumSalary: Float
+    maximumSalary: Float
+    willingToRelocate: Boolean!
+    willingToRemote: Boolean!
   }
 
   type UserProfile {
     id: ID!
-    skills: [String!]!
+    headline: String
+    about: String
+    skills: [ProfileSkill!]!
     skillsText: String!
-    desiredRole: String
+    careerLevel: CareerLevel
     location: String
+    resumeFileName: String
     education: [Education!]!
     experience: [WorkExperience!]!
+    certifications: [Certification!]!
+    projects: [Project!]!
+    languages: [Language!]!
+    preferences: UserPreference
   }
 
   type Me {
@@ -92,13 +186,86 @@ export const typeDefs = `#graphql
     savedCourses: [SavedCourse!]!
   }
 
-  input UpdateProfileInput {
-    skills: [String!]!
-    skillsText: String!
+  input ProfileSkillInput {
+    name: String!
+    category: String
+    level: SkillLevel
+    years: Float
+  }
+
+  input EducationInput {
+    school: String!
+    degree: String
+    fieldOfStudy: String
+    startYear: Int
+    endYear: Int
+    description: String
+  }
+
+  input WorkExperienceInput {
+    title: String!
+    company: String!
+    location: String
+    employmentType: EmploymentType
+    description: String
+    startDate: String!
+    endDate: String
+    current: Boolean
+  }
+
+  input CertificationInput {
+    name: String!
+    issuer: String!
+    issueDate: String
+    expirationDate: String
+    credentialId: String
+    credentialUrl: String
+  }
+
+  input ProjectInput {
+    name: String!
+    description: String!
+    technologies: [String!]!
+    url: String
+    startDate: String
+    endDate: String
+  }
+
+  input LanguageInput {
+    language: String!
+    proficiency: LanguageProficiency
+  }
+
+  input UserPreferenceInput {
+    desiredRoles: [String!]!
+    preferredLocations: [String!]!
+    preferredJobTypes: [EmploymentType!]!
+    preferredIndustries: [String!]!
+    workSetup: WorkSetup
+    minimumSalary: Float
+    maximumSalary: Float
+    willingToRelocate: Boolean!
+    willingToRemote: Boolean!
+  }
+
+  input CompleteOnboardingInput {
+    headline: String
+    about: String
+    location: String
+    careerLevel: CareerLevel
+    resumeFileName: String
+    skills: [ProfileSkillInput!]!
+    education: [EducationInput!]!
+    experience: [WorkExperienceInput!]!
+    certifications: [CertificationInput!]!
+    projects: [ProjectInput!]!
+    languages: [LanguageInput!]!
+    preferences: UserPreferenceInput!
   }
 
   type Mutation {
-    updateProfile(input: UpdateProfileInput!): UserProfile!
+    completeOnboarding(input: CompleteOnboardingInput!): UserProfile!
+    updateAbout(about: String!): UserProfile!
     logInteraction(jobId: ID!, eventType: String!): Boolean!
     saveJob(jobId: ID!): SavedJob!
     unsaveJob(jobId: ID!): Boolean!
