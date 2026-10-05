@@ -21,11 +21,11 @@ export function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & { showCloseButton?: boolean }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" />
       <DialogPrimitive.Content
         className={cn(
           'fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
-          'rounded-lg border border-border bg-card p-6 shadow-lg',
+          'rounded-2xl border border-border bg-card p-6 shadow-xl',
           'max-h-[calc(100vh-2rem)] overflow-y-auto',
           className
         )}
@@ -35,7 +35,7 @@ export function DialogContent({
         {showCloseButton ? (
           <DialogPrimitive.Close
             aria-label="Close"
-            className="absolute top-4 right-4 rounded-sm text-muted-foreground hover:text-foreground"
+            className="absolute top-4 right-4 cursor-pointer rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <X className="size-4" />
           </DialogPrimitive.Close>
