@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import embeddings, recommendations, skill_gap
+from app.routers import embeddings, recommendations, resume, skill_gap
 from app.services.embedder import embed_text
 from app.services.weights_fetcher import fetch_ncf_weights
 
@@ -9,6 +9,7 @@ app = FastAPI(title="Angkop ML Microservice", version="0.1.0")
 app.include_router(embeddings.router, tags=["embeddings"])
 app.include_router(recommendations.router, tags=["recommendations"])
 app.include_router(skill_gap.router, tags=["skill-gap"])
+app.include_router(resume.router, tags=["resume"])
 
 
 @app.on_event("startup")

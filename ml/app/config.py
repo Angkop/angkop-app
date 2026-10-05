@@ -8,6 +8,11 @@ MODEL_NAME = os.getenv("MODEL_NAME", "all-MiniLM-L6-v2")
 NCF_WEIGHTS_PATH = os.getenv("NCF_WEIGHTS_PATH", "./weights/ncf.pt")
 NCF_ID_MAPPING_PATH = os.getenv("NCF_ID_MAPPING_PATH", "./weights/id_mappings.json")
 
+# Powers the Application Draft Generator and the Resume Parser (both call Gemini with a
+# document/profile and expect structured output back).
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+
 # Lets a retrained model ship by uploading to this bucket + restarting the service,
 # instead of committing weights to git or redeploying code — see DEPLOYMENT.md Phase 4.
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
