@@ -1,21 +1,6 @@
-import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/page-header'
-import { API_URL } from '@/constants/api'
-
-type ListingSummary = {
-  id: string
-  title: string
-  company: string
-  requiredSkills: string[]
-  sourceName: string
-}
-
-async function getListings(): Promise<ListingSummary[]> {
-  const response = await fetch(`${API_URL}/api/jobs`, { cache: 'no-store' })
-  if (!response.ok) return []
-  return response.json()
-}
+import { ListingRow } from './components/listing-row'
+import { getListings } from './queries'
 
 export async function ListingsPage() {
   const listings = await getListings()
@@ -36,25 +21,7 @@ export async function ListingsPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {listings.map((listing) => (
-            <Link
-              key={listing.id}
-              href={`/listings/${listing.id}`}
-              className="flex flex-col gap-2 rounded-lg border border-border p-4 transition-colors hover:border-foreground/20"
-            >
-              <div>
-                <p className="text-sm font-medium text-foreground">{listing.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {listing.company} · via {listing.sourceName}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {listing.requiredSkills.map((skill) => (
-                  <Badge key={skill} variant="outline">
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-            </Link>
+            <ListingRow key={listing.id} listing={listing} />
           ))}
         </div>
       )}
