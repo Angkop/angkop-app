@@ -406,87 +406,94 @@ export function OnboardingPage() {
     setStep((current) => Math.max(current - 1, 0))
   }
 
-  async function handleFinish() {
-    await completeOnboarding({
-      variables: {
-        input: {
-          headline: headline || null,
-          about: about || null,
-          location: location || null,
-          careerLevel: careerLevel || null,
-          resumeFileName: resumeFileName || null,
-          skills: skills
-            .filter((skill) => skill.name.trim().length > 0)
-            .map((skill) => ({
-              name: skill.name,
-              category: skill.category || null,
-              level: skill.level ?? null,
-              years: skill.years ?? null
-            })),
-          education: education
-            .filter((entry) => entry.school.trim().length > 0)
-            .map((entry) => ({
-              school: entry.school,
-              degree: entry.degree || null,
-              fieldOfStudy: entry.fieldOfStudy || null,
-              startYear: entry.startYear ? Number(entry.startYear) : null,
-              endYear: entry.endYear ? Number(entry.endYear) : null,
-              description: entry.description || null
-            })),
-          experience: experience
-            .filter((entry) => entry.title.trim().length > 0 && entry.company.trim().length > 0 && entry.startDate)
-            .map((entry) => ({
-              title: entry.title,
-              company: entry.company,
-              location: entry.location || null,
-              employmentType: entry.employmentType ?? null,
-              description: entry.description || null,
-              startDate: isoFromMonthInput(entry.startDate)!,
-              endDate: entry.current ? null : isoFromMonthInput(entry.endDate),
-              current: entry.current
-            })),
-          certifications: certifications
-            .filter((entry) => entry.name.trim().length > 0 && entry.issuer.trim().length > 0)
-            .map((entry) => ({
-              name: entry.name,
-              issuer: entry.issuer,
-              issueDate: isoFromMonthInput(entry.issueDate),
-              expirationDate: isoFromMonthInput(entry.expirationDate),
-              credentialId: entry.credentialId || null,
-              credentialUrl: entry.credentialUrl || null
-            })),
-          projects: projects
-            .filter((entry) => entry.name.trim().length > 0 && entry.description.trim().length > 0)
-            .map((entry) => ({
-              name: entry.name,
-              description: entry.description,
-              technologies: entry.technologies,
-              url: entry.url || null,
-              startDate: isoFromMonthInput(entry.startDate),
-              endDate: isoFromMonthInput(entry.endDate)
-            })),
-          languages: languages
-            .filter((entry) => entry.language.trim().length > 0)
-            .map((entry) => ({ language: entry.language, proficiency: entry.proficiency ?? null })),
-          preferences: {
-            desiredRoles: preferences.desiredRoles,
-            preferredLocations: preferences.preferredLocations,
-            preferredJobTypes: preferences.preferredJobTypes,
-            preferredIndustries: preferences.preferredIndustries,
-            workSetup: preferences.workSetup ?? null,
-            minimumSalary: preferences.minimumSalary ? Number(preferences.minimumSalary) : null,
-            maximumSalary: preferences.maximumSalary ? Number(preferences.maximumSalary) : null,
-            willingToRelocate: preferences.willingToRelocate,
-            willingToRemote: preferences.willingToRemote
-          }
-        }
+  function buildCompleteOnboardingInput() {
+    return {
+      headline: headline || null,
+      about: about || null,
+      location: location || null,
+      careerLevel: careerLevel || null,
+      resumeFileName: resumeFileName || null,
+      skills: skills
+        .filter((skill) => skill.name.trim().length > 0)
+        .map((skill) => ({
+          name: skill.name,
+          category: skill.category || null,
+          level: skill.level ?? null,
+          years: skill.years ?? null
+        })),
+      education: education
+        .filter((entry) => entry.school.trim().length > 0)
+        .map((entry) => ({
+          school: entry.school,
+          degree: entry.degree || null,
+          fieldOfStudy: entry.fieldOfStudy || null,
+          startYear: entry.startYear ? Number(entry.startYear) : null,
+          endYear: entry.endYear ? Number(entry.endYear) : null,
+          description: entry.description || null
+        })),
+      experience: experience
+        .filter((entry) => entry.title.trim().length > 0 && entry.company.trim().length > 0 && entry.startDate)
+        .map((entry) => ({
+          title: entry.title,
+          company: entry.company,
+          location: entry.location || null,
+          employmentType: entry.employmentType ?? null,
+          description: entry.description || null,
+          startDate: isoFromMonthInput(entry.startDate)!,
+          endDate: entry.current ? null : isoFromMonthInput(entry.endDate),
+          current: entry.current
+        })),
+      certifications: certifications
+        .filter((entry) => entry.name.trim().length > 0 && entry.issuer.trim().length > 0)
+        .map((entry) => ({
+          name: entry.name,
+          issuer: entry.issuer,
+          issueDate: isoFromMonthInput(entry.issueDate),
+          expirationDate: isoFromMonthInput(entry.expirationDate),
+          credentialId: entry.credentialId || null,
+          credentialUrl: entry.credentialUrl || null
+        })),
+      projects: projects
+        .filter((entry) => entry.name.trim().length > 0 && entry.description.trim().length > 0)
+        .map((entry) => ({
+          name: entry.name,
+          description: entry.description,
+          technologies: entry.technologies,
+          url: entry.url || null,
+          startDate: isoFromMonthInput(entry.startDate),
+          endDate: isoFromMonthInput(entry.endDate)
+        })),
+      languages: languages
+        .filter((entry) => entry.language.trim().length > 0)
+        .map((entry) => ({ language: entry.language, proficiency: entry.proficiency ?? null })),
+      preferences: {
+        desiredRoles: preferences.desiredRoles,
+        preferredLocations: preferences.preferredLocations,
+        preferredJobTypes: preferences.preferredJobTypes,
+        preferredIndustries: preferences.preferredIndustries,
+        workSetup: preferences.workSetup ?? null,
+        minimumSalary: preferences.minimumSalary ? Number(preferences.minimumSalary) : null,
+        maximumSalary: preferences.maximumSalary ? Number(preferences.maximumSalary) : null,
+        willingToRelocate: preferences.willingToRelocate,
+        willingToRemote: preferences.willingToRemote
       }
-    })
+    }
+  }
+
+  // Finishing and skipping both save whatever's been filled in so far and land on the
+  // dashboard — "skip" just means "stop here," not "discard this." Either one is enough
+  // for /auth/callback to treat this user as already onboarded next time they sign in.
+  async function saveAndGoToDashboard() {
+    await completeOnboarding({ variables: { input: buildCompleteOnboardingInput() } })
     router.push('/dashboard')
   }
 
-  function handleSkip() {
-    router.push('/dashboard')
+  async function handleFinish() {
+    await saveAndGoToDashboard()
+  }
+
+  async function handleSkip() {
+    await saveAndGoToDashboard()
   }
 
   return (
@@ -575,9 +582,10 @@ export function OnboardingPage() {
           <button
             type="button"
             onClick={handleSkip}
-            className="cursor-pointer text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground"
+            disabled={isSaving}
+            className="cursor-pointer text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Skip onboarding
+            {isSaving ? 'Saving…' : 'Skip onboarding'}
           </button>
         </div>
 
