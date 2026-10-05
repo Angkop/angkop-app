@@ -9,7 +9,7 @@ import type {
   PreferencesEntry,
   ProfileSkillEntry,
   ProjectEntry
-} from '@/lib/onboarding-profile'
+} from '@/lib/profile-form'
 import { StepSection } from './step-section'
 
 export function ReviewStep({

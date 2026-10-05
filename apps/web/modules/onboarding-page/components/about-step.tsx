@@ -1,8 +1,6 @@
-import { CAREER_LEVEL_LABELS, type CareerLevel } from '@angkop/shared'
+import type { CareerLevel } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Input, Textarea } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { AboutFields } from '@/components/profile-fields/about-fields'
 import { getInitials } from '@/lib/utils'
 import { StepSection } from './step-section'
 
@@ -16,7 +14,9 @@ export function AboutStep({
   location,
   onLocationChange,
   about,
-  onAboutChange
+  onAboutChange,
+  resumeFileName,
+  onResumeFileNameChange
 }: {
   email: string
   name: string | null
@@ -28,6 +28,8 @@ export function AboutStep({
   onLocationChange: (value: string) => void
   about: string
   onAboutChange: (value: string) => void
+  resumeFileName: string
+  onResumeFileNameChange: (value: string) => void
 }) {
   return (
     <StepSection title="About you" description="A little context so we can start narrowing down what fits.">
@@ -43,52 +45,18 @@ export function AboutStep({
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="headline">Headline</Label>
-        <Input
-          id="headline"
-          value={headline}
-          onChange={(event) => onHeadlineChange(event.target.value)}
-          placeholder="e.g. Front-End Developer"
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="career-level">Where are you in your career?</Label>
-        <Select value={careerLevel} onValueChange={(value) => onCareerLevelChange(value as CareerLevel)}>
-          <SelectTrigger id="career-level" className="w-full">
-            <SelectValue placeholder="Select one" />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.entries(CAREER_LEVEL_LABELS) as [CareerLevel, string][]).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="location">Where are you based?</Label>
-        <Input
-          id="location"
-          value={location}
-          onChange={(event) => onLocationChange(event.target.value)}
-          placeholder="e.g. Muntinlupa City, Metro Manila"
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="about">About</Label>
-        <Textarea
-          id="about"
-          value={about}
-          onChange={(event) => onAboutChange(event.target.value)}
-          rows={4}
-          placeholder="A short introduction — what you do and what you're looking for."
-        />
-      </div>
+      <AboutFields
+        headline={headline}
+        onHeadlineChange={onHeadlineChange}
+        careerLevel={careerLevel}
+        onCareerLevelChange={onCareerLevelChange}
+        location={location}
+        onLocationChange={onLocationChange}
+        about={about}
+        onAboutChange={onAboutChange}
+        resumeFileName={resumeFileName}
+        onResumeFileNameChange={onResumeFileNameChange}
+      />
     </StepSection>
   )
 }

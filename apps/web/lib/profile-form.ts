@@ -1,14 +1,119 @@
 import type { Dispatch, SetStateAction } from 'react'
-import type { CareerLevel } from '@angkop/shared'
-import type {
-  CertificationEntry,
-  EducationEntry,
-  ExperienceEntry,
-  LanguageEntry,
-  PreferencesEntry,
-  ProfileSkillEntry,
-  ProjectEntry
-} from '@/lib/onboarding-profile'
+import type { CareerLevel, EmploymentType, LanguageProficiency, SkillLevel, WorkSetup } from '@angkop/shared'
+
+export type ProfileSkillEntry = {
+  name: string
+  category?: string
+  level?: SkillLevel
+  years?: number
+}
+
+export type EducationEntry = {
+  school: string
+  degree: string
+  fieldOfStudy: string
+  startYear: string
+  endYear: string
+  description: string
+}
+
+export type ExperienceEntry = {
+  title: string
+  company: string
+  location: string
+  employmentType?: EmploymentType
+  description: string
+  startDate: string
+  endDate: string
+  current: boolean
+}
+
+export type CertificationEntry = {
+  name: string
+  issuer: string
+  issueDate: string
+  expirationDate: string
+  credentialId: string
+  credentialUrl: string
+}
+
+export type ProjectEntry = {
+  name: string
+  description: string
+  technologies: string[]
+  url: string
+  startDate: string
+  endDate: string
+}
+
+export type LanguageEntry = {
+  language: string
+  proficiency?: LanguageProficiency
+}
+
+export type PreferencesEntry = {
+  desiredRoles: string[]
+  preferredLocations: string[]
+  preferredJobTypes: EmploymentType[]
+  preferredIndustries: string[]
+  workSetup?: WorkSetup
+  minimumSalary: string
+  maximumSalary: string
+  willingToRelocate: boolean
+  willingToRemote: boolean
+}
+
+export const EMPTY_EDUCATION: EducationEntry = {
+  school: '',
+  degree: '',
+  fieldOfStudy: '',
+  startYear: '',
+  endYear: '',
+  description: ''
+}
+
+export const EMPTY_EXPERIENCE: ExperienceEntry = {
+  title: '',
+  company: '',
+  location: '',
+  employmentType: undefined,
+  description: '',
+  startDate: '',
+  endDate: '',
+  current: false
+}
+
+export const EMPTY_CERTIFICATION: CertificationEntry = {
+  name: '',
+  issuer: '',
+  issueDate: '',
+  expirationDate: '',
+  credentialId: '',
+  credentialUrl: ''
+}
+
+export const EMPTY_PROJECT: ProjectEntry = {
+  name: '',
+  description: '',
+  technologies: [],
+  url: '',
+  startDate: '',
+  endDate: ''
+}
+
+export const EMPTY_LANGUAGE: LanguageEntry = { language: '', proficiency: undefined }
+
+export const EMPTY_PREFERENCES: PreferencesEntry = {
+  desiredRoles: [],
+  preferredLocations: [],
+  preferredJobTypes: [],
+  preferredIndustries: [],
+  workSetup: undefined,
+  minimumSalary: '',
+  maximumSalary: '',
+  willingToRelocate: false,
+  willingToRemote: true
+}
 
 export function monthInputFromIso(iso: string | null): string {
   return iso ? iso.slice(0, 7) : ''
@@ -29,7 +134,7 @@ export function makeArrayHelpers<T>(setState: Dispatch<SetStateAction<T[]>>, emp
 
 export type ArrayHelpers<T> = ReturnType<typeof makeArrayHelpers<T>>
 
-export type OnboardingWizardState = {
+export type ProfileFormState = {
   headline: string
   about: string
   location: string
@@ -44,7 +149,7 @@ export type OnboardingWizardState = {
   preferences: PreferencesEntry
 }
 
-export function buildCompleteOnboardingInput(state: OnboardingWizardState) {
+export function buildCompleteOnboardingInput(state: ProfileFormState) {
   const { headline, about, location, careerLevel, resumeFileName, skills, education, experience, certifications, projects, languages, preferences } =
     state
 

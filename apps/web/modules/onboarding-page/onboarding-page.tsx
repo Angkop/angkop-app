@@ -13,7 +13,6 @@ import { CertificationsStep } from './components/certifications-step'
 import { ProjectsStep } from './components/projects-step'
 import { LanguagesStep } from './components/languages-step'
 import { PreferencesStep } from './components/preferences-step'
-import { ResumeStep } from './components/resume-step'
 import { ReviewStep } from './components/review-step'
 import { STEPS } from './constants'
 
@@ -60,6 +59,8 @@ export function OnboardingPage() {
               onLocationChange={wizard.setLocation}
               about={wizard.about}
               onAboutChange={wizard.setAbout}
+              resumeFileName={wizard.resumeFileName}
+              onResumeFileNameChange={wizard.setResumeFileName}
             />
           ) : null}
 
@@ -90,10 +91,6 @@ export function OnboardingPage() {
 
           {wizard.activeStep.id === 'preferences' ? (
             <PreferencesStep preferences={wizard.preferences} setPreferences={wizard.setPreferences} />
-          ) : null}
-
-          {wizard.activeStep.id === 'resume' ? (
-            <ResumeStep resumeFileName={wizard.resumeFileName} onResumeFileNameChange={wizard.setResumeFileName} />
           ) : null}
 
           {wizard.activeStep.id === 'review' ? (
