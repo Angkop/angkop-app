@@ -63,3 +63,20 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Angkop's loading mark: a candidate (center) with job matches orbiting at
+   different radii/speeds until one locks in — see components/brand-loader.tsx. */
+@keyframes angkop-orbit {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .angkop-loader * {
+    animation: none !important;
+  }
+}

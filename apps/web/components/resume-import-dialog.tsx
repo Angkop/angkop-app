@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { FileText, Loader2, Upload } from 'lucide-react'
+import { FileText, Upload } from 'lucide-react'
 import { CAREER_LEVEL_LABELS, type ParsedResumeProfile } from '@angkop/shared'
 import { API_URL } from '@/constants/api'
 import { getStoredToken } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ErrorMessage } from '@/components/error-message'
+import { BrandLoader } from '@/components/brand-loader'
 
 const PARSING_STEPS = ['Reading file…', 'Extracting skills…', 'Matching experience…', 'Finalizing…']
 
@@ -136,7 +137,7 @@ export function ResumeImportDialog({
 
         {stage === 'parsing' ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-border p-8 text-center">
-            <Loader2 className="size-6 animate-spin text-primary" />
+            <BrandLoader size="md" />
             <div>
               <p className="text-sm font-medium text-foreground">{PARSING_STEPS[stepIndex]}</p>
               <p className="mt-1 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
