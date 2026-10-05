@@ -7,6 +7,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CareerLevel {
+  STUDENT
+  ENTRY_LEVEL
+  JUNIOR
+  MID_LEVEL
+  SENIOR
+  LEAD
+  MANAGER
+}
+
+enum WorkSetup {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LanguageProficiency {
+  BASIC
+  CONVERSATIONAL
+  PROFESSIONAL
+  NATIVE
+}
+
 model User {
   id           String           @id
   email        String           @unique
@@ -15,26 +52,58 @@ model User {
   updatedAt    DateTime         @updatedAt
   deleted      Boolean          @default(false)
   profile      UserProfile?
+  userSkills   UserSkill[]
   interactions Interaction[]
   skillGaps    SkillGapRecord[]
   savedJobs    SavedJob[]
   savedCourses SavedCourse[]
 }
 
+model Skill {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  category   String?
+  deleted    Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  userSkills UserSkill[]
+}
+
+model UserSkill {
+  id        Int         @id @default(autoincrement())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  skillId   Int
+  skill     Skill       @relation(fields: [skillId], references: [id])
+  level     SkillLevel?
+  years     Float?
+  deleted   Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, skillId])
+}
+
 model UserProfile {
-  id          Int              @id @default(autoincrement())
-  userId      String           @unique
-  user        User             @relation(fields: [userId], references: [id])
-  skills      String[]
-  skillsText  String
-  embedding   Float[]
-  desiredRole String?
-  location    String?
-  education   Education[]
-  experience  WorkExperience[]
-  deleted     Boolean          @default(false)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  id             Int              @id @default(autoincrement())
+  userId         String           @unique
+  user           User             @relation(fields: [userId], references: [id])
+  headline       String?
+  about          String?
+  skillsText     String
+  embedding      Float[]
+  careerLevel    CareerLevel?
+  location       String?
+  resumeFileName String?
+  education      Education[]
+  experience     WorkExperience[]
+  certifications Certification[]
+  projects       Project[]
+  languages      Language[]
+  preferences    UserPreference?
+  deleted        Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model Education {
@@ -42,23 +111,90 @@ model Education {
   userProfileId Int
   userProfile   UserProfile @relation(fields: [userProfileId], references: [id])
   school        String
-  degree        String
-  year          Int
+  degree        String?
+  fieldOfStudy  String?
+  startYear     Int?
+  endYear       Int?
+  description   String?
   deleted       Boolean     @default(false)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
 
 model WorkExperience {
+  id             Int             @id @default(autoincrement())
+  userProfileId  Int
+  userProfile    UserProfile     @relation(fields: [userProfileId], references: [id])
+  title          String
+  company        String
+  location       String?
+  employmentType EmploymentType?
+  description    String?
+  startDate      DateTime
+  endDate        DateTime?
+  current        Boolean         @default(false)
+  deleted        Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Certification {
+  id             Int         @id @default(autoincrement())
+  userProfileId  Int
+  userProfile    UserProfile @relation(fields: [userProfileId], references: [id])
+  name           String
+  issuer         String
+  issueDate      DateTime?
+  expirationDate DateTime?
+  credentialId   String?
+  credentialUrl  String?
+  deleted        Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Project {
   id            Int         @id @default(autoincrement())
   userProfileId Int
   userProfile   UserProfile @relation(fields: [userProfileId], references: [id])
-  title         String
-  company       String
-  months        Int
+  name          String
+  description   String
+  technologies  String[]
+  url           String?
+  startDate     DateTime?
+  endDate       DateTime?
   deleted       Boolean     @default(false)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model Language {
+  id            Int                  @id @default(autoincrement())
+  userProfileId Int
+  userProfile   UserProfile          @relation(fields: [userProfileId], references: [id])
+  language      String
+  proficiency   LanguageProficiency?
+  deleted       Boolean              @default(false)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+}
+
+model UserPreference {
+  id                  Int              @id @default(autoincrement())
+  userProfileId       Int              @unique
+  userProfile         UserProfile      @relation(fields: [userProfileId], references: [id])
+  desiredRoles        String[]
+  preferredLocations  String[]
+  preferredJobTypes   EmploymentType[]
+  preferredIndustries String[]
+  workSetup           WorkSetup?
+  minimumSalary       Float?
+  maximumSalary       Float?
+  willingToRelocate   Boolean          @default(false)
+  willingToRemote     Boolean          @default(true)
+  deleted             Boolean          @default(false)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 }
 
 model Job {

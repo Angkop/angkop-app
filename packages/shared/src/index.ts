@@ -22,27 +22,131 @@ export function getMatchLabel(score: number): MatchLabel {
   return 'Weak Match'
 }
 
+export type CareerLevel = 'STUDENT' | 'ENTRY_LEVEL' | 'JUNIOR' | 'MID_LEVEL' | 'SENIOR' | 'LEAD' | 'MANAGER'
+
+export const CAREER_LEVEL_LABELS: Record<CareerLevel, string> = {
+  STUDENT: 'Student',
+  ENTRY_LEVEL: 'Entry level',
+  JUNIOR: 'Junior',
+  MID_LEVEL: 'Mid level',
+  SENIOR: 'Senior',
+  LEAD: 'Lead',
+  MANAGER: 'Manager'
+}
+
+export type WorkSetup = 'REMOTE' | 'HYBRID' | 'ONSITE'
+
+export const WORK_SETUP_LABELS: Record<WorkSetup, string> = {
+  REMOTE: 'Remote',
+  HYBRID: 'Hybrid',
+  ONSITE: 'Onsite'
+}
+
+export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERNSHIP' | 'FREELANCE'
+
+export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
+  FULL_TIME: 'Full-time',
+  PART_TIME: 'Part-time',
+  CONTRACT: 'Contract',
+  INTERNSHIP: 'Internship',
+  FREELANCE: 'Freelance'
+}
+
+export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
+
+export const SKILL_LEVEL_LABELS: Record<SkillLevel, string> = {
+  BEGINNER: 'Beginner',
+  INTERMEDIATE: 'Intermediate',
+  ADVANCED: 'Advanced'
+}
+
+export type LanguageProficiency = 'BASIC' | 'CONVERSATIONAL' | 'PROFESSIONAL' | 'NATIVE'
+
+export const LANGUAGE_PROFICIENCY_LABELS: Record<LanguageProficiency, string> = {
+  BASIC: 'Basic',
+  CONVERSATIONAL: 'Conversational',
+  PROFESSIONAL: 'Professional',
+  NATIVE: 'Native'
+}
+
+export type ProfileSkill = {
+  name: string
+  category: string | null
+  level: SkillLevel | null
+  years: number | null
+}
+
 export type Education = {
   school: string
-  degree: string
-  year: number
+  degree: string | null
+  fieldOfStudy: string | null
+  startYear: number | null
+  endYear: number | null
+  description: string | null
 }
 
 export type WorkExperience = {
   title: string
   company: string
-  months: number
+  location: string | null
+  employmentType: EmploymentType | null
+  description: string | null
+  startDate: string
+  endDate: string | null
+  current: boolean
+}
+
+export type Certification = {
+  name: string
+  issuer: string
+  issueDate: string | null
+  expirationDate: string | null
+  credentialId: string | null
+  credentialUrl: string | null
+}
+
+export type Project = {
+  name: string
+  description: string
+  technologies: string[]
+  url: string | null
+  startDate: string | null
+  endDate: string | null
+}
+
+export type Language = {
+  language: string
+  proficiency: LanguageProficiency | null
+}
+
+export type UserPreference = {
+  desiredRoles: string[]
+  preferredLocations: string[]
+  preferredJobTypes: EmploymentType[]
+  preferredIndustries: string[]
+  workSetup: WorkSetup | null
+  minimumSalary: number | null
+  maximumSalary: number | null
+  willingToRelocate: boolean
+  willingToRemote: boolean
 }
 
 export type UserProfile = {
   id: string
   userId: string
-  skills: string[]
+  headline: string | null
+  about: string | null
+  skills: ProfileSkill[]
   skillsText: string
-  desiredRole: string | null
+  careerLevel: CareerLevel | null
   location: string | null
+  resumeFileName: string | null
   education: Education[]
   experience: WorkExperience[]
+  certifications: Certification[]
+  projects: Project[]
+  languages: Language[]
+  preferences: UserPreference | null
 }
 
 export type Job = {
