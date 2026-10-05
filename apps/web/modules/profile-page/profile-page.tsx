@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/stat-card'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
+import { ResumeImportDialog } from '@/components/resume-import-dialog'
 import { useProfileEditor } from '@/hooks/use-profile-editor'
 import { ProfileHeader } from './components/profile-header'
 import { ExperienceSection } from './components/experience-section'
@@ -33,6 +34,7 @@ export function ProfilePage() {
   const { data: savedJobsData } = useQuery<SavedJobsStatusQueryResult>(SAVED_JOBS_STATUS_QUERY)
   const [isEditing, setIsEditing] = useState(false)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
+  const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false)
 
   if (editor.loading) return <LoadingSkeleton heightClassName="h-48" />
   if (editor.error) return <ErrorMessage>Could not load profile: {editor.error.message}</ErrorMessage>
@@ -61,6 +63,16 @@ export function ProfilePage() {
         careerLevel={profile?.careerLevel}
         location={profile?.location}
         onEditClick={() => setIsEditing(true)}
+        onImportResumeClick={() => setIsResumeDialogOpen(true)}
+      />
+
+      <ResumeImportDialog
+        open={isResumeDialogOpen}
+        onOpenChange={setIsResumeDialogOpen}
+        onImport={(parsed) => {
+          editor.importParsedResume(parsed)
+          setIsEditing(true)
+        }}
       />
 
       <div className="mt-4 grid grid-cols-3 gap-3">

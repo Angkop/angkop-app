@@ -246,3 +246,63 @@ export type SkillGapRequest = {
 export type SkillGapResponse = {
   missingSkills: SkillGap[]
 }
+
+export type ResumeParseRequest = {
+  fileBase64: string
+  mimeType: string
+}
+
+// The subset of UserProfile a resume parse can plausibly populate — no id/userId/
+// skillsText/resumeFileName/preferences. The ML service clamps every enum-shaped field
+// to these exact unions server-side before a value ever reaches here (see
+// ml/app/services/resume_parser.py), so the web client can treat them as trusted.
+export type ParsedResumeProfile = {
+  headline: string | null
+  about: string | null
+  careerLevel: CareerLevel | null
+  location: string | null
+  skills: {
+    name: string
+    category: string | null
+    level: SkillLevel | null
+    years: number | null
+  }[]
+  education: {
+    school: string
+    degree: string | null
+    fieldOfStudy: string | null
+    startYear: number | null
+    endYear: number | null
+    description: string | null
+  }[]
+  experience: {
+    title: string
+    company: string
+    location: string | null
+    employmentType: EmploymentType | null
+    description: string | null
+    startDate: string | null
+    endDate: string | null
+    current: boolean
+  }[]
+  certifications: {
+    name: string
+    issuer: string
+    issueDate: string | null
+    expirationDate: string | null
+    credentialId: string | null
+    credentialUrl: string | null
+  }[]
+  projects: {
+    name: string
+    description: string
+    technologies: string[]
+    url: string | null
+    startDate: string | null
+    endDate: string | null
+  }[]
+  languages: {
+    language: string
+    proficiency: LanguageProficiency | null
+  }[]
+}

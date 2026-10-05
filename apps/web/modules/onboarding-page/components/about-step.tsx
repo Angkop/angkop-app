@@ -1,6 +1,10 @@
-import type { CareerLevel } from '@angkop/shared'
+import { useState } from 'react'
+import { Upload } from 'lucide-react'
+import type { CareerLevel, ParsedResumeProfile } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import { AboutFields } from '@/components/profile-fields/about-fields'
+import { ResumeImportDialog } from '@/components/resume-import-dialog'
 import { getInitials } from '@/lib/utils'
 import { StepSection } from './step-section'
 
@@ -16,7 +20,8 @@ export function AboutStep({
   about,
   onAboutChange,
   resumeFileName,
-  onResumeFileNameChange
+  onResumeFileNameChange,
+  onImportParsedResume
 }: {
   email: string
   name: string | null
@@ -30,7 +35,10 @@ export function AboutStep({
   onAboutChange: (value: string) => void
   resumeFileName: string
   onResumeFileNameChange: (value: string) => void
+  onImportParsedResume: (parsed: ParsedResumeProfile) => void
 }) {
+  const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false)
+
   return (
     <StepSection title="About you" description="A little context so we can start narrowing down what fits.">
       <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
@@ -44,6 +52,22 @@ export function AboutStep({
           <p className="truncate text-xs text-muted-foreground">{email}</p>
         </div>
       </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => setIsResumeDialogOpen(true)}
+        className="w-full gap-1.5 sm:w-auto"
+      >
+        <Upload className="size-3.5" />
+        Import from resume
+      </Button>
+
+      <ResumeImportDialog
+        open={isResumeDialogOpen}
+        onOpenChange={setIsResumeDialogOpen}
+        onImport={onImportParsedResume}
+      />
 
       <AboutFields
         headline={headline}
