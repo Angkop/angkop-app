@@ -45,18 +45,19 @@ enum LanguageProficiency {
 }
 
 model User {
-  id           String           @id
-  email        String           @unique
-  name         String?
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  deleted      Boolean          @default(false)
-  profile      UserProfile?
-  userSkills   UserSkill[]
-  interactions Interaction[]
-  skillGaps    SkillGapRecord[]
-  savedJobs    SavedJob[]
-  savedCourses SavedCourse[]
+  id            String           @id
+  email         String           @unique
+  name          String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  deleted       Boolean          @default(false)
+  profile       UserProfile?
+  userSkills    UserSkill[]
+  interactions  Interaction[]
+  skillGaps     SkillGapRecord[]
+  savedJobs     SavedJob[]
+  savedCourses  SavedCourse[]
+  matchInsights MatchInsight[]
 }
 
 model Skill {
@@ -219,6 +220,7 @@ model Job {
   interactions   Interaction[]
   skillGaps      SkillGapRecord[]
   savedBy        SavedJob[]
+  matchInsights  MatchInsight[]
   deleted        Boolean          @default(false)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -267,6 +269,38 @@ model SkillGapRecord {
   courses    Json
   deleted    Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+// "Why this is a match" dialog content — the algorithm's score breakdown plus Gemini's
+// natural-language explanation, generated once per (userId, jobId) and reused on every
+// later dialog open instead of re-paying for a Gemini call each time. Soft-deleted (not
+// recomputed in place) whenever the user's skillsText changes, since the explanation and
+// matchingSkills/missingSkills are grounded in that snapshot.
+model MatchInsight {
+  id                 Int      @id @default(autoincrement())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id])
+  jobId              String
+  job                Job      @relation(fields: [jobId], references: [id])
+  semanticScore      Float
+  collaborativeScore Float
+  hybridScore        Float
+  // The concrete numbers behind each score, shown alongside the plain-language reasons.
+  requiredSkillsCount Int
+  interactionCount    Int
+  collaborativeWeight Float
+  // Plain-language, job-specific justifications for the two scores above — what a job
+  // seeker actually wants ("you already know React"), not the algorithm's own vocabulary.
+  skillsReason       String
+  activityReason     String
+  matchingSkills     String[]
+  missingSkills      String[]
+  explanation        String
+  deleted            Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([userId, jobId])
 }
 
 enum ApplicationStatus {
