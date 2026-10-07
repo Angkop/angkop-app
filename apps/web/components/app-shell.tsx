@@ -32,25 +32,42 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  requireAuth = true,
+  mainClassName
+}: {
+  children: ReactNode
+  // /listings renders through AppShell too (for the navbar) but must stay reachable
+  // without a session — the browser extension scrapes it, and it's meant to be a
+  // public-facing page (see ARCHITECTURE.md). Pass false there to skip the redirect.
+  requireAuth?: boolean
+  mainClassName?: string
+}) {
   const router = useRouter()
   const pathname = usePathname()
   const [isChecking, setIsChecking] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
-  const { data } = useQuery<MeQueryResult>(ME_QUERY, { skip: isChecking })
+  // Starts false to match the server-rendered pass (localStorage doesn't exist there) —
+  // only ever updated from the effect below, never read during render, so the client's
+  // first render still matches the server's and React doesn't flag a hydration mismatch.
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { data } = useQuery<MeQueryResult>(ME_QUERY, { skip: isChecking || !isAuthenticated })
 
   useEffect(() => {
-    if (!getStoredToken()) {
+    const authed = Boolean(getStoredToken())
+    setIsAuthenticated(authed)
+    if (requireAuth && !authed) {
       router.replace('/')
       return
     }
-    // Client-only auth gate reading localStorage (a browser API, not derivable from
-    // props/state) — there's no non-effect way to know this on first client render.
     setIsChecking(false)
-  }, [router])
+  }, [router, requireAuth])
 
-  if (isChecking) return null
+  // Only protected pages (requireAuth) blank out while we check — /listings (requireAuth
+  // false) renders immediately so the extension's scraper never waits on client JS.
+  if (requireAuth && isChecking) return null
 
   const email = data?.me.email ?? ''
   const name = data?.me.name ?? null
@@ -91,18 +108,24 @@ export function AppShell({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsProfileOpen(true)}
-              className="flex cursor-pointer flex-col items-center gap-0.5 rounded-md px-2 py-1 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Avatar className="size-7">
-                <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden text-xs leading-none font-normal text-foreground sm:block">Account</span>
-            </button>
+            {isAuthenticated ? (
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(true)}
+                className="flex cursor-pointer flex-col items-center gap-0.5 rounded-md px-2 py-1 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Avatar className="size-7">
+                  <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden text-xs leading-none font-normal text-foreground sm:block">Account</span>
+              </button>
+            ) : (
+              <Link href="/" className="text-sm font-medium text-primary hover:underline">
+                Sign in
+              </Link>
+            )}
 
             <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
               <SheetContent showCloseButton={false}>
@@ -176,7 +199,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         ) : null}
       </header>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">{children}</main>
+      <main className={cn('mx-auto w-full flex-1 px-4 py-10', mainClassName ?? 'max-w-2xl')}>{children}</main>
     </div>
   )
 }
