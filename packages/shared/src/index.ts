@@ -314,3 +314,12 @@ export type ParsedResumeProfile = {
     proficiency: LanguageProficiency | null
   }[]
 }
+
+// A job description's prose, split at its own headings (real <h2>-style tags, or a
+// paragraph that's entirely one bolded phrase — both patterns appear across RemoteOK and
+// Arbeitnow). heading is null for the lead-in text before any heading is found — rendered
+// as plain paragraphs, not collapsed, since it's the overview a reader should see first.
+export type DescriptionSection = {
+  heading: string | null
+  items: string[]
+}

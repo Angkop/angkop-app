@@ -207,11 +207,15 @@ model Job {
   requiredSkills String[]
   url            String
   embedding      Float[]
-  // Attribution for jobs ingested from a real public job API (RemoteOK, Arbeitnow) and
-  // re-served on our own /listings pages — null for hand-written seed/demo jobs. Most
-  // free job-board APIs require linking back to the original posting; this is that link.
   sourceName     String?
   sourceUrl      String?
+  location       String?
+  salaryMin      Float?
+  salaryMax      Float?
+  workSetup      WorkSetup?
+  employmentType EmploymentType?
+  detectedLanguage    String?
+  descriptionSections JobDescriptionSection[]
   interactions   Interaction[]
   skillGaps      SkillGapRecord[]
   savedBy        SavedJob[]
@@ -220,6 +224,23 @@ model Job {
   updatedAt      DateTime         @updatedAt
 
   @@unique([platform, platformJobId])
+}
+
+model JobDescriptionSection {
+  id        Int      @id @default(autoincrement())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id])
+  // Position within the listing — doubles as the natural key ingestion upserts against
+  // (see ingest-jobs.ts), so re-running ingestion updates existing sections in place
+  // instead of duplicating them. null heading = the lead-in text before any heading.
+  order     Int
+  heading   String?
+  items     String[]
+  deleted   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobId, order])
 }
 
 model Interaction {
