@@ -11,8 +11,15 @@ export function ListingCard({ listing }: { listing: ListingDetail }) {
       data-angkop-platform="demo"
       data-angkop-platform-job-id={listing.platformJobId}
     >
-      <h1 className="job-title text-2xl font-semibold">{listing.title}</h1>
-      <p className="job-company mt-1 text-sm text-muted-foreground">{listing.company}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="job-title text-2xl font-semibold">{listing.title}</h1>
+          <p className="job-company mt-1 text-sm text-muted-foreground">{listing.company}</p>
+        </div>
+        <Badge variant="outline" className="shrink-0">
+          {listing.sourceName}
+        </Badge>
+      </div>
       <p className="job-description mt-4 text-sm leading-relaxed text-foreground">{listing.description}</p>
       <div className="mt-4 flex flex-wrap gap-1.5">
         {listing.requiredSkills.map((skill) => (
