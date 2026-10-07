@@ -1,12 +1,22 @@
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
-import { ListingRow } from './components/listing-row'
+import { ListingsBrowser } from './components/listings-browser'
 import { getListings } from './queries'
 
 export async function ListingsPage() {
   const listings = await getListings()
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12">
+    <div className="mx-auto max-w-5xl px-6 py-12">
+      <Link
+        href="/dashboard"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3.5" />
+        Back to Dashboard
+      </Link>
+
       <PageHeader
         title="Angkop Listings"
         description="Real postings pulled from public job APIs, re-served here for the browser extension to read."
@@ -19,11 +29,7 @@ export async function ListingsPage() {
           some in.
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {listings.map((listing) => (
-            <ListingRow key={listing.id} listing={listing} />
-          ))}
-        </div>
+        <ListingsBrowser listings={listings} />
       )}
     </div>
   )
