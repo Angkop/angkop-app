@@ -4,13 +4,15 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { PageHeader } from '@/components/page-header'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
-import { TOP_MATCHES_COUNT } from '@/constants/dashboard'
-import { MatchStatsRow } from './components/match-stats-row'
-import { TopMatchesList } from './components/top-matches-list'
-import { JOB_MATCHES_QUERY, LOG_INTERACTION_MUTATION, SAVE_JOB_MUTATION } from './queries'
-import type { JobMatchesQueryResult } from './types'
+import {
+  JOB_MATCHES_QUERY,
+  LOG_INTERACTION_MUTATION,
+  SAVE_JOB_MUTATION
+} from '@/modules/dashboard-page/queries'
+import type { JobMatchesQueryResult } from '@/modules/dashboard-page/types'
+import { MatchesBrowser } from './components/matches-browser'
 
-export function DashboardPage() {
+export function AllMatchesPage() {
   const { data, loading, error, refetch } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY)
   const [logInteraction] = useMutation(LOG_INTERACTION_MUTATION)
   const [saveJob] = useMutation(SAVE_JOB_MUTATION)
@@ -26,7 +28,7 @@ export function DashboardPage() {
   }
 
   if (loading) {
-    return <LoadingSkeleton rows={3} heightClassName="h-16" />
+    return <LoadingSkeleton rows={6} heightClassName="h-16" />
   }
 
   if (error) {
@@ -34,18 +36,11 @@ export function DashboardPage() {
   }
 
   const matches = data?.jobMatches ?? []
-  const topMatches = matches.slice(0, TOP_MATCHES_COUNT)
 
   return (
     <div>
-      <PageHeader title="Your matches" description="Jobs ranked by how well they fit your profile." />
-      <MatchStatsRow matches={matches} />
-      <TopMatchesList
-        matches={topMatches}
-        totalCount={matches.length}
-        onSave={handleSave}
-        onDismiss={handleDismiss}
-      />
+      <PageHeader title="All Matches" description="Every ingested job ranked by fit with your profile." />
+      <MatchesBrowser matches={matches} onSave={handleSave} onDismiss={handleDismiss} />
     </div>
   )
 }
