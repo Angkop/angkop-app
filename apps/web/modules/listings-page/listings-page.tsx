@@ -1,35 +1,40 @@
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { PageHeader } from '@/components/page-header'
 import { ListingsBrowser } from './components/listings-browser'
-import { getListings } from './queries'
+import { getListings, getListingSkills, getListingSources } from './queries'
 
-export async function ListingsPage() {
-  const listings = await getListings()
+const PAGE_SIZE = 12
+
+export async function ListingsPage({
+  searchParams
+}: {
+  searchParams: { page?: string; q?: string; source?: string; skill?: string }
+}) {
+  const page = Number(searchParams.page) || 1
+  const q = searchParams.q?.trim() || undefined
+  const source = searchParams.source?.trim() || undefined
+  const skill = searchParams.skill?.trim() || undefined
+
+  const [initialPage, sources, skills] = await Promise.all([
+    getListings({ page, pageSize: PAGE_SIZE, q, source, skill }),
+    getListingSources(),
+    getListingSkills()
+  ])
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
-      <Link
-        href="/dashboard"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" />
-        Back to Dashboard
-      </Link>
-
+    <div>
       <PageHeader
         title="Angkop Listings"
         description="Real postings pulled from public job APIs, re-served here for the browser extension to read."
       />
 
-      {listings.length === 0 ? (
+      {initialPage.total === 0 && !q && !source && !skill ? (
         <p className="text-sm text-muted-foreground">
           No real listings ingested yet. Run{' '}
           <code className="rounded bg-muted px-1 py-0.5">pnpm --filter @angkop/server run ingest:jobs</code> to pull
           some in.
         </p>
       ) : (
-        <ListingsBrowser listings={listings} />
+        <ListingsBrowser initialPage={initialPage} sources={sources} skills={skills} pageSize={PAGE_SIZE} />
       )}
     </div>
   )

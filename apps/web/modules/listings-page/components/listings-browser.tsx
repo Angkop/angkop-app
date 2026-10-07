@@ -1,52 +1,96 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Search } from 'lucide-react'
+import { LoadingSkeleton } from '@/components/loading-skeleton'
+import { PaginationControls } from '@/components/pagination-controls'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import type { ListingSummary } from '../types'
+import { withSearchParams } from '@/lib/utils'
+import { getListings } from '../queries'
+import type { ListingsPageResponse } from '../types'
 import { ListingRow } from './listing-row'
 
-const PAGE_SIZE = 12
 const ALL_SOURCES = 'all'
+const ALL_SKILLS = 'all'
 
-export function ListingsBrowser({ listings }: { listings: ListingSummary[] }) {
-  const [query, setQuery] = useState('')
-  const [source, setSource] = useState(ALL_SOURCES)
-  const [page, setPage] = useState(1)
+export function ListingsBrowser({
+  initialPage,
+  sources,
+  skills,
+  pageSize
+}: {
+  initialPage: ListingsPageResponse
+  sources: string[]
+  skills: string[]
+  pageSize: number
+}) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
-  const sources = useMemo(
-    () => Array.from(new Set(listings.map((listing) => listing.sourceName))).sort(),
-    [listings]
-  )
+  const page = Number(searchParams.get('page')) || 1
+  const appliedQuery = searchParams.get('q') ?? ''
+  const appliedSource = searchParams.get('source') ?? ALL_SOURCES
+  const appliedSkill = searchParams.get('skill') ?? ALL_SKILLS
 
-  const filtered = useMemo(() => {
-    const normalized = query.trim().toLowerCase()
-    return listings.filter((listing) => {
-      if (source !== ALL_SOURCES && listing.sourceName !== source) return false
-      if (!normalized) return true
-      return (
-        listing.title.toLowerCase().includes(normalized) ||
-        listing.company.toLowerCase().includes(normalized) ||
-        listing.requiredSkills.some((skill) => skill.toLowerCase().includes(normalized))
-      )
+  // Staged filter values — only take effect once "Apply Filters" is clicked, not as
+  // each control changes, so the result list doesn't shift under you mid-selection.
+  const [draftQuery, setDraftQuery] = useState(appliedQuery)
+  const [draftSource, setDraftSource] = useState(appliedSource)
+  const [draftSkill, setDraftSkill] = useState(appliedSkill)
+
+  const [data, setData] = useState(initialPage)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const hasPendingChanges =
+    draftQuery !== appliedQuery || draftSource !== appliedSource || draftSkill !== appliedSkill
+
+  // Keep drafts in sync with the URL when it changes from outside this form — back/forward
+  // navigation, or a shared link that already has filters on it.
+  useEffect(() => {
+    setDraftQuery(appliedQuery)
+    setDraftSource(appliedSource)
+    setDraftSkill(appliedSkill)
+  }, [appliedQuery, appliedSource, appliedSkill])
+
+  function updateParams(patch: Record<string, string | number | undefined>) {
+    const next = withSearchParams(searchParams, patch)
+    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false })
+  }
+
+  function applyFilters() {
+    updateParams({
+      q: draftQuery || undefined,
+      source: draftSource === ALL_SOURCES ? undefined : draftSource,
+      skill: draftSkill === ALL_SKILLS ? undefined : draftSkill,
+      page: undefined
     })
-  }, [listings, query, source])
-
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const currentPage = Math.min(page, pageCount)
-  const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
-
-  function updateQuery(value: string) {
-    setQuery(value)
-    setPage(1)
   }
 
-  function updateSource(value: string) {
-    setSource(value)
-    setPage(1)
-  }
+  // Refetch whenever the URL's *applied* filters/page actually change.
+  useEffect(() => {
+    let cancelled = false
+    setIsLoading(true)
+    getListings({
+      page,
+      pageSize,
+      q: appliedQuery || undefined,
+      source: appliedSource === ALL_SOURCES ? undefined : appliedSource,
+      skill: appliedSkill === ALL_SKILLS ? undefined : appliedSkill
+    }).then((result) => {
+      if (cancelled) return
+      setData(result)
+      setIsLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [page, pageSize, appliedQuery, appliedSource, appliedSkill])
+
+  const pageCount = Math.max(1, Math.ceil(data.total / pageSize))
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,13 +99,16 @@ export function ListingsBrowser({ listings }: { listings: ListingSummary[] }) {
           <div className="relative w-full sm:w-64">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              value={query}
-              onChange={(event) => updateQuery(event.target.value)}
-              placeholder="Search by title, company, or skill"
+              value={draftQuery}
+              onChange={(event) => setDraftQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') applyFilters()
+              }}
+              placeholder="Search by title or company"
               className="pl-8"
             />
           </div>
-          <Select value={source} onValueChange={updateSource}>
+          <Select value={draftSource} onValueChange={setDraftSource}>
             <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Source" />
             </SelectTrigger>
@@ -74,49 +121,43 @@ export function ListingsBrowser({ listings }: { listings: ListingSummary[] }) {
               ))}
             </SelectContent>
           </Select>
+          <Select value={draftSkill} onValueChange={setDraftSkill}>
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Skill" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_SKILLS}>All skills</SelectItem>
+              {skills.map((skillName) => (
+                <SelectItem key={skillName} value={skillName}>
+                  {skillName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={applyFilters} disabled={!hasPendingChanges}>
+            Apply Filters
+          </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          {filtered.length} of {listings.length} job{listings.length === 1 ? '' : 's'}
+          {data.total} job{data.total === 1 ? '' : 's'}
         </p>
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <LoadingSkeleton rows={4} heightClassName="h-20" />
+      ) : data.items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No jobs match these filters — try a different search or source.
+          No jobs match these filters — try a different search, source, or skill.
         </p>
       ) : (
-        <>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {paged.map((listing) => (
-              <ListingRow key={listing.id} listing={listing} />
-            ))}
-          </div>
-
-          {pageCount > 1 ? (
-            <div className="flex items-center justify-center gap-3 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-              >
-                Previous
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Page {currentPage} of {pageCount}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === pageCount}
-                onClick={() => setPage((prev) => Math.min(pageCount, prev + 1))}
-              >
-                Next
-              </Button>
-            </div>
-          ) : null}
-        </>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {data.items.map((listing) => (
+            <ListingRow key={listing.id} listing={listing} />
+          ))}
+        </div>
       )}
+
+      <PaginationControls page={page} pageCount={pageCount} onChange={(next) => updateParams({ page: next === 1 ? undefined : next })} />
     </div>
   )
 }

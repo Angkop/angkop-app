@@ -5,3 +5,10 @@ export type ListingSummary = {
   requiredSkills: string[]
   sourceName: string
 }
+
+export type ListingsPageResponse = {
+  items: ListingSummary[]
+  total: number
+  page: number
+  pageSize: number
+}
