@@ -40,6 +40,20 @@ export const typeDefs = `#graphql
     courses: [Course!]!
   }
 
+  type MatchInsight {
+    semanticScore: Float!
+    collaborativeScore: Float!
+    hybridScore: Float!
+    requiredSkillsCount: Int!
+    interactionCount: Int!
+    collaborativeWeight: Float!
+    skillsReason: String!
+    activityReason: String!
+    matchingSkills: [String!]!
+    missingSkills: [String!]!
+    explanation: String!
+  }
+
   enum ApplicationStatus {
     PENDING
     APPLIED
@@ -192,6 +206,7 @@ export const typeDefs = `#graphql
   type Query {
     me: Me!
     jobMatches(page: Int, pageSize: Int, search: String, skill: String): JobMatchPage!
+    jobMatchInsight(jobId: ID!): MatchInsight!
     skillGaps: [SkillGap!]!
     savedJobs: [SavedJob!]!
     savedCourses: [SavedCourse!]!
