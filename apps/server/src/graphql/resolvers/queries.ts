@@ -1,9 +1,17 @@
+import { MATCH_SCORE_THRESHOLDS } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { skillGap as skillGapRequest } from '../../lib/ml-client'
 import { logger } from '../../lib/logger'
-import { TOP_JOBS_FOR_SKILL_GAP } from './constants'
+import { DEFAULT_JOB_MATCHES_PAGE_SIZE, MAX_JOB_MATCHES_PAGE_SIZE, TOP_JOBS_FOR_SKILL_GAP } from './constants'
 import { computeJobMatches, loadProfileForMe, serializeSavedJob } from './helpers'
 import type { GraphQLContext } from './types'
+
+type JobMatchesArgs = {
+  page?: number | null
+  pageSize?: number | null
+  search?: string | null
+  skill?: string | null
+}
 
 export const queryResolvers = {
   me: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
@@ -16,7 +24,32 @@ export const queryResolvers = {
     }
   },
 
-  jobMatches: (_parent: unknown, _args: unknown, context: GraphQLContext) => computeJobMatches(context.userId),
+  jobMatches: async (_parent: unknown, args: JobMatchesArgs, context: GraphQLContext) => {
+    const allMatches = await computeJobMatches(context.userId)
+    const strongMatchCount = allMatches.filter((match) => match.hybridScore >= MATCH_SCORE_THRESHOLDS.STRONG).length
+
+    const search = args.search?.trim().toLowerCase()
+    const skill = args.skill?.trim()
+    const filtered = allMatches
+      .filter((match) =>
+        search
+          ? match.job.title.toLowerCase().includes(search) ||
+            match.job.company.toLowerCase().includes(search) ||
+            match.job.requiredSkills.some((jobSkill) => jobSkill.toLowerCase().includes(search))
+          : true
+      )
+      .filter((match) => (skill ? match.job.requiredSkills.includes(skill) : true))
+
+    const page = Math.max(1, args.page ?? 1)
+    const pageSize = Math.min(Math.max(1, args.pageSize ?? DEFAULT_JOB_MATCHES_PAGE_SIZE), MAX_JOB_MATCHES_PAGE_SIZE)
+    const start = (page - 1) * pageSize
+
+    return {
+      items: filtered.slice(start, start + pageSize),
+      total: filtered.length,
+      strongMatchCount
+    }
+  },
 
   skillGaps: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
     const [matches, userSkills] = await Promise.all([

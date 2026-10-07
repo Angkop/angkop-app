@@ -137,7 +137,8 @@ export async function computeJobMatches(userId: string): Promise<JobMatch[]> {
         company: job.company,
         description: job.description,
         requiredSkills: job.requiredSkills,
-        url: job.url
+        url: job.url,
+        sourceName: job.sourceName
       },
       semanticScore: scores.semanticScore,
       collaborativeScore: scores.collaborativeScore,

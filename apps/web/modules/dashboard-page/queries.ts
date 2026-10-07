@@ -1,20 +1,25 @@
 import { gql } from '@apollo/client'
 
 export const JOB_MATCHES_QUERY = gql`
-  query JobMatches {
-    jobMatches {
-      hybridScore
-      semanticScore
-      collaborativeScore
-      job {
-        id
-        title
-        company
-        description
-        platform
-        requiredSkills
-        url
+  query JobMatches($page: Int, $pageSize: Int, $search: String) {
+    jobMatches(page: $page, pageSize: $pageSize, search: $search) {
+      items {
+        hybridScore
+        semanticScore
+        collaborativeScore
+        job {
+          id
+          title
+          company
+          description
+          platform
+          requiredSkills
+          url
+          sourceName
+        }
       }
+      total
+      strongMatchCount
     }
   }
 `

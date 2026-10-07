@@ -1,19 +1,9 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import type { JobMatch } from '@angkop/shared'
-import { JobRow } from '@/components/job-row'
+import { TopMatchCard } from './top-match-card'
 
-export function TopMatchesList({
-  matches,
-  totalCount,
-  onSave,
-  onDismiss
-}: {
-  matches: JobMatch[]
-  totalCount: number
-  onSave: (jobId: string) => void
-  onDismiss: (jobId: string) => void
-}) {
+export function TopMatchesList({ matches, totalCount }: { matches: JobMatch[]; totalCount: number }) {
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-center justify-between">
@@ -30,12 +20,14 @@ export function TopMatchesList({
       </div>
       {matches.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No job matches yet. Run the seed script to load sample postings, then refresh.
+          No job matches yet. Run{' '}
+          <code className="rounded bg-muted px-1 py-0.5">pnpm --filter @angkop/server run ingest:jobs</code> to pull
+          in real listings, then refresh.
         </p>
       ) : (
         <div className="flex flex-col gap-2">
-          {matches.map((match) => (
-            <JobRow key={match.job.id} job={match.job} score={match.hybridScore} onSave={onSave} onDismiss={onDismiss} />
+          {matches.map((match, index) => (
+            <TopMatchCard key={match.job.id} match={match} rank={index + 1} />
           ))}
         </div>
       )}

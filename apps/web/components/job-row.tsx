@@ -21,9 +21,11 @@ export function JobRow({ job, score, onSave, onDismiss }: JobRowProps) {
           <p className="truncate text-sm font-medium text-foreground">{job.title}</p>
           <p className="truncate text-xs text-muted-foreground">{job.company}</p>
         </div>
-        <Badge variant="outline" className="hidden shrink-0 sm:inline-flex">
-          {job.platform}
-        </Badge>
+        {job.sourceName ? (
+          <Badge variant="outline" className="hidden shrink-0 sm:inline-flex">
+            {job.sourceName}
+          </Badge>
+        ) : null}
       </Link>
 
       {onSave || onDismiss ? (

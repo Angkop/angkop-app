@@ -8,6 +8,7 @@ export const typeDefs = `#graphql
     description: String!
     requiredSkills: [String!]!
     url: String!
+    sourceName: String
   }
 
   type JobMatch {
@@ -15,6 +16,16 @@ export const typeDefs = `#graphql
     semanticScore: Float!
     collaborativeScore: Float!
     hybridScore: Float!
+  }
+
+  type JobMatchPage {
+    items: [JobMatch!]!
+    # Count after search is applied — drives the pagination controls for whatever subset
+    # is currently being viewed.
+    total: Int!
+    # Always computed over every match regardless of search/paging, so dashboard stats
+    # don't change just because the client asked for a smaller page or a filtered search.
+    strongMatchCount: Int!
   }
 
   type Course {
@@ -180,7 +191,7 @@ export const typeDefs = `#graphql
 
   type Query {
     me: Me!
-    jobMatches: [JobMatch!]!
+    jobMatches(page: Int, pageSize: Int, search: String, skill: String): JobMatchPage!
     skillGaps: [SkillGap!]!
     savedJobs: [SavedJob!]!
     savedCourses: [SavedCourse!]!
