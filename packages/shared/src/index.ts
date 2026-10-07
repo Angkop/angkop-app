@@ -236,6 +236,7 @@ export type RecommendResponse = {
   semanticScore: number
   collaborativeScore: number
   hybridScore: number
+  collaborativeWeight: number
 }
 
 export type SkillGapRequest = {
@@ -245,6 +246,40 @@ export type SkillGapRequest = {
 
 export type SkillGapResponse = {
   missingSkills: SkillGap[]
+}
+
+export type MatchInsightRequest = {
+  jobTitle: string
+  jobCompany: string
+  jobDescription: string
+  jobRequiredSkills: string[]
+  userSkillsText: string
+  semanticScore: number
+  collaborativeScore: number
+  hybridScore: number
+}
+
+export type MatchInsightResponse = {
+  explanation: string
+  // Plain-language, job-specific justifications for semanticScore/collaborativeScore —
+  // written for a job seeker, not in the algorithm's own vocabulary.
+  skillsReason: string
+  activityReason: string
+  matchingSkills: string[]
+  missingSkills: string[]
+}
+
+// Served to the web client — the algorithm's score breakdown plus the Gemini-generated
+// explanation, combined into one shape so the "why this match" dialog renders both from a
+// single query. requiredSkillsCount/interactionCount/collaborativeWeight are the concrete
+// numbers behind each percentage, shown alongside the plain-language reasons.
+export type MatchInsight = MatchInsightResponse & {
+  semanticScore: number
+  collaborativeScore: number
+  hybridScore: number
+  requiredSkillsCount: number
+  interactionCount: number
+  collaborativeWeight: number
 }
 
 export type ResumeParseRequest = {
