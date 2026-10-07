@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import embeddings, recommendations, resume, skill_gap
+from app.routers import embeddings, insight, recommendations, resume, skill_gap
 from app.services.embedder import embed_text
 from app.services.weights_fetcher import fetch_ncf_weights
 
@@ -10,6 +10,7 @@ app.include_router(embeddings.router, tags=["embeddings"])
 app.include_router(recommendations.router, tags=["recommendations"])
 app.include_router(skill_gap.router, tags=["skill-gap"])
 app.include_router(resume.router, tags=["resume"])
+app.include_router(insight.router, tags=["insight"])
 
 
 @app.on_event("startup")
