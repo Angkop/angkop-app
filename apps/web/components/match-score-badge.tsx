@@ -1,7 +1,7 @@
 import { getMatchLabel } from '@angkop/shared'
 import { Badge } from '@/components/ui/badge'
 
-function variantForScore(score: number): 'strong' | 'partial' | 'weak' {
+export function variantForScore(score: number): 'strong' | 'partial' | 'weak' {
   const label = getMatchLabel(score)
   if (label === 'Strong Match') return 'strong'
   if (label === 'Partial Match') return 'partial'
