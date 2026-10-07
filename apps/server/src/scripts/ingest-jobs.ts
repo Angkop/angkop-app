@@ -5,7 +5,7 @@ import { logger } from '../lib/logger'
 const prisma = new PrismaClient()
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL ?? 'http://localhost:8000'
 const WEB_URL = process.env.WEB_URL ?? 'http://localhost:3000'
-const JOBS_PER_SOURCE = 5
+const JOBS_PER_SOURCE = 50
 
 // Real public job-board APIs, no key required. We ingest into our own DB and re-serve the
 // listings on apps/web's /listings pages (platform: 'demo') for the extension to scrape —

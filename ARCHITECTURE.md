@@ -239,8 +239,8 @@ two is just "link back to the original posting," satisfied via the `sourceUrl` s
 each listing page.
 
 - `apps/server/src/scripts/ingest-jobs.ts` (`pnpm --filter @angkop/server run ingest:jobs`)
-  — pulls up to 5 listings each from RemoteOK (`remoteok.com/api`, no auth) and Arbeitnow
-  (`arbeitnow.com/api/job-board-api`, no auth), strips HTML from descriptions, computes a
+  — pulls up to 50 listings each (~100 total) from RemoteOK (`remoteok.com/api`, no auth) and
+  Arbeitnow (`arbeitnow.com/api/job-board-api`, no auth), strips HTML from descriptions, computes a
   real embedding per listing via the ML service, and upserts them as `Job` rows with
   `platform: 'demo'` (this is still the "we control this page" tier — CLAUDE.md's 6
   supported platforms are unchanged) plus `sourceName`/`sourceUrl` for attribution. Safe to
