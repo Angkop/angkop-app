@@ -24,6 +24,10 @@ class RecommendResponse(BaseModel):
     semanticScore: float
     collaborativeScore: float
     hybridScore: float
+    # How much weight the collaborative score actually carries in the hybrid blend for
+    # this user — exposed so the client can show it as a concrete number (e.g. in the
+    # match insight dialog) rather than just the opaque hybrid result.
+    collaborativeWeight: float
 
 
 def _collaborative_weight(interaction_count: int) -> float:
@@ -48,4 +52,5 @@ def recommend(request: RecommendRequest) -> RecommendResponse:
         semanticScore=semantic_score,
         collaborativeScore=collaborative_score,
         hybridScore=hybrid_score,
+        collaborativeWeight=collaborative_weight,
     )

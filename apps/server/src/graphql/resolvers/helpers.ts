@@ -1,8 +1,9 @@
-import type { JobMatch } from '@angkop/shared'
+import type { JobMatch, MatchInsight, MatchInsightRequest, MatchInsightResponse } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { getOrSetMatchScore } from '../../lib/redis'
-import { recommend } from '../../lib/ml-client'
+import { MlServiceError, matchInsight as requestMatchInsight, recommend } from '../../lib/ml-client'
 import { mapWithConcurrency } from '../../lib/concurrency'
+import { logger } from '../../lib/logger'
 import { ML_REQUEST_CONCURRENCY } from './constants'
 import type { ProjectInput, SavedJobWithJob, WorkExperienceInput } from './types'
 
@@ -147,4 +148,101 @@ export async function computeJobMatches(userId: string): Promise<JobMatch[]> {
   })
 
   return matches.sort((a, b) => b.hybridScore - a.hybridScore)
+}
+
+const MAX_INSIGHT_RETRIES = 2
+
+// Gemini-backed, so transient 429/5xx responses are worth a couple of retries rather than
+// failing the dialog outright — same retry/backoff shape as the resume parser's.
+async function requestMatchInsightWithRetry(request: MatchInsightRequest): Promise<MatchInsightResponse> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= MAX_INSIGHT_RETRIES; attempt++) {
+    try {
+      return await requestMatchInsight(request)
+    } catch (error) {
+      lastError = error
+      const retryable = error instanceof MlServiceError && (error.status === 429 || error.status >= 500)
+      if (!retryable || attempt === MAX_INSIGHT_RETRIES) break
+      const backoffMs = 500 * 2 ** attempt + Math.random() * 250
+      await new Promise((resolve) => setTimeout(resolve, backoffMs))
+    }
+  }
+  throw lastError
+}
+
+// Generated once per (userId, jobId) and persisted — later dialog opens for the same job
+// reuse the stored row instead of paying for another Gemini call. Invalidated (soft-
+// deleted) by completeOnboarding whenever skillsText changes, since the explanation and
+// matching/missing skills are grounded in that snapshot.
+export async function getJobMatchInsight(userId: string, jobId: string): Promise<MatchInsight> {
+  const job = await prisma.job.findFirstOrThrow({ where: { id: jobId, deleted: false } })
+
+  const existing = await prisma.matchInsight.findUnique({
+    where: { userId_jobId: { userId, jobId: job.id } }
+  })
+  if (existing && !existing.deleted) {
+    return {
+      semanticScore: existing.semanticScore,
+      collaborativeScore: existing.collaborativeScore,
+      hybridScore: existing.hybridScore,
+      requiredSkillsCount: existing.requiredSkillsCount,
+      interactionCount: existing.interactionCount,
+      collaborativeWeight: existing.collaborativeWeight,
+      skillsReason: existing.skillsReason,
+      activityReason: existing.activityReason,
+      matchingSkills: existing.matchingSkills,
+      missingSkills: existing.missingSkills,
+      explanation: existing.explanation
+    }
+  }
+
+  const [profile, interactionCount] = await Promise.all([
+    prisma.userProfile.findUnique({ where: { userId } }),
+    prisma.interaction.count({ where: { userId, deleted: false } })
+  ])
+
+  const scores = await getOrSetMatchScore(userId, job.id, () =>
+    recommend({
+      userId,
+      jobId: job.id,
+      userSkillsText: profile?.skillsText ?? '',
+      jobText: `${job.title}. ${job.description}`,
+      userInteractionCount: interactionCount
+    })
+  )
+
+  const insight = await requestMatchInsightWithRetry({
+    jobTitle: job.title,
+    jobCompany: job.company,
+    jobDescription: job.description,
+    jobRequiredSkills: job.requiredSkills,
+    userSkillsText: profile?.skillsText ?? '',
+    semanticScore: scores.semanticScore,
+    collaborativeScore: scores.collaborativeScore,
+    hybridScore: scores.hybridScore
+  })
+
+  const result: MatchInsight = {
+    semanticScore: scores.semanticScore,
+    collaborativeScore: scores.collaborativeScore,
+    hybridScore: scores.hybridScore,
+    requiredSkillsCount: job.requiredSkills.length,
+    interactionCount,
+    collaborativeWeight: scores.collaborativeWeight,
+    skillsReason: insight.skillsReason,
+    activityReason: insight.activityReason,
+    matchingSkills: insight.matchingSkills,
+    missingSkills: insight.missingSkills,
+    explanation: insight.explanation
+  }
+
+  await prisma.matchInsight
+    .upsert({
+      where: { userId_jobId: { userId, jobId: job.id } },
+      update: { ...result, deleted: false },
+      create: { userId, jobId: job.id, ...result }
+    })
+    .catch((error) => logger.warn({ error }, 'Failed to persist match insight'))
+
+  return result
 }

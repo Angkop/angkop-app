@@ -204,6 +204,14 @@ export const mutationResolvers = {
     // before this edit are now wrong for every job, not just one.
     await invalidateMatchScoresForUser(context.userId)
 
+    // The persisted "why this match" explanation and its matching/missing skill lists are
+    // grounded in the old skillsText snapshot — soft-delete so the next dialog open
+    // regenerates against the new one instead of serving a stale explanation forever.
+    await prisma.matchInsight.updateMany({
+      where: { userId: context.userId, deleted: false },
+      data: { deleted: true }
+    })
+
     return (await loadProfileForMe(context.userId))!
   },
 

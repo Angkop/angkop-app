@@ -1,6 +1,8 @@
 import type {
   EmbedRequest,
   EmbedResponse,
+  MatchInsightRequest,
+  MatchInsightResponse,
   ParsedResumeProfile,
   RecommendRequest,
   RecommendResponse,
@@ -51,4 +53,8 @@ export function skillGap(request: SkillGapRequest): Promise<SkillGapResponse> {
 
 export function parseResume(request: ResumeParseRequest): Promise<ParsedResumeProfile> {
   return postJson<ParsedResumeProfile>('/resume/parse', request)
+}
+
+export function matchInsight(request: MatchInsightRequest): Promise<MatchInsightResponse> {
+  return postJson<MatchInsightResponse>('/insight/explain', request)
 }
