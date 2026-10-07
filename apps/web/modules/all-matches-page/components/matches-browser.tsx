@@ -8,8 +8,7 @@ import { PaginationControls } from '@/components/pagination-controls'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-
-const ALL_SKILLS = 'all'
+import { ALL_FILTER_VALUE } from '@/constants/filters'
 
 export function MatchesBrowser({
   items,
@@ -67,7 +66,7 @@ export function MatchesBrowser({
               <SelectValue placeholder="Skill" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_SKILLS}>All skills</SelectItem>
+              <SelectItem value={ALL_FILTER_VALUE}>All skills</SelectItem>
               {skills.map((skillName) => (
                 <SelectItem key={skillName} value={skillName}>
                   {skillName}
@@ -88,7 +87,7 @@ export function MatchesBrowser({
         <LoadingSkeleton rows={4} heightClassName="h-16" />
       ) : items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          {query || skill !== ALL_SKILLS ? (
+          {query || skill !== ALL_FILTER_VALUE ? (
             'No matches found for these filters — try a different search or skill.'
           ) : (
             <>

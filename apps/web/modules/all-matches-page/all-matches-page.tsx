@@ -1,68 +1,31 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMutation, useQuery } from '@apollo/client/react'
 import { PageHeader } from '@/components/page-header'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
-import { withSearchParams } from '@/lib/utils'
-import {
-  JOB_MATCHES_QUERY,
-  LOG_INTERACTION_MUTATION,
-  SAVE_JOB_MUTATION
-} from '@/modules/dashboard-page/queries'
-import type { JobMatchesQueryResult } from '@/modules/dashboard-page/types'
-import { getListingSkills } from '@/modules/listings-page/queries'
+import { ALL_FILTER_VALUE } from '@/constants/filters'
 import { MatchesBrowser } from './components/matches-browser'
-
-const PAGE_SIZE = 15
-const ALL_SKILLS = 'all'
+import { PAGE_SIZE } from './constants'
+import { useMatchFilters } from './hooks/use-match-filters'
+import { JOB_MATCHES_QUERY, LOG_INTERACTION_MUTATION, SAVE_JOB_MUTATION, getListingSkills } from './queries'
+import type { JobMatchesQueryResult } from './types'
 
 export function AllMatchesPage() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
-  const page = Number(searchParams.get('page')) || 1
-  const appliedQuery = searchParams.get('q') ?? ''
-  const appliedSkill = searchParams.get('skill') ?? ALL_SKILLS
-
-  // Staged filter values — only take effect once "Apply Filters" is clicked.
-  const [draftQuery, setDraftQuery] = useState(appliedQuery)
-  const [draftSkill, setDraftSkill] = useState(appliedSkill)
+  const filters = useMatchFilters()
   const [skills, setSkills] = useState<string[]>([])
-
-  const hasPendingChanges = draftQuery !== appliedQuery || draftSkill !== appliedSkill
-
-  useEffect(() => {
-    setDraftQuery(appliedQuery)
-    setDraftSkill(appliedSkill)
-  }, [appliedQuery, appliedSkill])
 
   useEffect(() => {
     getListingSkills().then(setSkills)
   }, [])
 
-  function updateParams(patch: Record<string, string | number | undefined>) {
-    const next = withSearchParams(searchParams, patch)
-    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false })
-  }
-
-  function applyFilters() {
-    updateParams({
-      q: draftQuery || undefined,
-      skill: draftSkill === ALL_SKILLS ? undefined : draftSkill,
-      page: undefined
-    })
-  }
-
   const { data, loading, error, refetch } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
     variables: {
-      page,
+      page: filters.page,
       pageSize: PAGE_SIZE,
-      search: appliedQuery || undefined,
-      skill: appliedSkill === ALL_SKILLS ? undefined : appliedSkill
+      search: filters.appliedQuery || undefined,
+      skill: filters.appliedSkill === ALL_FILTER_VALUE ? undefined : filters.appliedSkill
     },
     notifyOnNetworkStatusChange: true
   })
@@ -92,17 +55,17 @@ export function AllMatchesPage() {
         <MatchesBrowser
           items={data?.jobMatches.items ?? []}
           total={data?.jobMatches.total ?? 0}
-          page={page}
+          page={filters.page}
           pageSize={PAGE_SIZE}
-          query={draftQuery}
-          skill={draftSkill}
+          query={filters.draftQuery}
+          skill={filters.draftSkill}
           skills={skills}
-          hasPendingChanges={hasPendingChanges}
+          hasPendingChanges={filters.hasPendingChanges}
           isLoading={loading}
-          onQueryChange={setDraftQuery}
-          onSkillChange={setDraftSkill}
-          onApply={applyFilters}
-          onPageChange={(next) => updateParams({ page: next === 1 ? undefined : next })}
+          onQueryChange={filters.setDraftQuery}
+          onSkillChange={filters.setDraftSkill}
+          onApply={filters.applyFilters}
+          onPageChange={filters.goToPage}
           onSave={handleSave}
           onDismiss={handleDismiss}
         />
