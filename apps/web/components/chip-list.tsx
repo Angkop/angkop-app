@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Check, Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 export function ChipList({
@@ -26,6 +27,11 @@ export function ChipList({
     setAdding(false)
   }
 
+  function cancel() {
+    setDraft('')
+    setAdding(false)
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {items.map((item) => (
@@ -42,21 +48,39 @@ export function ChipList({
         </Badge>
       ))}
       {adding ? (
-        <Input
-          autoFocus
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') commit()
-            if (event.key === 'Escape') {
-              setDraft('')
-              setAdding(false)
-            }
-          }}
-          onBlur={commit}
-          placeholder={placeholder}
-          className="h-7 w-32 text-xs"
-        />
+        <div className="inline-flex items-center gap-1">
+          <Input
+            autoFocus
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') commit()
+              if (event.key === 'Escape') cancel()
+            }}
+            placeholder={placeholder}
+            className="h-7 w-32 text-xs"
+          />
+          <Button
+            type="button"
+            variant="default"
+            size="icon-sm"
+            aria-label="Confirm tag"
+            className="size-7"
+            onClick={commit}
+          >
+            <Check className="size-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Cancel adding tag"
+            className="size-7"
+            onClick={cancel}
+          >
+            <X className="size-3.5" />
+          </Button>
+        </div>
       ) : (
         <button
           type="button"
