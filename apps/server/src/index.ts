@@ -55,11 +55,35 @@ async function main() {
     })
   )
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     logger.info(`Express API listening on http://localhost:${PORT}`)
     logger.info(`GraphQL endpoint at http://localhost:${PORT}/graphql`)
   })
+
+  // Without this, a second `pnpm dev` instance started by accident fails to bind the
+  // port but can sit around alive anyway, still able to open its own DB connections —
+  // exactly what happened the night this got added. Fail loud and immediate instead.
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      logger.fatal(`Port ${PORT} is already in use — is another apps/server instance already running?`)
+    } else {
+      logger.fatal({ error }, 'Server failed to start')
+    }
+    process.exit(1)
+  })
 }
+
+// Without this, killing the process (tsx watch's restart-on-save, Ctrl+C, a deploy
+// redeploy) leaves Prisma's connections open until the DB's pooler notices the socket
+// died on its own — against Supabase's session-mode pooler (small client cap) that can
+// starve the next process of a connection slot. Releasing them here is immediate instead.
+async function shutdown() {
+  await prisma.$disconnect()
+  process.exit(0)
+}
+
+process.on('SIGINT', shutdown)
+process.on('SIGTERM', shutdown)
 
 main().catch((error) => {
   logger.error({ error }, 'Failed to start server')

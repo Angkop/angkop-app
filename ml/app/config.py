@@ -13,6 +13,10 @@ NCF_ID_MAPPING_PATH = os.getenv("NCF_ID_MAPPING_PATH", "./weights/id_mappings.js
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
+# Fallback course lookup (app/data/course_index.py) for skills the static index doesn't
+# cover. Free tier, no OAuth — see https://console.cloud.google.com/apis/credentials.
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
+
 # Lets a retrained model ship by uploading to this bucket + restarting the service,
 # instead of committing weights to git or redeploying code — see DEPLOYMENT.md Phase 4.
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")

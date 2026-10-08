@@ -1,8 +1,10 @@
-import { Calendar, Eye, X } from 'lucide-react'
+import { useState } from 'react'
+import { Calendar, Eye, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type SavedJob } from '@angkop/shared'
 import { Button } from '@/components/ui/button'
 import { ChipList } from '@/components/chip-list'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MatchScoreBadge } from '@/components/match-score-badge'
@@ -25,6 +27,8 @@ export function ApplicationCard({
   onUnsave: (jobId: string) => void
   onViewInsight: (savedJob: SavedJob) => void
 }) {
+  const [confirmUnsaveOpen, setConfirmUnsaveOpen] = useState(false)
+
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -41,8 +45,13 @@ export function ApplicationCard({
           >
             <Eye className="size-4" />
           </Button>
-          <Button variant="ghost" size="icon-sm" aria-label="Unsave job" onClick={() => onUnsave(savedJob.job.id)}>
-            <X className="size-4" />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Remove application"
+            onClick={() => setConfirmUnsaveOpen(true)}
+          >
+            <Trash2 className="size-4" />
           </Button>
         </div>
       </div>
@@ -100,6 +109,15 @@ export function ApplicationCard({
           placeholder="e.g. Dream job"
         />
       </div>
+
+      <ConfirmDialog
+        open={confirmUnsaveOpen}
+        onOpenChange={setConfirmUnsaveOpen}
+        title="Remove this application?"
+        description={`"${savedJob.job.title}" at ${savedJob.job.company} will be removed from your tracked applications, including its status, tags, and interview date.`}
+        confirmLabel="Remove"
+        onConfirm={() => onUnsave(savedJob.job.id)}
+      />
     </div>
   )
 }

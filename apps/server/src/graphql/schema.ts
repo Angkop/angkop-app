@@ -32,12 +32,19 @@ export const typeDefs = `#graphql
     title: String!
     provider: String!
     url: String!
+    thumbnail: String
+    description: String
   }
 
   type SkillGap {
     skill: String!
     confidence: Float!
     courses: [Course!]!
+  }
+
+  type SkillGapPage {
+    items: [SkillGap!]!
+    total: Int!
   }
 
   type MatchInsight {
@@ -208,7 +215,8 @@ export const typeDefs = `#graphql
     me: Me!
     jobMatches(page: Int, pageSize: Int, search: String, skill: String): JobMatchPage!
     jobMatchInsight(jobId: ID!): MatchInsight!
-    skillGaps: [SkillGap!]!
+    skillGaps(page: Int, pageSize: Int): SkillGapPage!
+    savedJobCount: Int!
     savedJobs: [SavedJob!]!
     savedCourses: [SavedCourse!]!
   }

@@ -17,6 +17,8 @@ class Course(BaseModel):
     title: str
     provider: str
     url: str
+    thumbnail: str | None = None
+    description: str | None = None
 
 
 class SkillGap(BaseModel):

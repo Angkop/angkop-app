@@ -129,17 +129,19 @@ export function ProfilePage() {
             <PreferencesFields preferences={editor.preferences} setPreferences={editor.setPreferences} />
           </ProfileFieldSection>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
-            <Button type="button" onClick={handleSave} disabled={editor.isSaving}>
-              {editor.isSaving ? 'Saving…' : 'Save changes'}
-            </Button>
-            <Button type="button" variant="outline" onClick={handleCancel} disabled={editor.isSaving}>
-              Cancel
-            </Button>
+          <div className="sticky bottom-0 -mx-5 -mb-5 border-t border-border bg-card px-5 pt-4 pb-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="button" onClick={handleSave} disabled={editor.isSaving}>
+                {editor.isSaving ? 'Saving…' : 'Save changes'}
+              </Button>
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={editor.isSaving}>
+                Cancel
+              </Button>
+            </div>
+            {editor.saveError ? (
+              <ErrorMessage>Could not save your profile: {editor.saveError.message}</ErrorMessage>
+            ) : null}
           </div>
-          {editor.saveError ? (
-            <ErrorMessage>Could not save your profile: {editor.saveError.message}</ErrorMessage>
-          ) : null}
         </div>
       ) : (
         <>

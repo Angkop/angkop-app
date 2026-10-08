@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client/react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
-import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
+import { AllMatchesSkeleton } from './components/all-matches-skeleton'
 import { MatchesBrowser } from './components/matches-browser'
 import { PAGE_SIZE } from './constants'
 import { useMatchFilters } from './hooks/use-match-filters'
@@ -57,15 +57,13 @@ export function AllMatchesPage() {
     }
   }
 
-  if (error) {
-    return <ErrorMessage>Could not load job matches: {error.message}</ErrorMessage>
-  }
-
   return (
     <div>
       <PageHeader title="All Matches" description="Every ingested job ranked by fit with your profile." />
       {loading && !data ? (
-        <LoadingSkeleton rows={6} heightClassName="h-16" />
+        <AllMatchesSkeleton />
+      ) : error ? (
+        <ErrorMessage>Could not load job matches: {error.message}</ErrorMessage>
       ) : (
         <MatchesBrowser
           items={data?.jobMatches.items ?? []}

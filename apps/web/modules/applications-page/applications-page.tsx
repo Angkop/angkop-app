@@ -5,13 +5,13 @@ import { useMutation, useQuery } from '@apollo/client/react'
 import { toast } from 'sonner'
 import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type SavedJob } from '@angkop/shared'
 import { PageHeader } from '@/components/page-header'
-import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
 import { PaginationControls } from '@/components/pagination-controls'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
 import { ApplicationStatsRow } from './components/application-stats-row'
 import { ApplicationCard } from './components/application-card'
+import { ApplicationsSkeleton } from './components/applications-skeleton'
 import { ApplicationInsightDialog } from './components/application-insight-dialog'
 import { PAGE_SIZE, STATUS_ORDER } from './constants'
 import {
@@ -88,15 +88,7 @@ export function ApplicationsPage() {
       <PageHeader title="Applications" description="Track every saved job through your application process." />
 
       {loading ? (
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="h-24 animate-pulse rounded-lg border border-border bg-muted" />
-            ))}
-          </div>
-          <div className="h-9 w-56 animate-pulse rounded-md border border-border bg-muted" />
-          <LoadingSkeleton rows={3} heightClassName="h-28" />
-        </div>
+        <ApplicationsSkeleton />
       ) : error ? (
         <ErrorMessage>Could not load applications: {error.message}</ErrorMessage>
       ) : savedJobs.length === 0 ? (

@@ -1,5 +1,12 @@
-"""Small static skill -> course lookup. Real deployment would back this with a proper
-course catalog; this is enough to demo the skill-gap -> course-recommendation flow."""
+"""Skill -> course lookup. Checks a small curated static index first (hand-picked, so
+always returns the same trusted link for common skills); skills it doesn't cover fall
+back to a YouTube Data API v3 search (free tier, no OAuth), cached in-process per skill
+so the ~100 searches/day quota is only ever spent once per distinct skill, not once per
+request."""
+
+import httpx
+
+from app.config import YOUTUBE_API_KEY
 
 COURSE_INDEX: dict[str, list[dict[str, str]]] = {
     "react": [{"title": "React - The Complete Guide", "provider": "Udemy", "url": "https://www.udemy.com/course/react-the-complete-guide-incl-redux/"}],
@@ -46,10 +53,46 @@ COURSE_INDEX: dict[str, list[dict[str, str]]] = {
 }
 
 
-def courses_for_skill(skill: str) -> list[dict[str, str]]:
-    key = skill.strip().lower()
-    if key in COURSE_INDEX:
-        return COURSE_INDEX[key]
+_youtube_cache: dict[str, list[dict[str, str]]] = {}
+
+
+def _search_youtube(skill: str) -> list[dict[str, str]] | None:
+    if not YOUTUBE_API_KEY:
+        return None
+    try:
+        response = httpx.get(
+            "https://www.googleapis.com/youtube/v3/search",
+            params={
+                "part": "snippet",
+                "q": f"{skill} course tutorial",
+                "type": "video",
+                "maxResults": 3,
+                "safeSearch": "strict",
+                "key": YOUTUBE_API_KEY,
+            },
+            timeout=10,
+        )
+        if response.status_code != 200:
+            return None
+    except httpx.HTTPError:
+        return None
+
+    items = response.json().get("items", [])
+    courses = [
+        {
+            "title": item["snippet"]["title"],
+            "provider": item["snippet"]["channelTitle"],
+            "url": f"https://www.youtube.com/watch?v={item['id']['videoId']}",
+            "thumbnail": item["snippet"]["thumbnails"]["medium"]["url"],
+            "description": item["snippet"]["description"],
+        }
+        for item in items
+        if item.get("id", {}).get("videoId")
+    ]
+    return courses or None
+
+
+def _fallback_search_link(skill: str) -> list[dict[str, str]]:
     return [
         {
             "title": f"Search courses for \"{skill}\"",
@@ -57,3 +100,16 @@ def courses_for_skill(skill: str) -> list[dict[str, str]]:
             "url": f"https://www.coursera.org/search?query={skill.replace(' ', '%20')}",
         }
     ]
+
+
+def courses_for_skill(skill: str) -> list[dict[str, str]]:
+    key = skill.strip().lower()
+    if key in COURSE_INDEX:
+        return COURSE_INDEX[key]
+
+    if key in _youtube_cache:
+        return _youtube_cache[key]
+
+    courses = _search_youtube(key) or _fallback_search_link(skill)
+    _youtube_cache[key] = courses
+    return courses

@@ -2,7 +2,12 @@ import { MATCH_SCORE_THRESHOLDS } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { skillGap as skillGapRequest } from '../../lib/ml-client'
 import { logger } from '../../lib/logger'
-import { DEFAULT_JOB_MATCHES_PAGE_SIZE, MAX_JOB_MATCHES_PAGE_SIZE, TOP_JOBS_FOR_SKILL_GAP } from './constants'
+import {
+  DEFAULT_JOB_MATCHES_PAGE_SIZE,
+  DEFAULT_SKILL_GAPS_PAGE_SIZE,
+  MAX_JOB_MATCHES_PAGE_SIZE,
+  MAX_SKILL_GAPS_PAGE_SIZE
+} from './constants'
 import {
   computeHybridScoresByJobId,
   computeJobMatches,
@@ -17,6 +22,11 @@ type JobMatchesArgs = {
   pageSize?: number | null
   search?: string | null
   skill?: string | null
+}
+
+type SkillGapsArgs = {
+  page?: number | null
+  pageSize?: number | null
 }
 
 export const queryResolvers = {
@@ -80,20 +90,23 @@ export const queryResolvers = {
     return getJobMatchInsight(context.userId, args.jobId)
   },
 
-  skillGaps: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
-    const [matches, userSkills] = await Promise.all([
-      computeJobMatches(context.userId),
+  skillGaps: async (_parent: unknown, args: SkillGapsArgs, context: GraphQLContext) => {
+    const [savedJobs, userSkills] = await Promise.all([
+      prisma.savedJob.findMany({
+        where: { userId: context.userId, deleted: false, job: { deleted: false } },
+        include: { job: true },
+        orderBy: { createdAt: 'desc' }
+      }),
       prisma.userSkill.findMany({
         where: { userId: context.userId, deleted: false },
         include: { skill: true }
       })
     ])
 
-    const topJobs = matches.slice(0, TOP_JOBS_FOR_SKILL_GAP).map((match) => match.job)
-    const jobRequiredSkills = Array.from(new Set(topJobs.flatMap((job) => job.requiredSkills)))
+    const jobRequiredSkills = Array.from(new Set(savedJobs.flatMap((savedJob) => savedJob.job.requiredSkills)))
 
     if (jobRequiredSkills.length === 0) {
-      return []
+      return { items: [], total: 0 }
     }
 
     const result = await skillGapRequest({
@@ -101,13 +114,13 @@ export const queryResolvers = {
       jobRequiredSkills
     })
 
-    if (topJobs[0]) {
+    if (savedJobs[0]) {
       await Promise.all(
         result.missingSkills.map((gap) =>
           prisma.skillGapRecord.create({
             data: {
               userId: context.userId,
-              jobId: topJobs[0].id,
+              jobId: savedJobs[0].job.id,
               skill: gap.skill,
               confidence: gap.confidence,
               courses: gap.courses
@@ -117,7 +130,20 @@ export const queryResolvers = {
       ).catch((error) => logger.warn({ error }, 'Failed to persist skill gap records'))
     }
 
-    return result.missingSkills
+    const page = Math.max(1, args.page ?? 1)
+    const pageSize = Math.min(Math.max(1, args.pageSize ?? DEFAULT_SKILL_GAPS_PAGE_SIZE), MAX_SKILL_GAPS_PAGE_SIZE)
+    const start = (page - 1) * pageSize
+
+    return {
+      items: result.missingSkills.slice(start, start + pageSize),
+      total: result.missingSkills.length
+    }
+  },
+
+  savedJobCount: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
+    return prisma.savedJob.count({
+      where: { userId: context.userId, deleted: false, job: { deleted: false } }
+    })
   },
 
   savedJobs: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {

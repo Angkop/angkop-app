@@ -179,6 +179,8 @@ export type Course = {
   title: string
   provider: string
   url: string
+  thumbnail?: string | null
+  description?: string | null
 }
 
 export type ApplicationStatus =
