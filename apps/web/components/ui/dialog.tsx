@@ -21,12 +21,20 @@ export function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & { showCloseButton?: boolean }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" />
+      <DialogPrimitive.Overlay
+        className={cn(
+          'angkop-dialog-overlay fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]',
+          'data-[state=open]:[animation:angkop-fade-in_200ms_ease-out]',
+          'data-[state=closed]:[animation:angkop-fade-out_150ms_ease-in]'
+        )}
+      />
       <DialogPrimitive.Content
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
+          'angkop-dialog-content fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
           'rounded-2xl border border-border bg-card p-6 shadow-xl',
           'max-h-[calc(100vh-2rem)] overflow-y-auto',
+          'data-[state=open]:[animation:angkop-dialog-in_200ms_ease-out]',
+          'data-[state=closed]:[animation:angkop-dialog-out_150ms_ease-in]',
           className
         )}
         {...props}
