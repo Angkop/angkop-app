@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { AppApolloProvider } from '@/providers/apollo-provider'
 import { AuthSyncProvider } from '@/providers/auth-sync-provider'
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 const inter = Inter({
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthSyncProvider>
           <AppApolloProvider>{children}</AppApolloProvider>
         </AuthSyncProvider>
+        <Toaster />
       </body>
     </html>
   )

@@ -25,12 +25,31 @@ export const queryResolvers = {
   },
 
   jobMatches: async (_parent: unknown, args: JobMatchesArgs, context: GraphQLContext) => {
-    const allMatches = await computeJobMatches(context.userId)
-    const strongMatchCount = allMatches.filter((match) => match.hybridScore >= MATCH_SCORE_THRESHOLDS.STRONG).length
+    const [allMatches, savedJobs, dismissedInteractions] = await Promise.all([
+      computeJobMatches(context.userId),
+      prisma.savedJob.findMany({
+        where: { userId: context.userId, deleted: false },
+        select: { jobId: true }
+      }),
+      prisma.interaction.findMany({
+        where: { userId: context.userId, deleted: false, eventType: 'dismiss' },
+        select: { jobId: true }
+      })
+    ])
+    // Saved jobs move to the Applications page and dismissed jobs are a negative signal —
+    // neither belongs in the browse list anymore, otherwise Save/Dismiss appear to do nothing.
+    const hiddenJobIds = new Set([
+      ...savedJobs.map((savedJob) => savedJob.jobId),
+      ...dismissedInteractions.map((interaction) => interaction.jobId)
+    ])
+    const visibleMatches = allMatches.filter((match) => !hiddenJobIds.has(match.job.id))
+    const strongMatchCount = visibleMatches.filter(
+      (match) => match.hybridScore >= MATCH_SCORE_THRESHOLDS.STRONG
+    ).length
 
     const search = args.search?.trim().toLowerCase()
     const skill = args.skill?.trim()
-    const filtered = allMatches
+    const filtered = visibleMatches
       .filter((match) =>
         search
           ? match.job.title.toLowerCase().includes(search) ||

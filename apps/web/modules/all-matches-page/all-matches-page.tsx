@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@apollo/client/react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
@@ -33,13 +34,27 @@ export function AllMatchesPage() {
   const [saveJob] = useMutation(SAVE_JOB_MUTATION)
 
   async function handleSave(jobId: string) {
-    await saveJob({ variables: { jobId } })
-    await refetch()
+    try {
+      await saveJob({ variables: { jobId } })
+      await refetch()
+      toast.success('Saved to your applications')
+    } catch (saveError) {
+      toast.error('Could not save this job', {
+        description: saveError instanceof Error ? saveError.message : undefined
+      })
+    }
   }
 
   async function handleDismiss(jobId: string) {
-    await logInteraction({ variables: { jobId, eventType: 'dismiss' } })
-    await refetch()
+    try {
+      await logInteraction({ variables: { jobId, eventType: 'dismiss' } })
+      await refetch()
+      toast.success('Job dismissed')
+    } catch (dismissError) {
+      toast.error('Could not dismiss this job', {
+        description: dismissError instanceof Error ? dismissError.message : undefined
+      })
+    }
   }
 
   if (error) {
