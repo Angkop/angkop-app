@@ -69,6 +69,37 @@ embedding = model.encode(text, normalize_embeddings=True)  # → 384 floats, uni
 collapsing into a point in a 384-dimensional space, simplified to 2D/3D (e.g. via a toy
 PCA projection) so viewers can see "similar meaning → nearby points."
 
+### What goes into the user's embedding text
+
+**File:** `apps/server/src/graphql/resolvers/helpers.ts` (`buildSkillsText`)
+
+The job side of the embedding is just `"{title}. {description}"`. The user side is built
+on the Node API before it ever reaches the ML service, by concatenating these profile
+fields (in order, joined with `. `) into one `skillsText` string, persisted on
+`UserProfile.skillsText` and recomputed whenever onboarding is completed or the profile
+is edited:
+
+| Source | Format |
+|---|---|
+| `headline` | as-is |
+| `about` | as-is |
+| `careerLevel` | lowercased, underscores → spaces |
+| `skills` | `"Skills: {name}, {name}, ..."` |
+| `experience` | `"{title} at {company} — {description}"` per entry |
+| `education` | `"{degree} in {fieldOfStudy} from {school}"` per entry (falls back to just `{school}` if no degree/field) |
+| `projects` | `"{name}: {description}"` per entry |
+| `certifications` | `"{name} ({issuer})"` per entry |
+| `languages` | `"Languages: {language}, {language}, ..."` |
+| `preferences.desiredRoles` | `"Looking for: {role}, {role}, ..."` |
+| `preferences.preferredIndustries` | `"Interested in: {industry}, {industry}, ..."` |
+
+**Not included:** `preferredLocations`, `preferredJobTypes`, `workSetup`,
+`minimumSalary`/`maximumSalary`, `willingToRelocate`/`willingToRemote`, education
+start/end years, and certification dates/credential IDs. These are either structured
+filters better suited to a `WHERE` clause than free text, or numeric/boolean fields a
+sentence embedding can't meaningfully represent — they don't feed the semantic score
+today.
+
 ---
 
 ## 3. Step 2 — Semantic Score (cosine similarity)

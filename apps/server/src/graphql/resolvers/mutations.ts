@@ -31,8 +31,12 @@ export const mutationResolvers = {
       about: input.about,
       careerLevel: input.careerLevel,
       skills,
+      education,
       experience,
-      projects
+      certifications,
+      projects,
+      languages,
+      preferences: input.preferences
     })
 
     await prisma.$transaction(async (tx) => {

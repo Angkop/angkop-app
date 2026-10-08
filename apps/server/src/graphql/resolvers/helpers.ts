@@ -5,7 +5,15 @@ import { MlServiceError, matchInsight as requestMatchInsight, recommend } from '
 import { mapWithConcurrency } from '../../lib/concurrency'
 import { logger } from '../../lib/logger'
 import { ML_REQUEST_CONCURRENCY } from './constants'
-import type { ProjectInput, SavedJobWithJob, WorkExperienceInput } from './types'
+import type {
+  CertificationInput,
+  EducationInput,
+  LanguageInput,
+  ProjectInput,
+  SavedJobWithJob,
+  UserPreferenceInput,
+  WorkExperienceInput
+} from './types'
 
 export function serializeSavedJob(savedJob: SavedJobWithJob, hybridScore = 0) {
   return {
@@ -24,8 +32,12 @@ export function buildSkillsText(input: {
   about?: string | null
   careerLevel?: string | null
   skills: { name: string }[]
+  education: EducationInput[]
   experience: WorkExperienceInput[]
+  certifications: CertificationInput[]
   projects: ProjectInput[]
+  languages: LanguageInput[]
+  preferences: UserPreferenceInput
 }): string {
   const parts: string[] = []
   if (input.headline) parts.push(input.headline)
@@ -38,8 +50,24 @@ export function buildSkillsText(input: {
         (experience.description ? ` — ${experience.description}` : '')
     )
   }
+  for (const education of input.education) {
+    const degreeField = [education.degree, education.fieldOfStudy].filter(Boolean).join(' in ')
+    parts.push(degreeField ? `${degreeField} from ${education.school}` : education.school)
+  }
   for (const project of input.projects) {
     parts.push(`${project.name}: ${project.description}`)
+  }
+  for (const certification of input.certifications) {
+    parts.push(`${certification.name} (${certification.issuer})`)
+  }
+  if (input.languages.length > 0) {
+    parts.push(`Languages: ${input.languages.map((language) => language.language).join(', ')}`)
+  }
+  if (input.preferences.desiredRoles.length > 0) {
+    parts.push(`Looking for: ${input.preferences.desiredRoles.join(', ')}`)
+  }
+  if (input.preferences.preferredIndustries.length > 0) {
+    parts.push(`Interested in: ${input.preferences.preferredIndustries.join(', ')}`)
   }
   return parts.join('. ')
 }
