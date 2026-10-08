@@ -3,8 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  // Supabase's Transaction-mode pooler (port 6543, ?pgbouncer=true) — supports far more
+  // concurrent clients than Session mode (port 5432, 15-client hard cap) by multiplexing
+  // logical connections over a few real Postgres ones. directUrl bypasses pooling
+  // entirely for prisma migrate/db push, which transaction-mode pooling can't support.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum CareerLevel {
