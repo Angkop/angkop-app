@@ -9,3 +9,5 @@ export const STATUS_ORDER: ApplicationStatus[] = [
   'SUCCESSFUL',
   'UNSUCCESSFUL'
 ]
+
+export const PAGE_SIZE = 10

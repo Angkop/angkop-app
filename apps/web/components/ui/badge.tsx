@@ -8,9 +8,11 @@ const badgeVariants = cva('inline-flex items-center rounded-full px-2.5 py-0.5 t
       default: 'bg-secondary text-secondary-foreground',
       outline: 'border border-border text-foreground',
       secondary: 'gap-1 bg-secondary pr-1 text-secondary-foreground',
-      strong: 'bg-match-strong text-match-strong-foreground',
-      partial: 'bg-match-partial text-match-partial-foreground',
-      weak: 'bg-match-weak text-match-weak-foreground'
+      strong:
+        'gap-1.5 bg-match-strong/12 text-foreground before:size-1.5 before:shrink-0 before:rounded-full before:bg-match-strong before:content-[""]',
+      partial:
+        'gap-1.5 bg-match-partial/18 text-foreground before:size-1.5 before:shrink-0 before:rounded-full before:bg-match-partial before:content-[""]',
+      weak: 'gap-1.5 bg-match-weak/12 text-foreground before:size-1.5 before:shrink-0 before:rounded-full before:bg-match-weak before:content-[""]'
     }
   },
   defaultVariants: {

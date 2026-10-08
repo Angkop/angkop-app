@@ -64,16 +64,9 @@ function SkillChips({ skills, tone }: { skills: string[]; tone: 'match' | 'growt
   return (
     <div className="flex flex-wrap gap-1.5">
       {skills.map((skill) => (
-        <span
-          key={skill}
-          className={
-            tone === 'match'
-              ? 'rounded-full bg-match-strong px-2.5 py-1 text-xs font-medium text-match-strong-foreground'
-              : 'rounded-full bg-muted px-2.5 py-1 text-xs text-foreground'
-          }
-        >
+        <Badge key={skill} variant={tone === 'match' ? 'strong' : 'outline'}>
           {skill}
-        </span>
+        </Badge>
       ))}
     </div>
   )

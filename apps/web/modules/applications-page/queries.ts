@@ -7,10 +7,15 @@ export const SAVED_JOBS_QUERY = gql`
       status
       tags
       interviewDate
+      createdAt
+      hybridScore
       job {
         id
         title
         company
+        requiredSkills
+        url
+        sourceName
       }
     }
   }
