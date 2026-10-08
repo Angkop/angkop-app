@@ -3,7 +3,13 @@ import { prisma } from '../../lib/prisma'
 import { skillGap as skillGapRequest } from '../../lib/ml-client'
 import { logger } from '../../lib/logger'
 import { DEFAULT_JOB_MATCHES_PAGE_SIZE, MAX_JOB_MATCHES_PAGE_SIZE, TOP_JOBS_FOR_SKILL_GAP } from './constants'
-import { computeJobMatches, getJobMatchInsight, loadProfileForMe, serializeSavedJob } from './helpers'
+import {
+  computeHybridScoresByJobId,
+  computeJobMatches,
+  getJobMatchInsight,
+  loadProfileForMe,
+  serializeSavedJob
+} from './helpers'
 import type { GraphQLContext } from './types'
 
 type JobMatchesArgs = {
@@ -120,7 +126,11 @@ export const queryResolvers = {
       include: { job: true },
       orderBy: { createdAt: 'desc' }
     })
-    return savedJobs.map(serializeSavedJob)
+    const scoresByJobId = await computeHybridScoresByJobId(
+      context.userId,
+      savedJobs.map((savedJob) => savedJob.jobId)
+    )
+    return savedJobs.map((savedJob) => serializeSavedJob(savedJob, scoresByJobId.get(savedJob.jobId) ?? 0))
   },
 
   savedCourses: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {

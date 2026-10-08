@@ -207,6 +207,7 @@ export type SavedJob = {
   tags: string[]
   interviewDate: string | null
   createdAt: string
+  hybridScore: number
 }
 
 export type SavedCourse = {

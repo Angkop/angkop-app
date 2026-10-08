@@ -7,14 +7,15 @@ import { logger } from '../../lib/logger'
 import { ML_REQUEST_CONCURRENCY } from './constants'
 import type { ProjectInput, SavedJobWithJob, WorkExperienceInput } from './types'
 
-export function serializeSavedJob(savedJob: SavedJobWithJob) {
+export function serializeSavedJob(savedJob: SavedJobWithJob, hybridScore = 0) {
   return {
     id: savedJob.id,
     job: savedJob.job,
     status: savedJob.status,
     tags: savedJob.tags,
     interviewDate: savedJob.interviewDate ? savedJob.interviewDate.toISOString() : null,
-    createdAt: savedJob.createdAt.toISOString()
+    createdAt: savedJob.createdAt.toISOString(),
+    hybridScore
   }
 }
 
@@ -148,6 +149,34 @@ export async function computeJobMatches(userId: string): Promise<JobMatch[]> {
   })
 
   return matches.sort((a, b) => b.hybridScore - a.hybridScore)
+}
+
+// Scores only the given jobs (e.g. a user's saved jobs) instead of every ingested job like
+// computeJobMatches — cheap even though scores are cached, since saved-job lists are small
+// and this runs on every Applications page load.
+export async function computeHybridScoresByJobId(userId: string, jobIds: string[]): Promise<Map<string, number>> {
+  if (jobIds.length === 0) return new Map()
+
+  const [jobs, profile, interactionCount] = await Promise.all([
+    prisma.job.findMany({ where: { id: { in: jobIds }, deleted: false } }),
+    prisma.userProfile.findUnique({ where: { userId } }),
+    prisma.interaction.count({ where: { userId, deleted: false } })
+  ])
+
+  const entries = await mapWithConcurrency(jobs, ML_REQUEST_CONCURRENCY, async (job) => {
+    const scores = await getOrSetMatchScore(userId, job.id, () =>
+      recommend({
+        userId,
+        jobId: job.id,
+        userSkillsText: profile?.skillsText ?? '',
+        jobText: `${job.title}. ${job.description}`,
+        userInteractionCount: interactionCount
+      })
+    )
+    return [job.id, scores.hybridScore] as const
+  })
+
+  return new Map(entries)
 }
 
 const MAX_INSIGHT_RETRIES = 2

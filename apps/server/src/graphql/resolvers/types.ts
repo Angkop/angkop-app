@@ -6,6 +6,7 @@ export type GraphQLContext = {
 
 export type SavedJobWithJob = {
   id: number
+  jobId: string
   job: {
     id: string
     platformJobId: string

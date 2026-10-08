@@ -71,6 +71,7 @@ export const typeDefs = `#graphql
     tags: [String!]!
     interviewDate: String
     createdAt: String!
+    hybridScore: Float!
   }
 
   type SavedCourse {
