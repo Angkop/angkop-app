@@ -46,7 +46,7 @@ Angkop operates as **two coordinated services** plus a browser extension:
 ### 4. FastAPI ML Microservice (Intelligence Layer)
 - **Python + FastAPI**
 - Hosts four sub-components:
-  - **Embedding Generator**: loads `all-MiniLM-L6-v2` (Sentence-BERT), outputs 768-dimensional vectors
+  - **Embedding Generator**: loads `all-MiniLM-L6-v2` (Sentence-BERT), outputs 384-dimensional vectors
   - **Hybrid Ranking Engine**: combines Sentence-BERT cosine similarity score + NCF collaborative score
   - **Skill Gap Analyzer**: vector subtraction (job embedding − user embedding), maps missing dimensions to course recommendations
   - **Application Draft Generator**: calls the Gemini API with the job description + user profile to draft a cover letter and application email
@@ -59,7 +59,7 @@ Angkop operates as **two coordinated services** plus a browser extension:
 - Accessible on both desktop and mobile browsers (no native app)
 
 ### 6. Data & Caching Layer
-- **PostgreSQL on Supabase** + **pgvector extension** for storing 768-dim embeddings
+- **PostgreSQL on Supabase** for storing 384-dim embeddings as `Float[]` columns (no pgvector extension in use)
 - **Prisma ORM** for schema management (soft-deletes only — no hard deletes)
 - **Redis** for caching computed match scores and recommendation lists (TTL = 24h)
 

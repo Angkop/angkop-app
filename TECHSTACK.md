@@ -21,7 +21,7 @@
 
 | Technology | Version | Use |
 |---|---|---|
-| Sentence-BERT (`sentence-transformers`, `all-MiniLM-L6-v2`) | 3.x / 5.x | Converts skill/job text into 768-dim semantic embedding vectors |
+| Sentence-BERT (`sentence-transformers`, `all-MiniLM-L6-v2`) | 3.x / 5.x | Converts skill/job text into 384-dim semantic embedding vectors |
 | Hugging Face Transformers | 4.x | Required dependency for sentence-transformers |
 | Cosine Similarity | N/A (algorithm) | Compares user and job embeddings to produce the real-time match score |
 | Neural Collaborative Filtering (NCF) via PyTorch | PyTorch 2.x | GMF + MLP to learn preference patterns from weighted implicit feedback (applied > saved > viewed > dismissed) |
