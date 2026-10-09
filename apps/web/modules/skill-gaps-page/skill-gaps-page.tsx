@@ -2,15 +2,17 @@
 
 import { useState } from 'react'
 import { useQuery } from '@apollo/client/react'
+import { Sparkles } from 'lucide-react'
 import type { Course } from '@angkop/shared'
 import { PageHeader } from '@/components/page-header'
 import { ErrorMessage } from '@/components/error-message'
 import { PaginationControls } from '@/components/pagination-controls'
+import { BrandLoader } from '@/components/brand-loader'
+import { StepProgress } from '@/components/step-progress'
 import { SkillGapCard } from './components/skill-gap-card'
-import { SkillGapsSkeleton } from './components/skill-gaps-skeleton'
 import { CourseDetailDialog } from './components/course-detail-dialog'
 import { PAGE_SIZE } from './constants'
-import { SKILL_GAPS_QUERY } from './queries'
+import { SKILL_GAPS_LOADING_STEPS, SKILL_GAPS_QUERY } from './queries'
 import type { SkillGapsQueryResult } from './types'
 
 export function SkillGapsPage() {
@@ -35,7 +37,21 @@ export function SkillGapsPage() {
       />
 
       {loading && !data ? (
-        <SkillGapsSkeleton />
+        <div className="rounded-2xl border border-border p-5">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Sparkles className="size-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground">Building your skill gap report</p>
+              <p className="text-xs text-muted-foreground">Based on your saved jobs</p>
+            </div>
+            <BrandLoader size="sm" />
+          </div>
+          <div className="mt-5 border-t border-border pt-4">
+            <StepProgress steps={SKILL_GAPS_LOADING_STEPS} />
+          </div>
+        </div>
       ) : error ? (
         <ErrorMessage>Could not load skill gaps: {error.message}</ErrorMessage>
       ) : savedJobCount === 0 ? (

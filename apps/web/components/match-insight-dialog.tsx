@@ -4,12 +4,17 @@ import { useQuery } from '@apollo/client/react'
 import { AlertTriangle, BarChart3, CheckCircle2, GraduationCap, Sparkles, Target, Users } from 'lucide-react'
 import type { MatchInsight } from '@angkop/shared'
 import { getMatchLabel } from '@angkop/shared'
-import { JOB_MATCH_INSIGHT_QUERY, type JobMatchInsightQueryResult } from '@/lib/job-match-insight'
+import {
+  JOB_MATCH_INSIGHT_QUERY,
+  MATCH_INSIGHT_LOADING_STEPS,
+  type JobMatchInsightQueryResult
+} from '@/lib/job-match-insight'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
+import { BrandLoader } from '@/components/brand-loader'
+import { StepProgress } from '@/components/step-progress'
 import { variantForScore } from '@/components/match-score-badge'
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -180,7 +185,23 @@ export function MatchInsightDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {loading ? <LoadingSkeleton rows={3} heightClassName="h-16" /> : null}
+        {loading ? (
+          <div className="rounded-2xl border border-border p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Sparkles className="size-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{jobTitle}</p>
+                <p className="text-xs text-muted-foreground">Analyzing this match</p>
+              </div>
+              <BrandLoader size="sm" />
+            </div>
+            <div className="mt-5 border-t border-border pt-4">
+              <StepProgress steps={MATCH_INSIGHT_LOADING_STEPS} />
+            </div>
+          </div>
+        ) : null}
 
         {error ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-border p-8 text-center">

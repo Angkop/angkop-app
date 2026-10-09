@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   Award,
   Briefcase,
-  Check,
   FileText,
   FolderGit2,
   GraduationCap,
@@ -26,12 +25,12 @@ import {
 } from '@angkop/shared'
 import { API_URL } from '@/constants/api'
 import { getStoredToken } from '@/lib/auth'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { ErrorMessage } from '@/components/error-message'
 import { BrandLoader } from '@/components/brand-loader'
+import { StepProgress } from '@/components/step-progress'
 
 const PARSING_STEPS = ['Uploading file', 'Reading document', 'Extracting skills & experience', 'Matching to your profile']
 
@@ -80,38 +79,6 @@ function dateRange(start: string | null, end: string | null, current?: boolean):
   return `${startLabel} – ${endLabel}`
 }
 
-function ParsingSteps({ activeIndex }: { activeIndex: number }) {
-  return (
-    <ol className="mt-5 space-y-3 border-t border-border pt-4">
-      {PARSING_STEPS.map((step, index) => {
-        const status = index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending'
-        return (
-          <li key={step} className="flex items-center gap-3">
-            <span
-              className={cn(
-                'flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-medium transition-colors',
-                status === 'done' && 'bg-primary text-primary-foreground',
-                status === 'active' && 'border-2 border-primary text-primary',
-                status === 'pending' && 'border border-border text-muted-foreground'
-              )}
-            >
-              {status === 'done' ? <Check className="size-3" /> : index + 1}
-            </span>
-            <span
-              className={cn(
-                'text-sm transition-colors',
-                status === 'pending' ? 'text-muted-foreground' : 'text-foreground',
-                status === 'active' && 'font-medium'
-              )}
-            >
-              {step}
-            </span>
-          </li>
-        )
-      })}
-    </ol>
-  )
-}
 
 function HighlightStat({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
@@ -192,7 +159,6 @@ export function ResumeImportDialog({
   const [isCacheHit, setIsCacheHit] = useState(false)
   const [fileName, setFileName] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-  const [stepIndex, setStepIndex] = useState(0)
   const lastFileRef = useRef<File | null>(null)
 
   useEffect(() => {
@@ -205,15 +171,6 @@ export function ResumeImportDialog({
       lastFileRef.current = null
     }
   }, [open])
-
-  useEffect(() => {
-    if (stage !== 'parsing') return
-    setStepIndex(0)
-    const interval = setInterval(() => {
-      setStepIndex((current) => Math.min(current + 1, PARSING_STEPS.length - 1))
-    }, 900)
-    return () => clearInterval(interval)
-  }, [stage])
 
   async function runParse(file: File) {
     lastFileRef.current = file
@@ -285,7 +242,9 @@ export function ResumeImportDialog({
               <BrandLoader size="sm" />
             </div>
 
-            <ParsingSteps activeIndex={stepIndex} />
+            <div className="mt-5 border-t border-border pt-4">
+              <StepProgress steps={PARSING_STEPS} />
+            </div>
           </div>
         ) : null}
 

@@ -16,12 +16,18 @@ import type { JobMatchesQueryResult } from './types'
 export function AllMatchesPage() {
   const filters = useMatchFilters()
   const [skills, setSkills] = useState<string[]>([])
+  // Save/dismiss just hide a job from the current view — the server already excludes
+  // saved/dismissed jobs from jobMatches going forward, so there's nothing left to learn
+  // from a full requery right now. Refetching here would re-score every job in the feed
+  // (each a cache miss right after invalidateMatchScoresForUser) just to reflect one
+  // removal — slow, and the other jobs' scores haven't meaningfully changed anyway.
+  const [hiddenJobIds, setHiddenJobIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     getListingSkills().then(setSkills)
   }, [])
 
-  const { data, loading, error, refetch } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
+  const { data, loading, error } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
     variables: {
       page: filters.page,
       pageSize: PAGE_SIZE,
@@ -36,7 +42,7 @@ export function AllMatchesPage() {
   async function handleSave(jobId: string) {
     try {
       await saveJob({ variables: { jobId } })
-      await refetch()
+      setHiddenJobIds((prev) => new Set(prev).add(jobId))
       toast.success('Saved to your applications')
     } catch (saveError) {
       toast.error('Could not save this job', {
@@ -48,7 +54,7 @@ export function AllMatchesPage() {
   async function handleDismiss(jobId: string) {
     try {
       await logInteraction({ variables: { jobId, eventType: 'dismiss' } })
-      await refetch()
+      setHiddenJobIds((prev) => new Set(prev).add(jobId))
       toast.success('Job dismissed')
     } catch (dismissError) {
       toast.error('Could not dismiss this job', {
@@ -66,8 +72,8 @@ export function AllMatchesPage() {
         <ErrorMessage>Could not load job matches: {error.message}</ErrorMessage>
       ) : (
         <MatchesBrowser
-          items={data?.jobMatches.items ?? []}
-          total={data?.jobMatches.total ?? 0}
+          items={(data?.jobMatches.items ?? []).filter((match) => !hiddenJobIds.has(match.job.id))}
+          total={Math.max(0, (data?.jobMatches.total ?? 0) - hiddenJobIds.size)}
           page={filters.page}
           pageSize={PAGE_SIZE}
           query={filters.draftQuery}

@@ -19,3 +19,10 @@ export const SKILL_GAPS_QUERY = gql`
     savedJobCount
   }
 `
+
+export const SKILL_GAPS_LOADING_STEPS = [
+  'Loading your saved jobs',
+  'Comparing against your skills',
+  'Finding matching courses',
+  'Finalizing your report'
+]

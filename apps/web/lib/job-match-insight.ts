@@ -20,3 +20,10 @@ export const JOB_MATCH_INSIGHT_QUERY = gql`
 `
 
 export type JobMatchInsightQueryResult = { jobMatchInsight: MatchInsight }
+
+export const MATCH_INSIGHT_LOADING_STEPS = [
+  'Loading job details',
+  'Comparing skills & experience',
+  'Checking activity signals',
+  'Writing your personalized explanation'
+]
