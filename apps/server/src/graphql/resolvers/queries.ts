@@ -2,10 +2,14 @@ import { MATCH_SCORE_THRESHOLDS } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { skillGap as skillGapRequest } from '../../lib/ml-client'
 import { logger } from '../../lib/logger'
+import type { ApplicationStatus } from '@angkop/shared'
 import {
   DEFAULT_JOB_MATCHES_PAGE_SIZE,
+  DEFAULT_SAVED_JOBS_PAGE_SIZE,
   DEFAULT_SKILL_GAPS_PAGE_SIZE,
+  IN_PROGRESS_SAVED_JOB_STATUSES,
   MAX_JOB_MATCHES_PAGE_SIZE,
+  MAX_SAVED_JOBS_PAGE_SIZE,
   MAX_SKILL_GAPS_PAGE_SIZE
 } from './constants'
 import {
@@ -27,6 +31,12 @@ type JobMatchesArgs = {
 type SkillGapsArgs = {
   page?: number | null
   pageSize?: number | null
+}
+
+type SavedJobsArgs = {
+  page?: number | null
+  pageSize?: number | null
+  status?: ApplicationStatus | null
 }
 
 export const queryResolvers = {
@@ -58,7 +68,11 @@ export const queryResolvers = {
       ...savedJobs.map((savedJob) => savedJob.jobId),
       ...dismissedInteractions.map((interaction) => interaction.jobId)
     ])
-    const visibleMatches = allMatches.filter((match) => !hiddenJobIds.has(match.job.id))
+    // Below MINIMUM the match is too weak to be worth showing at all — excluded from the
+    // browse list entirely, not just styled differently like the STRONG/PARTIAL labels.
+    const visibleMatches = allMatches.filter(
+      (match) => !hiddenJobIds.has(match.job.id) && match.hybridScore >= MATCH_SCORE_THRESHOLDS.MINIMUM
+    )
     const strongMatchCount = visibleMatches.filter(
       (match) => match.hybridScore >= MATCH_SCORE_THRESHOLDS.STRONG
     ).length
@@ -146,17 +160,68 @@ export const queryResolvers = {
     })
   },
 
-  savedJobs: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
+  // Just the ids — lets a page (e.g. /listings, which is public/unauthenticated) show
+  // which jobs the signed-in viewer already saved, without paying for savedJobs' hybrid
+  // score computation when all that's needed is "is this one bookmarked".
+  savedJobIds: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
     const savedJobs = await prisma.savedJob.findMany({
       where: { userId: context.userId, deleted: false, job: { deleted: false } },
-      include: { job: true },
-      orderBy: { createdAt: 'desc' }
+      select: { jobId: true }
     })
+    return savedJobs.map((savedJob) => savedJob.jobId)
+  },
+
+  savedJobs: async (_parent: unknown, args: SavedJobsArgs, context: GraphQLContext) => {
+    const where = {
+      userId: context.userId,
+      deleted: false,
+      job: { deleted: false },
+      ...(args.status ? { status: args.status } : {})
+    }
+
+    const page = Math.max(1, args.page ?? 1)
+    const pageSize = Math.min(Math.max(1, args.pageSize ?? DEFAULT_SAVED_JOBS_PAGE_SIZE), MAX_SAVED_JOBS_PAGE_SIZE)
+
+    const [savedJobs, total] = await Promise.all([
+      prisma.savedJob.findMany({
+        where,
+        include: { job: true },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize
+      }),
+      prisma.savedJob.count({ where })
+    ])
+
     const scoresByJobId = await computeHybridScoresByJobId(
       context.userId,
       savedJobs.map((savedJob) => savedJob.jobId)
     )
-    return savedJobs.map((savedJob) => serializeSavedJob(savedJob, scoresByJobId.get(savedJob.jobId) ?? 0))
+
+    return {
+      items: savedJobs.map((savedJob) => serializeSavedJob(savedJob, scoresByJobId.get(savedJob.jobId) ?? 0)),
+      total
+    }
+  },
+
+  // Independent of the list's current page/status filter — always the full picture, since
+  // that's what the stats row is for.
+  savedJobStats: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
+    const baseWhere = { userId: context.userId, deleted: false, job: { deleted: false } }
+    const [total, inProgress, upcomingInterviews, successful] = await Promise.all([
+      prisma.savedJob.count({ where: baseWhere }),
+      prisma.savedJob.count({ where: { ...baseWhere, status: { in: IN_PROGRESS_SAVED_JOB_STATUSES } } }),
+      prisma.savedJob.count({ where: { ...baseWhere, interviewDate: { not: null } } }),
+      prisma.savedJob.count({ where: { ...baseWhere, status: 'SUCCESSFUL' } })
+    ])
+    return { total, inProgress, upcomingInterviews, successful }
+  },
+
+  // "Jobs applied" on the profile page — any saved job that's moved past PENDING.
+  appliedJobCount: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
+    return prisma.savedJob.count({
+      where: { userId: context.userId, deleted: false, job: { deleted: false }, status: { not: 'PENDING' } }
+    })
   },
 
   savedCourses: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {

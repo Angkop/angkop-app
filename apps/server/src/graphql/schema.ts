@@ -81,6 +81,20 @@ export const typeDefs = `#graphql
     hybridScore: Float!
   }
 
+  type SavedJobPage {
+    items: [SavedJob!]!
+    total: Int!
+  }
+
+  # Aggregate counts across every saved job, independent of the current page/status
+  # filter — what the Applications page's stats row shows.
+  type SavedJobStats {
+    total: Int!
+    inProgress: Int!
+    upcomingInterviews: Int!
+    successful: Int!
+  }
+
   type SavedCourse {
     id: ID!
     title: String!
@@ -217,7 +231,10 @@ export const typeDefs = `#graphql
     jobMatchInsight(jobId: ID!): MatchInsight!
     skillGaps(page: Int, pageSize: Int): SkillGapPage!
     savedJobCount: Int!
-    savedJobs: [SavedJob!]!
+    appliedJobCount: Int!
+    savedJobIds: [ID!]!
+    savedJobs(page: Int, pageSize: Int, status: ApplicationStatus): SavedJobPage!
+    savedJobStats: SavedJobStats!
     savedCourses: [SavedCourse!]!
   }
 

@@ -13,7 +13,10 @@ export type MatchLabel = 'Strong Match' | 'Partial Match' | 'Weak Match'
 
 export const MATCH_SCORE_THRESHOLDS = {
   STRONG: 0.7,
-  PARTIAL: 0.4
+  PARTIAL: 0.4,
+  // Below this, a job never appears in the matches browse list at all — too weak a
+  // signal to be worth showing, as opposed to PARTIAL/STRONG which only affect the label.
+  MINIMUM: 0.4
 } as const
 
 export function getMatchLabel(score: number): MatchLabel {
