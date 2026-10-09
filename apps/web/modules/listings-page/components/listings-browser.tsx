@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useQuery } from '@apollo/client/react'
 import { Search } from 'lucide-react'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { PaginationControls } from '@/components/pagination-controls'
@@ -8,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
+import { getStoredToken } from '@/lib/auth'
+import { SAVED_JOB_IDS_QUERY, type SavedJobIdsQueryResult } from '@/lib/job-matches'
 import { useListingsFilters } from '../hooks/use-listings-filters'
 import { getListings } from '../queries'
 import type { ListingsPageResponse } from '../types'
@@ -27,6 +30,13 @@ export function ListingsBrowser({
   const filters = useListingsFilters()
   const [data, setData] = useState(initialPage)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Skipped entirely for anonymous browsing — /listings itself is public, this just adds
+  // "which of these are already bookmarked" on top for a signed-in viewer.
+  const { data: savedJobIdsData } = useQuery<SavedJobIdsQueryResult>(SAVED_JOB_IDS_QUERY, {
+    skip: !getStoredToken()
+  })
+  const savedJobIds = new Set(savedJobIdsData?.savedJobIds ?? [])
 
   // Refetch whenever the URL's *applied* filters/page actually change.
   useEffect(() => {
@@ -110,7 +120,7 @@ export function ListingsBrowser({
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {data.items.map((listing) => (
-            <ListingRow key={listing.id} listing={listing} />
+            <ListingRow key={listing.id} listing={listing} initiallySaved={savedJobIds.has(listing.id)} />
           ))}
         </div>
       )}

@@ -39,6 +39,16 @@ export const SAVE_JOB_MUTATION = gql`
   }
 `
 
+export const SAVED_JOB_IDS_QUERY = gql`
+  query SavedJobIds {
+    savedJobIds
+  }
+`
+
+export type SavedJobIdsQueryResult = {
+  savedJobIds: string[]
+}
+
 export type JobMatchesPage = {
   items: JobMatch[]
   total: number
