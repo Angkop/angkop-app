@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
-import { buttonVariants } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { ArrowLeft } from 'lucide-react'
+import { ApplyLink } from './components/apply-link'
 import { ListingCard } from './components/listing-card'
+import { ViewTracker } from './components/view-tracker'
 import { getListing } from './queries'
 
 export async function ListingDetailPage({ jobId }: { jobId: string }) {
@@ -12,6 +12,8 @@ export async function ListingDetailPage({ jobId }: { jobId: string }) {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-12">
+      <ViewTracker jobId={listing.id} />
+
       <Link
         href="/listings"
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
@@ -26,15 +28,7 @@ export async function ListingDetailPage({ jobId }: { jobId: string }) {
         <p className="text-xs text-muted-foreground">
           Re-served here for the Angkop extension demo — apply through the original posting.
         </p>
-        <a
-          href={listing.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={cn(buttonVariants({ size: 'sm' }), 'shrink-0')}
-        >
-          Apply on {listing.sourceName}
-          <ExternalLink className="size-3.5" />
-        </a>
+        <ApplyLink jobId={listing.id} sourceUrl={listing.sourceUrl} sourceName={listing.sourceName} />
       </div>
     </div>
   )
