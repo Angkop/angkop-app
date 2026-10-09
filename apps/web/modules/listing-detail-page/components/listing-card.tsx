@@ -13,7 +13,7 @@ export function ListingCard({ listing }: { listing: ListingDetail }) {
   return (
     <div
       className="job-listing rounded-lg border border-border bg-card p-6 shadow-sm"
-      data-angkop-platform="demo"
+      data-angkop-platform="angkop"
       data-angkop-platform-job-id={listing.platformJobId}
     >
       <div className="flex items-start justify-between gap-3">

@@ -42,12 +42,12 @@ async function main() {
       embedding
     }
     await prisma.job.upsert({
-      where: { platform_platformJobId: { platform: 'demo', platformJobId: listing.id } },
+      where: { platform_platformJobId: { platform: 'angkop', platformJobId: listing.id } },
       update: fields,
       create: {
         id: listing.id,
         platformJobId: listing.id,
-        platform: 'demo',
+        platform: 'angkop',
         ...fields
       }
     })

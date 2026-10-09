@@ -10,7 +10,7 @@ export const MAX_DESCRIPTION_LENGTH = 1500
 export const MAX_ARBEITNOW_PAGES = 5
 
 // Real public job-board APIs, no key required. We ingest into our own DB and re-serve the
-// listings on apps/web's /listings pages (platform: 'demo') for the extension to scrape —
+// listings on apps/web's /listings pages (platform: 'angkop') for the extension to scrape —
 // see ARCHITECTURE.md for why: scraping our own site carries no third-party ToS risk, while
 // these APIs' own terms (link back to the original posting) are satisfied via sourceUrl.
 export const USER_AGENT = 'Angkop-Thesis-Project/0.1 (educational use; github.com/angkop)'

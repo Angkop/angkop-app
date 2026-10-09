@@ -26,7 +26,7 @@ jobsRouter.get('/', async (req, res) => {
   const skill = typeof req.query.skill === 'string' ? req.query.skill.trim() : ''
 
   const where: Prisma.JobWhereInput = {
-    platform: 'demo',
+    platform: 'angkop',
     deleted: false,
     sourceName: source || { not: null },
     ...(skill ? { requiredSkills: { has: skill } } : {}),
@@ -65,7 +65,7 @@ jobsRouter.get('/', async (req, res) => {
 // hardcoded so a newly ingested source (see ingest-jobs.ts) shows up with no frontend change.
 jobsRouter.get('/sources', async (_req, res) => {
   const rows = await prisma.job.findMany({
-    where: { platform: 'demo', deleted: false, sourceName: { not: null } },
+    where: { platform: 'angkop', deleted: false, sourceName: { not: null } },
     select: { sourceName: true },
     distinct: ['sourceName']
   })
@@ -81,7 +81,7 @@ jobsRouter.get('/sources', async (_req, res) => {
 // this flattens the String[] column rather than joining one.
 jobsRouter.get('/skills', async (_req, res) => {
   const rows = await prisma.job.findMany({
-    where: { platform: 'demo', deleted: false, sourceName: { not: null } },
+    where: { platform: 'angkop', deleted: false, sourceName: { not: null } },
     select: { requiredSkills: true }
   })
   const skills = Array.from(new Set(rows.flatMap((row) => row.requiredSkills))).sort()
@@ -90,7 +90,7 @@ jobsRouter.get('/skills', async (_req, res) => {
 
 jobsRouter.get('/:id', async (req, res) => {
   const job = await prisma.job.findFirst({
-    where: { id: req.params.id, platform: 'demo', deleted: false, sourceName: { not: null } },
+    where: { id: req.params.id, platform: 'angkop', deleted: false, sourceName: { not: null } },
     include: {
       descriptionSections: {
         where: { deleted: false },
