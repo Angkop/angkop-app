@@ -1,7 +1,13 @@
 import type { EmploymentType } from '@prisma/client'
 
-export const JOBS_PER_SOURCE = 50
+export const JOBS_PER_SOURCE = 400
 export const MAX_DESCRIPTION_LENGTH = 1500
+
+// Arbeitnow paginates ~300+ jobs per page; RemoteOK doesn't paginate at all (one request
+// returns everything it has, currently under 100). This caps how many pages of Arbeitnow
+// we walk per ingest run — in practice the loop stops as soon as JOBS_PER_SOURCE is hit
+// (usually 2 pages), this just bounds it if that ever stops being true.
+export const MAX_ARBEITNOW_PAGES = 5
 
 // Real public job-board APIs, no key required. We ingest into our own DB and re-serve the
 // listings on apps/web's /listings pages (platform: 'demo') for the extension to scrape —

@@ -1,6 +1,6 @@
 import type { EmploymentType, WorkSetup } from '@prisma/client'
 import { logger } from '../../../lib/logger'
-import { EMPLOYMENT_TYPE_MAP, JOBS_PER_SOURCE, USER_AGENT } from '../constants'
+import { EMPLOYMENT_TYPE_MAP, JOBS_PER_SOURCE, MAX_ARBEITNOW_PAGES, USER_AGENT } from '../constants'
 import { flattenSections, parseDescriptionSections } from '../description-sections'
 import type { NormalizedListing } from '../types'
 
@@ -14,17 +14,32 @@ function mapEmploymentType(jobTypes: unknown): EmploymentType | null {
   return null
 }
 
-export async function fetchArbeitnow(): Promise<NormalizedListing[]> {
-  const response = await fetch('https://arbeitnow.com/api/job-board-api', {
-    headers: { 'User-Agent': USER_AGENT }
-  })
-  if (!response.ok) {
-    logger.warn({ status: response.status }, 'Arbeitnow fetch failed, skipping source')
-    return []
-  }
-  const body = (await response.json()) as { data?: Array<Record<string, unknown>> }
+type ArbeitnowPage = {
+  data?: Array<Record<string, unknown>>
+  links?: { next?: string | null }
+}
 
-  return (body.data ?? [])
+async function fetchArbeitnowPage(url: string): Promise<ArbeitnowPage | null> {
+  const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
+  if (!response.ok) {
+    logger.warn({ status: response.status, url }, 'Arbeitnow page fetch failed, stopping pagination')
+    return null
+  }
+  return (await response.json()) as ArbeitnowPage
+}
+
+export async function fetchArbeitnow(): Promise<NormalizedListing[]> {
+  const rawJobs: Record<string, unknown>[] = []
+  let nextUrl: string | null = 'https://arbeitnow.com/api/job-board-api'
+
+  for (let page = 0; page < MAX_ARBEITNOW_PAGES && nextUrl && rawJobs.length < JOBS_PER_SOURCE; page++) {
+    const body: ArbeitnowPage | null = await fetchArbeitnowPage(nextUrl)
+    if (!body) break
+    rawJobs.push(...(body.data ?? []))
+    nextUrl = body.links?.next ?? null
+  }
+
+  return rawJobs
     .filter((entry): entry is Record<string, unknown> & { slug: string; title: string } =>
       typeof entry.slug === 'string' && typeof entry.title === 'string'
     )
