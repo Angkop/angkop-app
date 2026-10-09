@@ -1,9 +1,15 @@
+import { EMBEDDING_DIMENSIONS } from '@angkop/shared'
 import { Router } from 'express'
 import { prisma } from '../lib/prisma'
-import { getOrSetMatchScore } from '../lib/redis'
+import { getOrSetMatchScores } from '../lib/redis'
 import { recommend } from '../lib/ml-client'
 
 const DEMO_USER_ID = 'demo-user-1'
+
+// A user with no stored embedding yet (no completed onboarding) scores against a neutral
+// zero vector instead of re-embedding text on every overlay request - see the equivalent
+// fallback in graphql/resolvers/helpers.ts.
+const ZERO_EMBEDDING: number[] = new Array(EMBEDDING_DIMENSIONS).fill(0)
 
 export const matchScoreRouter = Router()
 
@@ -22,15 +28,17 @@ matchScoreRouter.get('/:jobId', async (req, res) => {
     prisma.interaction.count({ where: { userId, deleted: false } })
   ])
 
-  const score = await getOrSetMatchScore(userId, job.id, () =>
-    recommend({
+  const userEmbedding = profile && profile.embedding.length > 0 ? profile.embedding : ZERO_EMBEDDING
+  const scoresByJobId = await getOrSetMatchScores(userId, [job.id], async () => {
+    const score = await recommend({
       userId,
       jobId: job.id,
-      userSkillsText: profile?.skillsText ?? '',
-      jobText: `${job.title}. ${job.description}`,
+      userEmbedding,
+      jobEmbedding: job.embedding,
       userInteractionCount: interactionCount
     })
-  )
+    return new Map([[job.id, score]])
+  })
 
-  res.json(score)
+  res.json(scoresByJobId.get(job.id))
 })

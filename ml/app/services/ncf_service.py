@@ -67,3 +67,24 @@ def predict_collaborative_score(user_id: str, job_id: str) -> float:
     with _inference_lock, torch.no_grad():
         score = loaded.model(user_idx, item_idx).item()
     return score
+
+
+def predict_collaborative_scores_batch(user_id: str, job_ids: list[str]) -> list[float]:
+    """Batched counterpart to predict_collaborative_score: one tensor forward pass for the
+    whole list instead of one Python call (plus a lock acquisition) per job, which is what
+    made scoring a full job feed slow."""
+    loaded = _load()
+    if loaded is None or user_id not in loaded.user_index:
+        return [COLD_START_COLLABORATIVE_SCORE] * len(job_ids)
+
+    known_job_ids = [job_id for job_id in job_ids if job_id in loaded.item_index]
+    if not known_job_ids:
+        return [COLD_START_COLLABORATIVE_SCORE] * len(job_ids)
+
+    user_idx = torch.tensor([loaded.user_index[user_id]] * len(known_job_ids))
+    item_idx = torch.tensor([loaded.item_index[job_id] for job_id in known_job_ids])
+    with _inference_lock, torch.no_grad():
+        scores = loaded.model(user_idx, item_idx).tolist()
+
+    scores_by_job_id = dict(zip(known_job_ids, scores))
+    return [scores_by_job_id.get(job_id, COLD_START_COLLABORATIVE_SCORE) for job_id in job_ids]

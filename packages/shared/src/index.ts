@@ -230,11 +230,18 @@ export type EmbedResponse = {
   embedding: number[]
 }
 
+// all-MiniLM-L6-v2's fixed output size — used as the zero-vector fallback length for a
+// user who hasn't completed onboarding yet (no stored UserProfile.embedding).
+export const EMBEDDING_DIMENSIONS = 384
+
+// Embeddings in, not raw text — the job's embedding is already computed once at ingestion
+// (Job.embedding) and the user's once per profile save (UserProfile.embedding), so scoring
+// a job is plain cosine-similarity math instead of a live Sentence-BERT inference call.
 export type RecommendRequest = {
   userId: string
   jobId: string
-  userSkillsText: string
-  jobText: string
+  userEmbedding: number[]
+  jobEmbedding: number[]
   userInteractionCount: number
 }
 
@@ -243,6 +250,23 @@ export type RecommendResponse = {
   collaborativeScore: number
   hybridScore: number
   collaborativeWeight: number
+}
+
+// Scores many jobs against one user embedding in a single request instead of one HTTP
+// round-trip per job - what the job feed calls for every uncached job.
+export type RecommendBatchRequest = {
+  userId: string
+  userEmbedding: number[]
+  userInteractionCount: number
+  jobs: { jobId: string; jobEmbedding: number[] }[]
+}
+
+export type RecommendBatchResult = RecommendResponse & {
+  jobId: string
+}
+
+export type RecommendBatchResponse = {
+  results: RecommendBatchResult[]
 }
 
 export type SkillGapRequest = {

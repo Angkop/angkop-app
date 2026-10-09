@@ -1,6 +1,7 @@
 import { INTERACTION_WEIGHTS, type ApplicationStatus, type InteractionEventType } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { invalidateMatchScoresForUser } from '../../lib/redis'
+import { embed } from '../../lib/ml-client'
 import { VALID_EVENT_TYPES } from './constants'
 import { buildSkillsText, loadProfileForMe, serializeSavedJob } from './helpers'
 import type { CompleteOnboardingInput, GraphQLContext } from './types'
@@ -39,144 +40,173 @@ export const mutationResolvers = {
       preferences: input.preferences
     })
 
-    await prisma.$transaction(async (tx) => {
-      const profile = await tx.userProfile.upsert({
-        where: { userId: context.userId },
-        update: {
-          headline: input.headline ?? null,
-          about: input.about ?? null,
-          location: input.location ?? null,
-          careerLevel: input.careerLevel ?? null,
-          resumeFileName: input.resumeFileName ?? null,
-          skillsText
-        },
-        create: {
-          userId: context.userId,
-          headline: input.headline ?? null,
-          about: input.about ?? null,
-          location: input.location ?? null,
-          careerLevel: input.careerLevel ?? null,
-          resumeFileName: input.resumeFileName ?? null,
-          skillsText,
-          embedding: []
-        }
-      })
+    // skillsText's embedding is computed once here and stored, instead of the job feed
+    // re-embedding it from scratch for every job on every feed load (see computeJobMatches
+    // in helpers.ts) - that redundant re-embedding was the main cause of the feed being slow.
+    const [{ embedding }, skillRecords] = await Promise.all([
+      embed({ text: skillsText }),
+      Promise.all(
+        skills.map((skillInput) =>
+          prisma.skill.upsert({
+            where: { name: skillInput.name },
+            update: skillInput.category ? { category: skillInput.category } : {},
+            create: { name: skillInput.name, category: skillInput.category ?? null }
+          })
+        )
+      )
+    ])
 
-      // Re-running onboarding (or editing the profile later) shouldn't duplicate child
-      // rows, and hard deletes are off-limits — soft-delete the previous set before
-      // recreating it, same pattern prisma/seed.ts already uses.
-      await tx.userSkill.updateMany({
+    // Interactive transactions ($transaction(async tx => ...)) need one connection held
+    // open across every round-trip while app code runs in between. Supabase's DATABASE_URL
+    // here is the transaction-mode pooler (schema.prisma datasource comment), which doesn't
+    // guarantee that — mid-transaction the engine can lose track of it and throw "Transaction
+    // not found". Raising timeout/maxWait only made that rarer, not impossible, and got worse
+    // the more skills a user had (2 round-trips per skill, all sequential). The fix is to stop
+    // using the interactive form: resolve the profile with a plain (non-transactional) call
+    // first, then do the rest as one *batched* `$transaction([...])` - Prisma sends that as a
+    // single request with no app-code round trips in between, which is the form Prisma
+    // documents as pooler-safe.
+    const profile = await prisma.userProfile.upsert({
+      where: { userId: context.userId },
+      update: {
+        headline: input.headline ?? null,
+        about: input.about ?? null,
+        location: input.location ?? null,
+        careerLevel: input.careerLevel ?? null,
+        resumeFileName: input.resumeFileName ?? null,
+        skillsText,
+        embedding
+      },
+      create: {
+        userId: context.userId,
+        headline: input.headline ?? null,
+        about: input.about ?? null,
+        location: input.location ?? null,
+        careerLevel: input.careerLevel ?? null,
+        resumeFileName: input.resumeFileName ?? null,
+        skillsText,
+        embedding
+      }
+    })
+
+    // Re-running onboarding (or editing the profile later) shouldn't duplicate child rows,
+    // and hard deletes are off-limits — soft-delete the previous set before recreating it,
+    // same pattern prisma/seed.ts already uses.
+    await prisma.$transaction([
+      prisma.userSkill.updateMany({
         where: { userId: context.userId, deleted: false },
         data: { deleted: true }
-      })
-      await tx.education.updateMany({
+      }),
+      prisma.education.updateMany({
         where: { userProfileId: profile.id, deleted: false },
         data: { deleted: true }
-      })
-      await tx.workExperience.updateMany({
+      }),
+      prisma.workExperience.updateMany({
         where: { userProfileId: profile.id, deleted: false },
         data: { deleted: true }
-      })
-      await tx.certification.updateMany({
+      }),
+      prisma.certification.updateMany({
         where: { userProfileId: profile.id, deleted: false },
         data: { deleted: true }
-      })
-      await tx.project.updateMany({
+      }),
+      prisma.project.updateMany({
         where: { userProfileId: profile.id, deleted: false },
         data: { deleted: true }
-      })
-      await tx.language.updateMany({
+      }),
+      prisma.language.updateMany({
         where: { userProfileId: profile.id, deleted: false },
         data: { deleted: true }
-      })
-
-      for (const skillInput of skills) {
-        const skill = await tx.skill.upsert({
-          where: { name: skillInput.name },
-          update: skillInput.category ? { category: skillInput.category } : {},
-          create: { name: skillInput.name, category: skillInput.category ?? null }
-        })
-        await tx.userSkill.upsert({
+      }),
+      ...skillRecords.map((skill, index) =>
+        prisma.userSkill.upsert({
           where: { userId_skillId: { userId: context.userId, skillId: skill.id } },
-          update: { level: skillInput.level ?? null, years: skillInput.years ?? null, deleted: false },
+          update: {
+            level: skills[index].level ?? null,
+            years: skills[index].years ?? null,
+            deleted: false
+          },
           create: {
             userId: context.userId,
             skillId: skill.id,
-            level: skillInput.level ?? null,
-            years: skillInput.years ?? null
+            level: skills[index].level ?? null,
+            years: skills[index].years ?? null
           }
         })
-      }
-
-      if (education.length > 0) {
-        await tx.education.createMany({
-          data: education.map((entry) => ({
-            userProfileId: profile.id,
-            school: entry.school,
-            degree: entry.degree ?? null,
-            fieldOfStudy: entry.fieldOfStudy ?? null,
-            startYear: entry.startYear ?? null,
-            endYear: entry.endYear ?? null,
-            description: entry.description ?? null
-          }))
-        })
-      }
-
-      if (experience.length > 0) {
-        await tx.workExperience.createMany({
-          data: experience.map((entry) => ({
-            userProfileId: profile.id,
-            title: entry.title,
-            company: entry.company,
-            location: entry.location ?? null,
-            employmentType: entry.employmentType ?? null,
-            description: entry.description ?? null,
-            startDate: new Date(entry.startDate),
-            endDate: entry.endDate ? new Date(entry.endDate) : null,
-            current: entry.current ?? false
-          }))
-        })
-      }
-
-      if (certifications.length > 0) {
-        await tx.certification.createMany({
-          data: certifications.map((entry) => ({
-            userProfileId: profile.id,
-            name: entry.name,
-            issuer: entry.issuer,
-            issueDate: entry.issueDate ? new Date(entry.issueDate) : null,
-            expirationDate: entry.expirationDate ? new Date(entry.expirationDate) : null,
-            credentialId: entry.credentialId ?? null,
-            credentialUrl: entry.credentialUrl ?? null
-          }))
-        })
-      }
-
-      if (projects.length > 0) {
-        await tx.project.createMany({
-          data: projects.map((entry) => ({
-            userProfileId: profile.id,
-            name: entry.name,
-            description: entry.description,
-            technologies: entry.technologies,
-            url: entry.url ?? null,
-            startDate: entry.startDate ? new Date(entry.startDate) : null,
-            endDate: entry.endDate ? new Date(entry.endDate) : null
-          }))
-        })
-      }
-
-      if (languages.length > 0) {
-        await tx.language.createMany({
-          data: languages.map((entry) => ({
-            userProfileId: profile.id,
-            language: entry.language,
-            proficiency: entry.proficiency ?? null
-          }))
-        })
-      }
-
-      await tx.userPreference.upsert({
+      ),
+      ...(education.length > 0
+        ? [
+            prisma.education.createMany({
+              data: education.map((entry) => ({
+                userProfileId: profile.id,
+                school: entry.school,
+                degree: entry.degree ?? null,
+                fieldOfStudy: entry.fieldOfStudy ?? null,
+                startYear: entry.startYear ?? null,
+                endYear: entry.endYear ?? null,
+                description: entry.description ?? null
+              }))
+            })
+          ]
+        : []),
+      ...(experience.length > 0
+        ? [
+            prisma.workExperience.createMany({
+              data: experience.map((entry) => ({
+                userProfileId: profile.id,
+                title: entry.title,
+                company: entry.company,
+                location: entry.location ?? null,
+                employmentType: entry.employmentType ?? null,
+                description: entry.description ?? null,
+                startDate: new Date(entry.startDate),
+                endDate: entry.endDate ? new Date(entry.endDate) : null,
+                current: entry.current ?? false
+              }))
+            })
+          ]
+        : []),
+      ...(certifications.length > 0
+        ? [
+            prisma.certification.createMany({
+              data: certifications.map((entry) => ({
+                userProfileId: profile.id,
+                name: entry.name,
+                issuer: entry.issuer,
+                issueDate: entry.issueDate ? new Date(entry.issueDate) : null,
+                expirationDate: entry.expirationDate ? new Date(entry.expirationDate) : null,
+                credentialId: entry.credentialId ?? null,
+                credentialUrl: entry.credentialUrl ?? null
+              }))
+            })
+          ]
+        : []),
+      ...(projects.length > 0
+        ? [
+            prisma.project.createMany({
+              data: projects.map((entry) => ({
+                userProfileId: profile.id,
+                name: entry.name,
+                description: entry.description,
+                technologies: entry.technologies,
+                url: entry.url ?? null,
+                startDate: entry.startDate ? new Date(entry.startDate) : null,
+                endDate: entry.endDate ? new Date(entry.endDate) : null
+              }))
+            })
+          ]
+        : []),
+      ...(languages.length > 0
+        ? [
+            prisma.language.createMany({
+              data: languages.map((entry) => ({
+                userProfileId: profile.id,
+                language: entry.language,
+                proficiency: entry.proficiency ?? null
+              }))
+            })
+          ]
+        : []),
+      prisma.userPreference.upsert({
         where: { userProfileId: profile.id },
         update: {
           desiredRoles: input.preferences.desiredRoles,
@@ -202,7 +232,7 @@ export const mutationResolvers = {
           willingToRemote: input.preferences.willingToRemote
         }
       })
-    })
+    ])
 
     // Skills/skillsText feed straight into the semantic score, so cached scores from
     // before this edit are now wrong for every job, not just one.

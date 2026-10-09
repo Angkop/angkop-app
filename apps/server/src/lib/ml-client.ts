@@ -4,6 +4,8 @@ import type {
   MatchInsightRequest,
   MatchInsightResponse,
   ParsedResumeProfile,
+  RecommendBatchRequest,
+  RecommendBatchResponse,
   RecommendRequest,
   RecommendResponse,
   ResumeParseRequest,
@@ -33,7 +35,10 @@ async function postJson<TResponse>(path: string, body: unknown): Promise<TRespon
 
   if (!response.ok) {
     const detail = await response.text()
-    throw new MlServiceError(response.status, `ML service request to ${path} failed with status ${response.status}: ${detail}`)
+    throw new MlServiceError(
+      response.status,
+      `ML service request to ${path} failed with status ${response.status}: ${detail}`
+    )
   }
 
   return response.json() as Promise<TResponse>
@@ -45,6 +50,10 @@ export function embed(request: EmbedRequest): Promise<EmbedResponse> {
 
 export function recommend(request: RecommendRequest): Promise<RecommendResponse> {
   return postJson<RecommendResponse>('/recommend', request)
+}
+
+export function recommendBatch(request: RecommendBatchRequest): Promise<RecommendBatchResponse> {
+  return postJson<RecommendBatchResponse>('/recommend/batch', request)
 }
 
 export function skillGap(request: SkillGapRequest): Promise<SkillGapResponse> {

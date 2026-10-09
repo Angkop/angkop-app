@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { gql } from '@apollo/client'
-import { useMutation, useQuery } from '@apollo/client/react'
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import type { CareerLevel, ParsedResumeProfile, UserProfile as SharedUserProfile } from '@angkop/shared'
 import {
   EMPTY_CERTIFICATION,
@@ -108,6 +108,7 @@ type MeQueryResult = {
 }
 
 export function useProfileEditor() {
+  const apolloClient = useApolloClient()
   const { data, loading, error, refetch } = useQuery<MeQueryResult>(ME_QUERY)
   const [completeOnboarding, { loading: isSaving, error: saveError }] = useMutation(COMPLETE_ONBOARDING_MUTATION)
 
@@ -232,6 +233,16 @@ export function useProfileEditor() {
     // completeOnboarding only echoes back { id }, so the cache never auto-updates the
     // profile fields — refetch so the read-only view reflects what was just saved.
     await refetch()
+    // Every one of these reads a hybrid/semantic score or a skill gap computed from the
+    // profile that just changed. The server recomputes them fine (see completeOnboarding's
+    // Redis cache invalidation), but Apollo's own cache doesn't know they're stale and would
+    // otherwise keep serving the old numbers to any page that reads them next - evict so the
+    // next read for each goes to the network instead.
+    apolloClient.cache.evict({ fieldName: 'jobMatches' })
+    apolloClient.cache.evict({ fieldName: 'jobMatchInsight' })
+    apolloClient.cache.evict({ fieldName: 'savedJobs' })
+    apolloClient.cache.evict({ fieldName: 'skillGaps' })
+    apolloClient.cache.gc()
   }
 
   // Fills in-memory form state from a parsed resume — same as a user typing into every

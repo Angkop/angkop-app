@@ -1,15 +1,15 @@
-// Full environment reset — wipes every row in every table plus the Redis match-score and
-// resume caches, so the app starts from a genuinely blank slate (same Google account can
-// sign in again, same job postings can be re-ingested with new ids, etc.).
+// Environment reset — wipes every row in every table except Job and JobDescriptionSection
+// (re-ingesting real listings costs real API calls, no reason to pay that again), plus the
+// Redis match-score and resume caches, so the app starts from a blank slate otherwise (same
+// Google account can sign in again, etc.).
 //
 // Run: tsx src/scripts/reset-all-data.ts        (dry run — counts only, deletes nothing)
 //      DRY_RUN=false tsx src/scripts/reset-all-data.ts   (actually deletes)
 //
 // SAFE: hard delete instead of soft-delete, by explicit developer request (pre-launch thesis
 // dev data, no audit requirement). Soft-deleting wouldn't actually achieve "start fresh" here
-// anyway — User.email, Job[platform,platformJobId], SavedJob[userId,jobId] etc. are plain
-// unique constraints that still apply to deleted:true rows, so the same test account/job
-// could never be re-created without this.
+// anyway — User.email, SavedJob[userId,jobId] etc. are plain unique constraints that still
+// apply to deleted:true rows, so the same test account could never be re-created without this.
 import 'dotenv/config'
 import { PrismaClient, type Prisma } from '@prisma/client'
 import { logger } from '../lib/logger'
@@ -56,6 +56,8 @@ async function main() {
   logger.info(`Running in ${DRY_RUN ? 'DRY RUN' : 'LIVE'} mode`)
 
   // Children before parents, so the real delete pass never hits a foreign-key violation.
+  // Job and JobDescriptionSection are deliberately excluded — everything left here only
+  // references Job via jobId, never the other way around, so skipping it is safe.
   const models: { name: string; delegate: DeletableDelegate }[] = [
     { name: 'education', delegate: prisma.education },
     { name: 'workExperience', delegate: prisma.workExperience },
@@ -63,7 +65,6 @@ async function main() {
     { name: 'project', delegate: prisma.project },
     { name: 'language', delegate: prisma.language },
     { name: 'userPreference', delegate: prisma.userPreference },
-    { name: 'jobDescriptionSection', delegate: prisma.jobDescriptionSection },
     { name: 'interaction', delegate: prisma.interaction },
     { name: 'skillGapRecord', delegate: prisma.skillGapRecord },
     { name: 'matchInsight', delegate: prisma.matchInsight },
@@ -71,7 +72,6 @@ async function main() {
     { name: 'savedCourse', delegate: prisma.savedCourse },
     { name: 'userSkill', delegate: prisma.userSkill },
     { name: 'userProfile', delegate: prisma.userProfile },
-    { name: 'job', delegate: prisma.job },
     { name: 'skill', delegate: prisma.skill },
     { name: 'user', delegate: prisma.user }
   ]

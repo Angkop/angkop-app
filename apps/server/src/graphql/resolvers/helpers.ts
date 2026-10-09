@@ -1,10 +1,8 @@
-import type { JobMatch, MatchInsight, MatchInsightRequest, MatchInsightResponse } from '@angkop/shared'
+import { EMBEDDING_DIMENSIONS, type JobMatch, type MatchInsight, type MatchInsightRequest, type MatchInsightResponse, type RecommendResponse } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
-import { getOrSetMatchScore } from '../../lib/redis'
-import { MlServiceError, matchInsight as requestMatchInsight, recommend } from '../../lib/ml-client'
-import { mapWithConcurrency } from '../../lib/concurrency'
+import { getOrSetMatchScores } from '../../lib/redis'
+import { MlServiceError, matchInsight as requestMatchInsight, recommend, recommendBatch } from '../../lib/ml-client'
 import { logger } from '../../lib/logger'
-import { ML_REQUEST_CONCURRENCY } from './constants'
 import type {
   CertificationInput,
   EducationInput,
@@ -14,6 +12,15 @@ import type {
   UserPreferenceInput,
   WorkExperienceInput
 } from './types'
+
+// A user who hasn't completed onboarding yet has no UserProfile row (and therefore no
+// stored embedding) - score them against a neutral zero vector rather than special-casing
+// "no profile" through every caller below.
+const ZERO_EMBEDDING: number[] = new Array(EMBEDDING_DIMENSIONS).fill(0)
+
+function resolveUserEmbedding(profile: { embedding: number[] } | null): number[] {
+  return profile && profile.embedding.length > 0 ? profile.embedding : ZERO_EMBEDDING
+}
 
 export function serializeSavedJob(savedJob: SavedJobWithJob, hybridScore = 0) {
   return {
@@ -140,6 +147,37 @@ export async function loadProfileForMe(userId: string) {
   }
 }
 
+// Scores every job against the user's stored embedding in one batched ML request - both
+// embeddings are precomputed (Job.embedding at ingestion, UserProfile.embedding on profile
+// save), so this is cosine-similarity + NCF lookup, not live Sentence-BERT inference, and
+// the cache misses across the whole feed go out as a single /recommend/batch call instead
+// of one request per job.
+async function scoreJobs(
+  userId: string,
+  jobs: { id: string; embedding: number[] }[],
+  userEmbedding: number[],
+  interactionCount: number
+): Promise<Map<string, RecommendResponse>> {
+  const jobsById = new Map(jobs.map((job) => [job.id, job]))
+
+  return getOrSetMatchScores(
+    userId,
+    jobs.map((job) => job.id),
+    async (missingJobIds) => {
+      const { results } = await recommendBatch({
+        userId,
+        userEmbedding,
+        userInteractionCount: interactionCount,
+        jobs: missingJobIds.map((jobId) => ({
+          jobId,
+          jobEmbedding: jobsById.get(jobId)!.embedding
+        }))
+      })
+      return new Map(results.map((result) => [result.jobId, result]))
+    }
+  )
+}
+
 export async function computeJobMatches(userId: string): Promise<JobMatch[]> {
   const [jobs, profile, interactionCount] = await Promise.all([
     prisma.job.findMany({ where: { deleted: false } }),
@@ -147,17 +185,10 @@ export async function computeJobMatches(userId: string): Promise<JobMatch[]> {
     prisma.interaction.count({ where: { userId, deleted: false } })
   ])
 
-  const matches = await mapWithConcurrency(jobs, ML_REQUEST_CONCURRENCY, async (job) => {
-    const scores = await getOrSetMatchScore(userId, job.id, () =>
-      recommend({
-        userId,
-        jobId: job.id,
-        userSkillsText: profile?.skillsText ?? '',
-        jobText: `${job.title}. ${job.description}`,
-        userInteractionCount: interactionCount
-      })
-    )
+  const scoresByJobId = await scoreJobs(userId, jobs, resolveUserEmbedding(profile), interactionCount)
 
+  const matches = jobs.map((job) => {
+    const scores = scoresByJobId.get(job.id)!
     return {
       job: {
         id: job.id,
@@ -191,20 +222,9 @@ export async function computeHybridScoresByJobId(userId: string, jobIds: string[
     prisma.interaction.count({ where: { userId, deleted: false } })
   ])
 
-  const entries = await mapWithConcurrency(jobs, ML_REQUEST_CONCURRENCY, async (job) => {
-    const scores = await getOrSetMatchScore(userId, job.id, () =>
-      recommend({
-        userId,
-        jobId: job.id,
-        userSkillsText: profile?.skillsText ?? '',
-        jobText: `${job.title}. ${job.description}`,
-        userInteractionCount: interactionCount
-      })
-    )
-    return [job.id, scores.hybridScore] as const
-  })
+  const scoresByJobId = await scoreJobs(userId, jobs, resolveUserEmbedding(profile), interactionCount)
 
-  return new Map(entries)
+  return new Map(jobs.map((job) => [job.id, scoresByJobId.get(job.id)!.hybridScore]))
 }
 
 const MAX_INSIGHT_RETRIES = 2
@@ -258,15 +278,18 @@ export async function getJobMatchInsight(userId: string, jobId: string): Promise
     prisma.interaction.count({ where: { userId, deleted: false } })
   ])
 
-  const scores = await getOrSetMatchScore(userId, job.id, () =>
-    recommend({
+  const userEmbedding = resolveUserEmbedding(profile)
+  const scoresByJobId = await getOrSetMatchScores(userId, [job.id], async () => {
+    const score = await recommend({
       userId,
       jobId: job.id,
-      userSkillsText: profile?.skillsText ?? '',
-      jobText: `${job.title}. ${job.description}`,
+      userEmbedding,
+      jobEmbedding: job.embedding,
       userInteractionCount: interactionCount
     })
-  )
+    return new Map([[job.id, score]])
+  })
+  const scores = scoresByJobId.get(job.id)!
 
   const insight = await requestMatchInsightWithRetry({
     jobTitle: job.title,
