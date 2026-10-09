@@ -1,22 +1,36 @@
 import { gql } from '@apollo/client'
 
 export const SAVED_JOBS_QUERY = gql`
-  query SavedJobs {
-    savedJobs {
-      id
-      status
-      tags
-      interviewDate
-      createdAt
-      hybridScore
-      job {
+  query SavedJobs($page: Int, $pageSize: Int, $status: ApplicationStatus) {
+    savedJobs(page: $page, pageSize: $pageSize, status: $status) {
+      items {
         id
-        title
-        company
-        requiredSkills
-        url
-        sourceName
+        status
+        tags
+        interviewDate
+        createdAt
+        hybridScore
+        job {
+          id
+          title
+          company
+          requiredSkills
+          url
+          sourceName
+        }
       }
+      total
+    }
+  }
+`
+
+export const SAVED_JOB_STATS_QUERY = gql`
+  query SavedJobStats {
+    savedJobStats {
+      total
+      inProgress
+      upcomingInterviews
+      successful
     }
   }
 `

@@ -1,10 +1,7 @@
 import { gql } from '@apollo/client'
 
-export const SAVED_JOBS_STATUS_QUERY = gql`
-  query SavedJobsStatus {
-    savedJobs {
-      id
-      status
-    }
+export const APPLIED_JOB_COUNT_QUERY = gql`
+  query AppliedJobCount {
+    appliedJobCount
   }
 `

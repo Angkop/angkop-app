@@ -10,4 +10,4 @@ export const STATUS_ORDER: ApplicationStatus[] = [
   'UNSUCCESSFUL'
 ]
 
-export const PAGE_SIZE = 10
+export const PAGE_SIZE = 5

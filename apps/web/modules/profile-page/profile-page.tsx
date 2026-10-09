@@ -26,12 +26,12 @@ import { ProjectsSection } from './components/projects-section'
 import { LanguagesSection } from './components/languages-section'
 import { PreferencesSection } from './components/preferences-section'
 import { ProfileFieldSection } from './components/profile-field-section'
-import { SAVED_JOBS_STATUS_QUERY } from './queries'
-import type { SavedJobsStatusQueryResult } from './types'
+import { APPLIED_JOB_COUNT_QUERY } from './queries'
+import type { AppliedJobCountQueryResult } from './types'
 
 export function ProfilePage() {
   const editor = useProfileEditor()
-  const { data: savedJobsData } = useQuery<SavedJobsStatusQueryResult>(SAVED_JOBS_STATUS_QUERY)
+  const { data: appliedJobCountData } = useQuery<AppliedJobCountQueryResult>(APPLIED_JOB_COUNT_QUERY)
   const [isEditing, setIsEditing] = useState(false)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false)
@@ -40,7 +40,7 @@ export function ProfilePage() {
   if (editor.error) return <ErrorMessage>Could not load profile: {editor.error.message}</ErrorMessage>
 
   const profile = editor.profile
-  const jobsAppliedCount = (savedJobsData?.savedJobs ?? []).filter((saved) => saved.status !== 'PENDING').length
+  const jobsAppliedCount = appliedJobCountData?.appliedJobCount ?? 0
 
   async function handleSave() {
     setSavedMessage(null)
@@ -69,8 +69,8 @@ export function ProfilePage() {
       <ResumeImportDialog
         open={isResumeDialogOpen}
         onOpenChange={setIsResumeDialogOpen}
-        onImport={(parsed) => {
-          editor.importParsedResume(parsed)
+        onImport={(parsed, fileName) => {
+          editor.importParsedResume(parsed, fileName)
           setIsEditing(true)
         }}
       />
@@ -93,8 +93,6 @@ export function ProfilePage() {
               onLocationChange={editor.setLocation}
               about={editor.about}
               onAboutChange={editor.setAbout}
-              resumeFileName={editor.resumeFileName}
-              onResumeFileNameChange={editor.setResumeFileName}
             />
           </ProfileFieldSection>
 
