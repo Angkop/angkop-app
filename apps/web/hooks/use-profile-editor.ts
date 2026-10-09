@@ -236,7 +236,9 @@ export function useProfileEditor() {
 
   // Fills in-memory form state from a parsed resume — same as a user typing into every
   // field by hand. Nothing is persisted until submit() runs via the normal Save/Finish flow.
-  function importParsedResume(parsed: ParsedResumeProfile) {
+  // resumeFileName records the actual imported file's name — it's the only place this
+  // field is ever set, since Angkop never stores the uploaded file itself.
+  function importParsedResume(parsed: ParsedResumeProfile, fileName: string) {
     const fields = profileEntriesFromParsedResume(parsed)
     setHeadline(fields.headline)
     setAbout(fields.about)
@@ -248,6 +250,7 @@ export function useProfileEditor() {
     certificationHelpers.replaceAll(fields.certifications)
     projectHelpers.replaceAll(fields.projects)
     languageHelpers.replaceAll(fields.languages)
+    setResumeFileName(fileName)
   }
 
   return {

@@ -2,7 +2,6 @@ import { CAREER_LEVEL_LABELS, type CareerLevel } from '@angkop/shared'
 import { Input, Textarea } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { ResumeUploadControl } from './resume-upload-control'
 
 export function AboutFields({
   headline,
@@ -12,9 +11,7 @@ export function AboutFields({
   location,
   onLocationChange,
   about,
-  onAboutChange,
-  resumeFileName,
-  onResumeFileNameChange
+  onAboutChange
 }: {
   headline: string
   onHeadlineChange: (value: string) => void
@@ -24,19 +21,9 @@ export function AboutFields({
   onLocationChange: (value: string) => void
   about: string
   onAboutChange: (value: string) => void
-  resumeFileName: string
-  onResumeFileNameChange: (value: string) => void
 }) {
   return (
     <>
-      <div className="space-y-1.5">
-        <Label>Upload your resume</Label>
-        <p className="text-xs text-muted-foreground">
-          Optional shortcut — skip manually filling in the fields below if your resume already covers them.
-        </p>
-        <ResumeUploadControl resumeFileName={resumeFileName} onResumeFileNameChange={onResumeFileNameChange} />
-      </div>
-
       <div className="space-y-1.5">
         <Label htmlFor="headline">Headline</Label>
         <Input

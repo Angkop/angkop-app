@@ -19,8 +19,6 @@ export function AboutStep({
   onLocationChange,
   about,
   onAboutChange,
-  resumeFileName,
-  onResumeFileNameChange,
   onImportParsedResume
 }: {
   email: string
@@ -33,9 +31,7 @@ export function AboutStep({
   onLocationChange: (value: string) => void
   about: string
   onAboutChange: (value: string) => void
-  resumeFileName: string
-  onResumeFileNameChange: (value: string) => void
-  onImportParsedResume: (parsed: ParsedResumeProfile) => void
+  onImportParsedResume: (parsed: ParsedResumeProfile, fileName: string) => void
 }) {
   const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false)
 
@@ -53,15 +49,20 @@ export function AboutStep({
         </div>
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => setIsResumeDialogOpen(true)}
-        className="w-full gap-1.5 sm:w-auto"
-      >
-        <Upload className="size-3.5" />
-        Import from resume
-      </Button>
+      <div className="space-y-1.5">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setIsResumeDialogOpen(true)}
+          className="w-full gap-1.5"
+        >
+          <Upload className="size-3.5" />
+          Import from resume
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Optional shortcut — skip manually filling in the fields below if your resume already covers them.
+        </p>
+      </div>
 
       <ResumeImportDialog
         open={isResumeDialogOpen}
@@ -78,8 +79,6 @@ export function AboutStep({
         onLocationChange={onLocationChange}
         about={about}
         onAboutChange={onAboutChange}
-        resumeFileName={resumeFileName}
-        onResumeFileNameChange={onResumeFileNameChange}
       />
     </StepSection>
   )

@@ -185,7 +185,7 @@ export function ResumeImportDialog({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onImport: (parsed: ParsedResumeProfile) => void
+  onImport: (parsed: ParsedResumeProfile, fileName: string) => void
 }) {
   const [stage, setStage] = useState<Stage>('upload')
   const [parsed, setParsed] = useState<ParsedResumeProfile | null>(null)
@@ -241,7 +241,7 @@ export function ResumeImportDialog({
 
   function handleImport() {
     if (!parsed) return
-    onImport(parsed)
+    onImport(parsed, fileName)
     onOpenChange(false)
   }
 
@@ -256,7 +256,8 @@ export function ResumeImportDialog({
             <DialogTitle>Import from resume</DialogTitle>
           </div>
           <DialogDescription>
-            Upload a resume and we&apos;ll pull out your skills, experience, and education to fill in your profile.
+            Upload a resume (PDF or DOCX) and we&apos;ll read it to fill in your headline, skills, experience,
+            education, certifications, projects, and languages — you&apos;ll review everything before it&apos;s applied.
           </DialogDescription>
         </DialogHeader>
 
