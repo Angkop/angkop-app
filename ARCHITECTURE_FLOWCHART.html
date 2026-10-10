@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Angkop — SBERT, NCF &amp; Hybrid Flowcharts</title>
+<style>
+  body {
+    background: #ffffff;
+    color: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding: 32px 16px 64px;
+  }
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 6px;
+  }
+  h2 {
+    font-size: 1.1rem;
+    margin: 48px 0 6px;
+  }
+  p.sub, p.caption {
+    font-size: 0.88rem;
+    margin: 0 0 20px;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 40px;
+  }
+  th, td {
+    border: 2px solid #000000;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: middle;
+  }
+  th { font-weight: 700; }
+  td svg { width: 70px; height: 44px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Angkop — SBERT, NCF &amp; Hybrid Flowcharts</h1>
+  <p class="sub">
+    High-level view: each chart shows only the major phases of its process, but the
+    actual computation at the core of each phase is written out in full — not hidden
+    behind a vague "process the data" box.
+  </p>
+
+  <!-- ============================================================= -->
+  <h2>1. SBERT — Semantic (Text) Matching</h2>
+  <p class="caption">Major phases: get the profile in → combine with the job text →
+    run the computation → get a score out.</p>
+
+  <svg viewBox="20 0 780 800" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="a1" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#000" />
+      </marker>
+    </defs>
+    <g fill="none" stroke="#000" stroke-width="2">
+      <line x1="400" y1="80"  x2="400" y2="120" marker-end="url(#a1)" />
+      <line x1="220" y1="180" x2="220" y2="220" marker-end="url(#a1)" />
+      <line x1="580" y1="180" x2="580" y2="220" marker-end="url(#a1)" />
+      <line x1="220" y1="280" x2="380" y2="320" marker-end="url(#a1)" />
+      <line x1="580" y1="280" x2="420" y2="320" marker-end="url(#a1)" />
+      <line x1="400" y1="380" x2="400" y2="420" marker-end="url(#a1)" />
+      <line x1="400" y1="480" x2="400" y2="520" marker-end="url(#a1)" />
+      <line x1="400" y1="580" x2="400" y2="620" marker-end="url(#a1)" />
+      <line x1="400" y1="680" x2="400" y2="720" marker-end="url(#a1)" />
+    </g>
+
+    <ellipse cx="400" cy="50" rx="90" ry="30" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="55" text-anchor="middle" font-size="15">Start</text>
+
+    <polygon points="400,120 580,180 400,240 220,180" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="175" text-anchor="middle" font-size="13">Importing a resume, or</text>
+    <text x="400" y="193" text-anchor="middle" font-size="13">entering your info manually?</text>
+    <text x="150" y="215" font-size="12">Resume</text>
+    <text x="588" y="215" font-size="12">Manual</text>
+
+    <rect x="70" y="220" width="300" height="60" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="220" y="245" text-anchor="middle" font-size="12">Import resume &#8594; auto-extract skills,</text>
+    <text x="220" y="263" text-anchor="middle" font-size="12">experience, education, etc. via Gemini</text>
+
+    <rect x="410" y="220" width="340" height="60" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="580" y="245" text-anchor="middle" font-size="12">Fill out profile form manually &#8212;</text>
+    <text x="580" y="263" text-anchor="middle" font-size="12">skills, experience, education, courses, etc.</text>
+
+    <rect x="270" y="320" width="260" height="60" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="355" text-anchor="middle" font-size="12">Save profile</text>
+
+    <polygon points="214,420 610,420 586,480 190,480" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="445" text-anchor="middle" font-size="12">Input: profile text (skills, experience,</text>
+    <text x="400" y="463" text-anchor="middle" font-size="12">education, etc.) + job text (title + description)</text>
+
+    <rect x="190" y="520" width="420" height="60" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="545" text-anchor="middle" font-size="12">Compute: embed both texts (SBERT model) &#8594;</text>
+    <text x="400" y="563" text-anchor="middle" font-size="12">semantic_score = max(0, cosine_similarity(profile, job))</text>
+
+    <polygon points="254,620 570,620 546,680 230,680" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="655" text-anchor="middle" font-size="12">Output: semantic_score (range 0&#8211;1)</text>
+
+    <ellipse cx="400" cy="750" rx="90" ry="30" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="755" text-anchor="middle" font-size="15">End</text>
+  </svg>
+  <p class="caption">&#8594; semantic_score feeds into the Hybrid chart below.</p>
+
+  <!-- ============================================================= -->
+  <h2>2. NCF — Behavior-Based Matching</h2>
+  <p class="caption">Major phases: get the activity data in → check if there's enough
+    history → run the computation (or fall back) → get a score out.</p>
+
+  <svg viewBox="130 0 820 700" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="#000" stroke-width="2">
+      <line x1="400" y1="80"  x2="400" y2="120" marker-end="url(#a1)" />
+      <line x1="400" y1="180" x2="400" y2="220" marker-end="url(#a1)" />
+      <line x1="400" y1="340" x2="400" y2="380" marker-end="url(#a1)" />
+      <polyline points="570,280 720,280 720,380" marker-end="url(#a1)" />
+      <line x1="400" y1="440" x2="380" y2="520" marker-end="url(#a1)" />
+      <polyline points="720,440 720,480 420,480 420,520" marker-end="url(#a1)" />
+      <line x1="400" y1="580" x2="400" y2="620" marker-end="url(#a1)" />
+    </g>
+
+    <ellipse cx="400" cy="50" rx="90" ry="30" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="55" text-anchor="middle" font-size="15">Start</text>
+
+    <polygon points="204,120 620,120 596,180 180,180" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="145" text-anchor="middle" font-size="12">Input: user_id, job_id, and interaction_count</text>
+    <text x="400" y="163" text-anchor="middle" font-size="12">(views, saves, applies, dismissals)</text>
+
+    <polygon points="400,220 570,280 400,340 230,280" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="275" text-anchor="middle" font-size="13">Has the model seen this</text>
+    <text x="400" y="293" text-anchor="middle" font-size="13">user &amp; job before?</text>
+    <text x="412" y="365" font-size="12">Yes</text>
+    <text x="585" y="272" font-size="12">No</text>
+
+    <rect x="190" y="380" width="420" height="60" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="405" text-anchor="middle" font-size="12">Compute: run the trained NCF model</text>
+    <text x="400" y="423" text-anchor="middle" font-size="12">(GMF + MLP) &#8594; collaborative_score = NCF(user, job)</text>
+
+    <rect x="550" y="380" width="340" height="60" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="720" y="405" text-anchor="middle" font-size="12">collaborative_score = 0.5</text>
+    <text x="720" y="423" text-anchor="middle" font-size="12">(cold-start default &#8212; not enough data yet)</text>
+
+    <polygon points="244,520 580,520 556,580 220,580" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="555" text-anchor="middle" font-size="12">Output: collaborative_score (range 0&#8211;1)</text>
+
+    <ellipse cx="400" cy="650" rx="90" ry="30" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="655" text-anchor="middle" font-size="15">End</text>
+  </svg>
+  <p class="caption">&#8594; collaborative_score feeds into the Hybrid chart below.</p>
+
+  <!-- ============================================================= -->
+  <h2>3. Combined (Hybrid) — Blending &amp; Ranking</h2>
+  <p class="caption">Major phases: get both scores in → blend them with the computation
+    below → rank every job → done.</p>
+
+  <svg viewBox="130 0 560 720" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="#000" stroke-width="2">
+      <line x1="400" y1="80"  x2="400" y2="120" marker-end="url(#a1)" />
+      <line x1="400" y1="180" x2="400" y2="220" marker-end="url(#a1)" />
+      <line x1="400" y1="300" x2="400" y2="340" marker-end="url(#a1)" />
+      <line x1="400" y1="400" x2="400" y2="440" marker-end="url(#a1)" />
+      <line x1="400" y1="500" x2="400" y2="540" marker-end="url(#a1)" />
+      <line x1="400" y1="600" x2="400" y2="640" marker-end="url(#a1)" />
+    </g>
+
+    <ellipse cx="400" cy="50" rx="90" ry="30" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="55" text-anchor="middle" font-size="15">Start</text>
+
+    <polygon points="204,120 620,120 596,180 180,180" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="145" text-anchor="middle" font-size="12">Input: semantic_score, collaborative_score,</text>
+    <text x="400" y="163" text-anchor="middle" font-size="12">and interaction_count</text>
+
+    <rect x="180" y="220" width="440" height="80" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="246" text-anchor="middle" font-size="12">Compute:</text>
+    <text x="400" y="264" text-anchor="middle" font-size="11">collaborative_weight = min(0.10 + 0.05&#215;interaction_count, 0.60)</text>
+    <text x="400" y="282" text-anchor="middle" font-size="11">hybrid_score = weight&#215;collaborative_score + (1&#8722;weight)&#215;semantic_score</text>
+
+    <polygon points="254,340 570,340 546,400 230,400" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="375" text-anchor="middle" font-size="12">Output: hybrid_score (per job)</text>
+
+    <rect x="170" y="440" width="460" height="60" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="465" text-anchor="middle" font-size="12">Repeat for every job &#8594; sort by hybrid_score &#8594;</text>
+    <text x="400" y="483" text-anchor="middle" font-size="12">map to % + color band (&#8805;70% green, 40&#8211;69% yellow, &lt;40% red)</text>
+
+    <polygon points="254,540 570,540 546,600 230,600" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="575" text-anchor="middle" font-size="12">Output: ranked job list &#8212; ranking complete</text>
+
+    <ellipse cx="400" cy="670" rx="90" ry="30" fill="#fff" stroke="#000" stroke-width="2" />
+    <text x="400" y="675" text-anchor="middle" font-size="15">End</text>
+  </svg>
+
+  <table>
+    <thead>
+      <tr><th>Symbol</th><th>Name</th><th>Function</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><svg viewBox="0 0 70 44"><ellipse cx="35" cy="22" rx="30" ry="16" fill="#fff" stroke="#000" stroke-width="2"/></svg></td>
+        <td>Start / end</td>
+        <td>An oval marks a start or end point of the flow</td>
+      </tr>
+      <tr>
+        <td><svg viewBox="0 0 70 44"><defs><marker id="k1" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#000"/></marker></defs><line x1="8" y1="22" x2="58" y2="22" stroke="#000" stroke-width="2" marker-end="url(#k1)"/></svg></td>
+        <td>Arrow</td>
+        <td>A connector showing the order data/control moves between shapes</td>
+      </tr>
+      <tr>
+        <td><svg viewBox="0 0 70 44"><polygon points="20,6 60,6 50,38 10,38" fill="#fff" stroke="#000" stroke-width="2"/></svg></td>
+        <td>Input / output</td>
+        <td>A parallelogram marks data going in or coming out at that step</td>
+      </tr>
+      <tr>
+        <td><svg viewBox="0 0 70 44"><rect x="8" y="6" width="54" height="32" fill="#fff" stroke="#000" stroke-width="2"/></svg></td>
+        <td>Process</td>
+        <td>A rectangle represents a processing step — the computation itself when one applies</td>
+      </tr>
+      <tr>
+        <td><svg viewBox="0 0 70 44"><polygon points="35,4 64,22 35,40 6,22" fill="#fff" stroke="#000" stroke-width="2"/></svg></td>
+        <td>Decision</td>
+        <td>A diamond indicates a branch point</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
