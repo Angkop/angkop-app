@@ -96,7 +96,7 @@ export function AppShell({
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  'rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                   isActive(pathname, link.href)
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:text-foreground'
