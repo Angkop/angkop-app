@@ -131,19 +131,19 @@ body {
   }
 }
 
-/* Dialog (components/ui/dialog.tsx) — centered modal open/close + overlay fade. The open
-   keyframe travels up slightly further than the close keyframe falls back — a settle-in
-   rather than a mechanical reverse — which is why the two aren't just mirrored. */
+/* Dialog (components/ui/dialog.tsx) — centered modal open/close + overlay fade. Scale only,
+   deliberately — DialogContent is centered via the `translate` CSS property (Tailwind v4's
+   -translate-x-1/2 -translate-y-1/2 compiles to it, not to `transform`), and a keyframe that
+   also animates `translate` would override that centering offset for the animation's
+   duration instead of combining with it, making the dialog open off-center. */
 @keyframes angkop-dialog-in {
   from {
     opacity: 0;
     scale: 0.96;
-    translate: 0 10px;
   }
   to {
     opacity: 1;
     scale: 1;
-    translate: 0 0;
   }
 }
 
@@ -151,12 +151,10 @@ body {
   from {
     opacity: 1;
     scale: 1;
-    translate: 0 0;
   }
   to {
     opacity: 0;
     scale: 0.97;
-    translate: 0 6px;
   }
 }
 
