@@ -1,10 +1,11 @@
 import Redis from 'ioredis'
-import type { RecommendResponse } from '@angkop/shared'
+import type { RecommendResponse, SkillGapResponse } from '@angkop/shared'
 import { logger } from './logger'
 
 export const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379')
 
 const MATCH_SCORE_TTL_SECONDS = 60 * 60 * 24
+const SKILL_GAPS_TTL_SECONDS = 60 * 60 * 24
 
 function matchScoreCacheKey(userId: string, jobId: string): string {
   return `match-score:${userId}:${jobId}`
@@ -56,6 +57,31 @@ export async function invalidateMatchScoresForUser(userId: string): Promise<void
   if (keys.length > 0) {
     await redis.del(...keys)
   }
+}
+
+function skillGapsCacheKey(userId: string): string {
+  return `skill-gaps:${userId}`
+}
+
+// The skill-gap report calls the ML service and persists a SkillGapRecord per missing
+// skill - without this cache, revisiting the page (or any refetch) re-runs both on every
+// single request even when nothing about the user's saved jobs or skills has changed.
+// Mirrors getOrSetMatchScores: cache the whole computed report, invalidate explicitly
+// wherever its inputs (saved jobs, skills) change, with a 24h TTL as a backstop.
+export async function getOrSetSkillGaps(
+  userId: string,
+  compute: () => Promise<SkillGapResponse>
+): Promise<SkillGapResponse> {
+  const cached = await redis.get(skillGapsCacheKey(userId))
+  if (cached) return JSON.parse(cached) as SkillGapResponse
+
+  const computed = await compute()
+  await redis.set(skillGapsCacheKey(userId), JSON.stringify(computed), 'EX', SKILL_GAPS_TTL_SECONDS)
+  return computed
+}
+
+export async function invalidateSkillGapsForUser(userId: string): Promise<void> {
+  await redis.del(skillGapsCacheKey(userId))
 }
 
 redis.on('error', (error) => {

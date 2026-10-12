@@ -1,6 +1,6 @@
 import { INTERACTION_WEIGHTS, type ApplicationStatus, type InteractionEventType } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
-import { invalidateMatchScoresForUser } from '../../lib/redis'
+import { invalidateMatchScoresForUser, invalidateSkillGapsForUser } from '../../lib/redis'
 import { embed } from '../../lib/ml-client'
 import { VALID_EVENT_TYPES } from './constants'
 import { buildSkillsText, loadProfileForMe, serializeSavedJob } from './helpers'
@@ -237,6 +237,8 @@ export const mutationResolvers = {
     // Skills/skillsText feed straight into the semantic score, so cached scores from
     // before this edit are now wrong for every job, not just one.
     await invalidateMatchScoresForUser(context.userId)
+    // Skills are also one of the two inputs to the skill-gap report.
+    await invalidateSkillGapsForUser(context.userId)
 
     // The persisted "why this match" explanation and its matching/missing skill lists are
     // grounded in the old skillsText snapshot — soft-delete so the next dialog open
@@ -307,6 +309,8 @@ export const mutationResolvers = {
       }
     })
     await invalidateMatchScoresForUser(context.userId)
+    // The newly-saved job's required skills are an input to the skill-gap report.
+    await invalidateSkillGapsForUser(context.userId)
 
     return serializeSavedJob(savedJob)
   },
@@ -316,6 +320,8 @@ export const mutationResolvers = {
       where: { userId: context.userId, jobId: args.jobId, deleted: false },
       data: { deleted: true }
     })
+    // The removed job's required skills no longer belong in the skill-gap report.
+    await invalidateSkillGapsForUser(context.userId)
     return true
   },
 

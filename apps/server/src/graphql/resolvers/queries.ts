@@ -1,6 +1,7 @@
 import { MATCH_SCORE_THRESHOLDS } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { skillGap as skillGapRequest } from '../../lib/ml-client'
+import { getOrSetSkillGaps } from '../../lib/redis'
 import { logger } from '../../lib/logger'
 import type { ApplicationStatus } from '@angkop/shared'
 import {
@@ -105,44 +106,53 @@ export const queryResolvers = {
   },
 
   skillGaps: async (_parent: unknown, args: SkillGapsArgs, context: GraphQLContext) => {
-    const [savedJobs, userSkills] = await Promise.all([
-      prisma.savedJob.findMany({
-        where: { userId: context.userId, deleted: false, job: { deleted: false } },
-        include: { job: true },
-        orderBy: { createdAt: 'desc' }
-      }),
-      prisma.userSkill.findMany({
-        where: { userId: context.userId, deleted: false },
-        include: { skill: true }
+    // Everything inside this closure only runs on a cache miss - a genuine recompute after
+    // a saved job or a skill actually changed (see invalidateSkillGapsForUser call sites).
+    // A cache hit must stay a single Redis round trip with no Postgres reads at all, or the
+    // frontend's "is this a real recompute" timing heuristic (RECOMPUTE_REVEAL_DELAY_MS)
+    // sees a slow response even when nothing changed.
+    const result = await getOrSetSkillGaps(context.userId, async () => {
+      const [savedJobs, userSkills] = await Promise.all([
+        prisma.savedJob.findMany({
+          where: { userId: context.userId, deleted: false, job: { deleted: false } },
+          include: { job: true },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.userSkill.findMany({
+          where: { userId: context.userId, deleted: false },
+          include: { skill: true }
+        })
+      ])
+
+      const jobRequiredSkills = Array.from(new Set(savedJobs.flatMap((savedJob) => savedJob.job.requiredSkills)))
+
+      if (jobRequiredSkills.length === 0) {
+        return { missingSkills: [] }
+      }
+
+      const computed = await skillGapRequest({
+        userSkills: userSkills.map((userSkill) => userSkill.skill.name),
+        jobRequiredSkills
       })
-    ])
 
-    const jobRequiredSkills = Array.from(new Set(savedJobs.flatMap((savedJob) => savedJob.job.requiredSkills)))
+      if (savedJobs[0]) {
+        await Promise.all(
+          computed.missingSkills.map((gap) =>
+            prisma.skillGapRecord.create({
+              data: {
+                userId: context.userId,
+                jobId: savedJobs[0].job.id,
+                skill: gap.skill,
+                confidence: gap.confidence,
+                courses: gap.courses
+              }
+            })
+          )
+        ).catch((error) => logger.warn({ error }, 'Failed to persist skill gap records'))
+      }
 
-    if (jobRequiredSkills.length === 0) {
-      return { items: [], total: 0 }
-    }
-
-    const result = await skillGapRequest({
-      userSkills: userSkills.map((userSkill) => userSkill.skill.name),
-      jobRequiredSkills
+      return computed
     })
-
-    if (savedJobs[0]) {
-      await Promise.all(
-        result.missingSkills.map((gap) =>
-          prisma.skillGapRecord.create({
-            data: {
-              userId: context.userId,
-              jobId: savedJobs[0].job.id,
-              skill: gap.skill,
-              confidence: gap.confidence,
-              courses: gap.courses
-            }
-          })
-        )
-      ).catch((error) => logger.warn({ error }, 'Failed to persist skill gap records'))
-    }
 
     const page = Math.max(1, args.page ?? 1)
     const pageSize = Math.min(Math.max(1, args.pageSize ?? DEFAULT_SKILL_GAPS_PAGE_SIZE), MAX_SKILL_GAPS_PAGE_SIZE)
