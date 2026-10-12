@@ -46,14 +46,20 @@ export function ApplicationsPage() {
 
   const status = statusFilter === ALL_FILTER_VALUE ? undefined : (statusFilter as ApplicationStatus)
 
+  // cache-and-network, not the default cache-first — saving a job happens from Listings
+  // or Matches, not this page, so a cached result here would otherwise keep showing the
+  // list from before that save until the user hard-refreshes.
   const { data, loading, error, refetch } = useQuery<SavedJobsQueryResult>(SAVED_JOBS_QUERY, {
-    variables: { page, pageSize: PAGE_SIZE, status }
+    variables: { page, pageSize: PAGE_SIZE, status },
+    fetchPolicy: 'cache-and-network'
   })
   const {
     data: statsData,
     loading: statsLoading,
     refetch: refetchStats
-  } = useQuery<SavedJobStatsQueryResult>(SAVED_JOB_STATS_QUERY)
+  } = useQuery<SavedJobStatsQueryResult>(SAVED_JOB_STATS_QUERY, {
+    fetchPolicy: 'cache-and-network'
+  })
 
   const [updateStatus] = useMutation(UPDATE_STATUS_MUTATION)
   const [setInterviewDate] = useMutation(SET_INTERVIEW_DATE_MUTATION)
