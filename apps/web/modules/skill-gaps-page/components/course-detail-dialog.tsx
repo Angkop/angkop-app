@@ -4,7 +4,15 @@ import Image from 'next/image'
 import { BookOpen, ExternalLink, Lightbulb } from 'lucide-react'
 import type { Course } from '@angkop/shared'
 import { buttonVariants } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogIconBadge,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
 export function CourseDetailDialog({
@@ -24,8 +32,13 @@ export function CourseDetailDialog({
         {course ? (
           <>
             <DialogHeader>
-              <DialogTitle>{course.title}</DialogTitle>
-              <DialogDescription>{course.provider}</DialogDescription>
+              <div className="flex items-start gap-3">
+                <DialogIconBadge icon={BookOpen} />
+                <div className="min-w-0 flex-1 space-y-1 pt-0.5">
+                  <DialogTitle>{course.title}</DialogTitle>
+                  <DialogDescription>{course.provider}</DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
 
             {skill ? (
@@ -60,15 +73,17 @@ export function CourseDetailDialog({
               {course.description || 'No description available for this course.'}
             </p>
 
-            <a
-              href={course.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(buttonVariants({ size: 'default' }), 'mt-6 w-full')}
-            >
-              Open Course
-              <ExternalLink className="size-3.5" />
-            </a>
+            <DialogFooter>
+              <a
+                href={course.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(buttonVariants({ size: 'default' }), 'w-full')}
+              >
+                Open Course
+                <ExternalLink className="size-3.5" />
+              </a>
+            </DialogFooter>
           </>
         ) : null}
       </DialogContent>

@@ -1,5 +1,6 @@
 'use client'
 
+import { AlertTriangle } from 'lucide-react'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import {
   Dialog,
@@ -7,6 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogIconBadge,
   DialogTitle
 } from '@/components/ui/dialog'
 
@@ -40,8 +42,13 @@ export function ConfirmDialog({
     <Dialog open={open} onOpenChange={(next) => !isConfirming && onOpenChange(next)}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <div className="flex items-start gap-3">
+            <DialogIconBadge icon={AlertTriangle} variant={confirmVariant === 'destructive' ? 'destructive' : 'primary'} />
+            <div className="min-w-0 flex-1 space-y-1 pt-0.5">
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>{description}</DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isConfirming}>

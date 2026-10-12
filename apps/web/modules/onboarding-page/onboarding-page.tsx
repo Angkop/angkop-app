@@ -28,6 +28,7 @@ export function OnboardingPage() {
         progress={wizard.progress}
         navUnlocked={wizard.navUnlocked}
         onStepClick={wizard.setStep}
+        disabled={wizard.isSaving}
       />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -115,7 +116,12 @@ export function OnboardingPage() {
           ) : null}
 
           <div className="mt-8 flex items-center justify-between border-t border-border pt-4">
-            <Button type="button" variant="ghost" onClick={wizard.goBack} disabled={wizard.step === 0}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={wizard.goBack}
+              disabled={wizard.step === 0 || wizard.isSaving}
+            >
               <ArrowLeft className="size-4" />
               Back
             </Button>
@@ -125,7 +131,7 @@ export function OnboardingPage() {
                 <Check className="size-4" />
               </Button>
             ) : (
-              <Button type="button" onClick={wizard.goNext} disabled={!wizard.canContinue}>
+              <Button type="button" onClick={wizard.goNext} disabled={!wizard.canContinue || wizard.isSaving}>
                 Continue
                 <ArrowRight className="size-4" />
               </Button>

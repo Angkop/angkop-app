@@ -7,12 +7,14 @@ export function SidebarNav({
   step,
   progress,
   navUnlocked,
-  onStepClick
+  onStepClick,
+  disabled = false
 }: {
   step: number
   progress: number
   navUnlocked: boolean
   onStepClick: (index: number) => void
+  disabled?: boolean
 }) {
   return (
     <div className="relative hidden flex-col justify-between overflow-hidden bg-primary p-8 text-primary-foreground sm:p-12 lg:flex lg:p-12">
@@ -52,12 +54,13 @@ export function SidebarNav({
             const isActive = index === step
             const isDone = index < step
             const isLocked = !navUnlocked && index > step
+            const isDisabled = isLocked || disabled
             return (
               <button
                 key={s.id}
                 type="button"
-                onClick={() => !isLocked && onStepClick(index)}
-                disabled={isLocked}
+                onClick={() => !isDisabled && onStepClick(index)}
+                disabled={isDisabled}
                 className={cn(
                   'flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed',
                   isActive && 'bg-primary-foreground/10 font-medium text-primary-foreground',

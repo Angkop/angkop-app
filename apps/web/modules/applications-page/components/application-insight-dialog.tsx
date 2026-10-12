@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Maximize2,
   Minimize2,
+  Sparkles,
   Target,
   Users
 } from 'lucide-react'
@@ -23,7 +24,14 @@ import {
 } from '@/lib/job-match-insight'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogIconBadge,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { ErrorMessage } from '@/components/error-message'
 import { BrandLoader } from '@/components/brand-loader'
@@ -104,11 +112,14 @@ export function ApplicationInsightDialog({
       <DialogContent className={cn(expanded ? 'max-w-5xl max-h-[90vh]' : 'max-w-2xl')}>
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-8">
-            <div>
-              <DialogTitle>How this job matches you</DialogTitle>
-              <DialogDescription>
-                {savedJob.job.title} · {savedJob.job.company}
-              </DialogDescription>
+            <div className="flex items-start gap-3">
+              <DialogIconBadge icon={Sparkles} />
+              <div className="min-w-0 space-y-1 pt-0.5">
+                <DialogTitle>How this job matches you</DialogTitle>
+                <DialogDescription>
+                  {savedJob.job.title} · {savedJob.job.company}
+                </DialogDescription>
+              </div>
             </div>
             <Button
               variant="ghost"

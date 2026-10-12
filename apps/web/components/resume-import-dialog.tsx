@@ -14,6 +14,7 @@ import {
   Upload,
   UserRound,
   Wrench,
+  X,
   Zap,
   type LucideIcon
 } from 'lucide-react'
@@ -25,8 +26,17 @@ import {
 } from '@angkop/shared'
 import { API_URL } from '@/constants/api'
 import { getStoredToken } from '@/lib/auth'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogIconBadge,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { ErrorMessage } from '@/components/error-message'
 import { BrandLoader } from '@/components/brand-loader'
@@ -57,6 +67,21 @@ async function requestParsedResume(file: File): Promise<ParseResult> {
   const parsed = (await response.json()) as ParsedResumeProfile
   const cacheHit = response.headers.get('X-Resume-Parse-Source') === 'cache'
   return { parsed, cacheHit }
+}
+
+const VALID_RESUME_EXTENSIONS = ['.pdf', '.docx']
+const MAX_RESUME_SIZE_BYTES = 10 * 1024 * 1024
+
+function validateResumeFile(file: File): string | null {
+  const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+  if (!VALID_RESUME_EXTENSIONS.includes(extension)) return 'Please upload a PDF or DOCX file'
+  if (file.size > MAX_RESUME_SIZE_BYTES) return 'File must be 10MB or smaller'
+  return null
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -157,6 +182,9 @@ export function ResumeImportDialog({
   const [isCacheHit, setIsCacheHit] = useState(false)
   const [fileName, setFileName] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectionError, setSelectionError] = useState('')
+  const [isDragging, setIsDragging] = useState(false)
   const lastFileRef = useRef<File | null>(null)
 
   useEffect(() => {
@@ -166,6 +194,9 @@ export function ResumeImportDialog({
       setIsCacheHit(false)
       setFileName('')
       setErrorMessage('')
+      setSelectedFile(null)
+      setSelectionError('')
+      setIsDragging(false)
       lastFileRef.current = null
     }
   }, [open])
@@ -185,9 +216,47 @@ export function ResumeImportDialog({
     }
   }
 
+  function selectFile(file: File) {
+    const error = validateResumeFile(file)
+    if (error) {
+      setSelectionError(error)
+      setSelectedFile(null)
+      return
+    }
+    setSelectionError('')
+    setSelectedFile(file)
+  }
+
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
-    if (file) runParse(file)
+    if (file) selectFile(file)
+    event.target.value = ''
+  }
+
+  function handleDragOver(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+    setIsDragging(true)
+  }
+
+  function handleDragLeave(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+    setIsDragging(false)
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+    setIsDragging(false)
+    const file = event.dataTransfer.files?.[0]
+    if (file) selectFile(file)
+  }
+
+  function handleRemoveSelectedFile() {
+    setSelectedFile(null)
+    setSelectionError('')
+  }
+
+  function handleSubmit() {
+    if (selectedFile) runParse(selectedFile)
   }
 
   function handleRetry() {
@@ -204,22 +273,60 @@ export function ResumeImportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={stage === 'review' ? 'max-w-xl' : undefined}>
         <DialogHeader>
-          <DialogTitle>Import from resume</DialogTitle>
-          <DialogDescription>
-            Upload a resume (PDF or DOCX) and we&apos;ll read it to fill in your headline, skills, experience,
-            education, certifications, projects, and languages. You&apos;ll review everything before it&apos;s applied.
-          </DialogDescription>
+          <div className="flex items-start gap-3">
+            <DialogIconBadge icon={FileText} />
+            <div className="min-w-0 flex-1 space-y-1 pt-0.5">
+              <DialogTitle>Import from resume</DialogTitle>
+              <DialogDescription>
+                Upload a resume (PDF or DOCX) and we&apos;ll read it to fill in your headline, skills, experience,
+                education, certifications, projects, and languages. You&apos;ll review everything before it&apos;s
+                applied.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         {stage === 'upload' ? (
-          <label className="group flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-dashed border-border p-10 text-center transition-colors hover:border-primary/40 hover:bg-primary/5">
-            <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
-              <Upload className="size-5" />
-            </span>
-            <span className="text-sm font-medium text-foreground">Click to upload, or drag and drop</span>
-            <span className="text-xs text-muted-foreground">PDF or DOCX, up to 10MB</span>
-            <input type="file" accept=".pdf,.docx" className="sr-only" onChange={handleFileChange} />
-          </label>
+          <div className="space-y-3">
+            {!selectedFile ? (
+              <label
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={cn(
+                  'group flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-dashed border-border p-10 text-center transition-colors hover:border-primary/40 hover:bg-primary/5',
+                  isDragging && 'border-primary bg-primary/5'
+                )}
+              >
+                <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
+                  <Upload className="size-5" />
+                </span>
+                <span className="text-sm font-medium text-foreground">Click to upload, or drag and drop</span>
+                <span className="text-xs text-muted-foreground">PDF or DOCX, up to 10MB</span>
+                <input type="file" accept=".pdf,.docx" className="sr-only" onChange={handleFileChange} />
+              </label>
+            ) : (
+              <div className="flex items-center gap-3 rounded-lg border border-border p-4">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <FileText className="size-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{selectedFile.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveSelectedFile}
+                  aria-label="Remove selected file"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            )}
+            {selectionError ? <p className="text-xs text-destructive">{selectionError}</p> : null}
+          </div>
         ) : null}
 
         {stage === 'parsing' ? (
@@ -405,6 +512,16 @@ export function ResumeImportDialog({
         ) : null}
 
         <DialogFooter>
+          {stage === 'upload' ? (
+            <>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleSubmit} disabled={!selectedFile}>
+                Upload Resume
+              </Button>
+            </>
+          ) : null}
           {stage === 'error' ? (
             <>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
