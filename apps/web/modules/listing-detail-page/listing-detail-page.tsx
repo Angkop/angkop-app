@@ -24,11 +24,8 @@ export async function ListingDetailPage({ jobId }: { jobId: string }) {
 
       <ListingCard listing={listing} />
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted-foreground">
-          Re-served here for the Angkop extension demo. Apply through the original posting.
-        </p>
-        <ApplyLink jobId={listing.id} sourceUrl={listing.sourceUrl} sourceName={listing.sourceName} />
+      <div className="mt-4 flex justify-end">
+        <ApplyLink sourceUrl={listing.sourceUrl} sourceName={listing.sourceName} />
       </div>
     </div>
   )
