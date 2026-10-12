@@ -1,15 +1,13 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import type { ListingDetail } from '../types'
+import { groupDescriptionSections } from '../utils'
 
-// Every listing renders through this same Accordion shape — no per-job special casing.
-// A source with no heading structure just means a single "Overview" item and nothing
-// else; it never falls back to a different layout.
+// Every listing renders through the same fixed category order (Overview, Responsibilities,
+// Requirements, Nice to have, Benefits, Additional details) regardless of how the source
+// worded its own headings — see groupDescriptionSections. A listing just skips whichever
+// categories it has nothing for; it never shows an empty one.
 export function DescriptionAccordion({ descriptionSections }: { descriptionSections: ListingDetail['descriptionSections'] }) {
-  const sections = descriptionSections.map((section, index) => ({
-    value: `section-${index}`,
-    label: section.heading ?? 'Overview',
-    items: section.items
-  }))
+  const sections = groupDescriptionSections(descriptionSections)
   const defaultOpenValues = sections.length > 0 ? [sections[0].value] : []
 
   if (sections.length === 0) {
