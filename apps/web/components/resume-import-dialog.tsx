@@ -10,10 +10,10 @@ import {
   GraduationCap,
   Languages as LanguagesIcon,
   MapPin,
-  Sparkles,
   TrendingUp,
   Upload,
   UserRound,
+  Wrench,
   Zap,
   type LucideIcon
 } from 'lucide-react'
@@ -83,9 +83,7 @@ function dateRange(start: string | null, end: string | null, current?: boolean):
 function HighlightStat({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
     <div className="flex items-start gap-2.5">
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background text-primary">
-        <Icon className="size-4" />
-      </span>
+      <Icon className="mt-0.5 size-4 shrink-0 text-primary" />
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-sm font-medium break-words text-foreground">{value}</p>
@@ -206,12 +204,7 @@ export function ResumeImportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={stage === 'review' ? 'max-w-xl' : undefined}>
         <DialogHeader>
-          <div className="flex items-center gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Sparkles className="size-4" />
-            </span>
-            <DialogTitle>Import from resume</DialogTitle>
-          </div>
+          <DialogTitle>Import from resume</DialogTitle>
           <DialogDescription>
             Upload a resume (PDF or DOCX) and we&apos;ll read it to fill in your headline, skills, experience,
             education, certifications, projects, and languages — you&apos;ll review everything before it&apos;s applied.
@@ -219,7 +212,7 @@ export function ResumeImportDialog({
         </DialogHeader>
 
         {stage === 'upload' ? (
-          <label className="group flex cursor-pointer flex-col items-center gap-3 rounded-2xl border border-dashed border-border p-10 text-center transition-colors hover:border-primary/40 hover:bg-primary/5">
+          <label className="group flex cursor-pointer flex-col items-center gap-3 rounded-lg border border-dashed border-border p-10 text-center transition-colors hover:border-primary/40 hover:bg-primary/5">
             <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
               <Upload className="size-5" />
             </span>
@@ -230,11 +223,9 @@ export function ResumeImportDialog({
         ) : null}
 
         {stage === 'parsing' ? (
-          <div className="rounded-2xl border border-border p-5">
+          <div className="rounded-lg border border-border p-5">
             <div className="flex items-center gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <FileText className="size-5" />
-              </span>
+              <FileText className="size-5 shrink-0 text-muted-foreground" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{fileName}</p>
                 <p className="text-xs text-muted-foreground">Reading your resume</p>
@@ -249,7 +240,7 @@ export function ResumeImportDialog({
         ) : null}
 
         {stage === 'error' ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-border p-8 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-border p-8 text-center">
             <span className="flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertTriangle className="size-5" />
             </span>
@@ -266,7 +257,7 @@ export function ResumeImportDialog({
               </div>
             ) : null}
 
-            <div className="grid grid-cols-1 gap-4 rounded-2xl bg-muted/40 p-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 rounded-lg border border-border p-4 sm:grid-cols-3">
               <HighlightStat icon={UserRound} label="Headline" value={parsed.headline || 'Not found'} />
               <HighlightStat
                 icon={TrendingUp}
@@ -276,10 +267,10 @@ export function ResumeImportDialog({
               <HighlightStat icon={MapPin} label="Location" value={parsed.location || 'Not found'} />
             </div>
 
-            <Accordion type="multiple" className="rounded-2xl border border-border px-4">
+            <Accordion type="multiple" className="rounded-lg border border-border px-4">
               <AccordionItem value="skills">
                 <AccordionTrigger>
-                  <SectionTrigger icon={Sparkles} label="Skills" count={parsed.skills.length} />
+                  <SectionTrigger icon={Wrench} label="Skills" count={parsed.skills.length} />
                 </AccordionTrigger>
                 <AccordionContent>
                   {parsed.skills.length > 0 ? (

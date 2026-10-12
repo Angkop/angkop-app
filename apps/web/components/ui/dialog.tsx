@@ -23,7 +23,7 @@ export function DialogContent({
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
         className={cn(
-          'angkop-dialog-overlay fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]',
+          'angkop-dialog-overlay fixed inset-0 z-50 bg-black/50',
           'data-[state=open]:[animation:angkop-fade-in_200ms_ease-out]',
           'data-[state=closed]:[animation:angkop-fade-out_150ms_ease-in]'
         )}
@@ -31,7 +31,7 @@ export function DialogContent({
       <DialogPrimitive.Content
         className={cn(
           'angkop-dialog-content fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
-          'rounded-2xl border border-border bg-card p-6 shadow-xl',
+          'rounded-lg border border-border bg-card p-6 shadow-lg',
           'max-h-[calc(100vh-2rem)] overflow-y-auto',
           'data-[state=open]:[animation:angkop-dialog-in_200ms_ease-out]',
           'data-[state=closed]:[animation:angkop-dialog-out_150ms_ease-in]',
@@ -59,7 +59,10 @@ export function DialogHeader({ className, ...props }: React.ComponentProps<'div'
 
 export function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
-    <DialogPrimitive.Title className={cn('text-base font-semibold text-foreground', className)} {...props} />
+    <DialogPrimitive.Title
+      className={cn('font-display text-lg font-medium text-foreground', className)}
+      {...props}
+    />
   )
 }
 

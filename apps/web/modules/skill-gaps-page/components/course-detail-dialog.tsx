@@ -29,7 +29,7 @@ export function CourseDetailDialog({
             </DialogHeader>
 
             {skill ? (
-              <div className="mb-4 flex items-start gap-2.5 rounded-xl bg-primary/5 p-3">
+              <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-border p-3">
                 <Lightbulb className="mt-0.5 size-4 shrink-0 text-primary" />
                 <p className="text-xs leading-relaxed text-foreground">
                   Suggested because <span className="font-medium">{skill}</span> showed up as a gap against your
@@ -39,7 +39,7 @@ export function CourseDetailDialog({
               </div>
             ) : null}
 
-            <div className="overflow-hidden rounded-xl border border-border bg-muted">
+            <div className="overflow-hidden rounded-lg border border-border bg-muted">
               {course.thumbnail ? (
                 <Image
                   src={course.thumbnail}

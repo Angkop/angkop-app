@@ -12,7 +12,6 @@ import {
   GraduationCap,
   Maximize2,
   Minimize2,
-  Sparkles,
   Target,
   Users
 } from 'lucide-react'
@@ -63,8 +62,8 @@ function ScoreMeter({ label, score }: { label: string; score: number }) {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-muted/60 px-3 py-2">
-      <p className="text-base font-semibold text-foreground">{value}</p>
+    <div>
+      <p className="font-display text-base font-medium tabular-nums text-foreground">{value}</p>
       <p className="text-[11px] text-muted-foreground">{label}</p>
     </div>
   )
@@ -105,16 +104,11 @@ export function ApplicationInsightDialog({
       <DialogContent className={cn(expanded ? 'max-w-5xl max-h-[90vh]' : 'max-w-2xl')}>
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-8">
-            <div className="flex items-center gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Sparkles className="size-4" />
-              </span>
-              <div>
-                <DialogTitle>How this job matches you</DialogTitle>
-                <DialogDescription>
-                  {savedJob.job.title} · {savedJob.job.company}
-                </DialogDescription>
-              </div>
+            <div>
+              <DialogTitle>How this job matches you</DialogTitle>
+              <DialogDescription>
+                {savedJob.job.title} · {savedJob.job.company}
+              </DialogDescription>
             </div>
             <Button
               variant="ghost"
@@ -128,11 +122,8 @@ export function ApplicationInsightDialog({
         </DialogHeader>
 
         {loading ? (
-          <div className="rounded-2xl border border-border p-5">
+          <div className="rounded-lg border border-border p-5">
             <div className="flex items-center gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Sparkles className="size-5" />
-              </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{savedJob.job.title}</p>
                 <p className="text-xs text-muted-foreground">Analyzing this match</p>
@@ -146,7 +137,7 @@ export function ApplicationInsightDialog({
         ) : null}
 
         {error ? (
-          <div className="flex flex-col items-center gap-3 rounded-2xl border border-border p-8 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-lg border border-border p-8 text-center">
             <span className="flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertTriangle className="size-5" />
             </span>
@@ -158,8 +149,8 @@ export function ApplicationInsightDialog({
           <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <div className="space-y-4">
-                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Job snapshot</p>
-                <div className="rounded-2xl border border-border p-4">
+                <p className="text-sm font-medium text-muted-foreground">Job snapshot</p>
+                <div className="rounded-lg border border-border p-4">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Building2 className="size-3.5 shrink-0 text-muted-foreground" />
                     {savedJob.job.company}
@@ -223,31 +214,27 @@ export function ApplicationInsightDialog({
               </div>
 
               <div className="space-y-4">
-                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Match breakdown</p>
+                <p className="text-sm font-medium text-muted-foreground">Match breakdown</p>
 
-                <div className="flex items-center gap-3 rounded-2xl bg-muted/40 p-4">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-background text-primary">
-                    <Target className="size-5" />
-                  </span>
+                <div className="flex items-center gap-3 border-b border-border pb-4">
+                  <Target className="size-5 shrink-0 text-primary" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-foreground">Overall match</p>
                     <p className="text-xs text-muted-foreground">{getMatchLabel(insight.hybridScore)}</p>
                   </div>
-                  <Badge variant={variantForScore(insight.hybridScore)} className="text-sm">
+                  <Badge variant={variantForScore(insight.hybridScore)} className="font-display text-sm tabular-nums">
                     {Math.round(insight.hybridScore * 100)}%
                   </Badge>
                 </div>
 
-                <Accordion type="multiple" className="rounded-2xl border border-border px-4">
+                <Accordion type="multiple" className="rounded-lg border border-border px-4">
                   <AccordionItem value="skills">
                     <AccordionTrigger>
-                      <span className="flex items-center gap-2.5 text-foreground">
-                        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-primary">
-                          <BarChart3 className="size-3.5" />
-                        </span>
+                      <span className="flex items-center gap-2 text-foreground">
+                        <BarChart3 className="size-4 shrink-0 text-primary" />
                         Skills & experience fit
                       </span>
-                      <Badge variant={variantForScore(insight.semanticScore)}>
+                      <Badge variant={variantForScore(insight.semanticScore)} className="font-display tabular-nums">
                         {Math.round(insight.semanticScore * 100)}%
                       </Badge>
                     </AccordionTrigger>
@@ -264,13 +251,11 @@ export function ApplicationInsightDialog({
 
                   <AccordionItem value="activity">
                     <AccordionTrigger>
-                      <span className="flex items-center gap-2.5 text-foreground">
-                        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-primary">
-                          <Users className="size-3.5" />
-                        </span>
+                      <span className="flex items-center gap-2 text-foreground">
+                        <Users className="size-4 shrink-0 text-primary" />
                         Interest from similar seekers
                       </span>
-                      <Badge variant={variantForScore(insight.collaborativeScore)}>
+                      <Badge variant={variantForScore(insight.collaborativeScore)} className="font-display tabular-nums">
                         {Math.round(insight.collaborativeScore * 100)}%
                       </Badge>
                     </AccordionTrigger>
@@ -311,11 +296,8 @@ export function ApplicationInsightDialog({
             </div>
 
             <div>
-              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                <Sparkles className="size-3.5" />
-                AI insight
-              </p>
-              <p className="rounded-2xl border border-border p-4 text-sm leading-relaxed text-foreground">
+              <p className="mb-2 text-sm font-medium text-muted-foreground">AI insight</p>
+              <p className="rounded-lg border border-border p-4 text-sm leading-relaxed text-foreground">
                 {insight.explanation}
               </p>
             </div>

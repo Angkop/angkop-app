@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useQuery } from '@apollo/client/react'
-import { Sparkles } from 'lucide-react'
 import type { Course } from '@angkop/shared'
 import { PageHeader } from '@/components/page-header'
 import { ErrorMessage } from '@/components/error-message'
@@ -37,11 +36,8 @@ export function SkillGapsPage() {
       />
 
       {loading && !data ? (
-        <div className="rounded-2xl border border-border p-5">
+        <div className="rounded-lg border border-border p-5">
           <div className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Sparkles className="size-5" />
-            </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground">Building your skill gap report</p>
               <p className="text-xs text-muted-foreground">Based on your saved jobs</p>
