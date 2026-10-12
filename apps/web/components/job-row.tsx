@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Archive, Bookmark, Sparkles } from 'lucide-react'
+import { Archive, Bookmark, Target } from 'lucide-react'
 import type { Job } from '@angkop/shared'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -38,7 +38,7 @@ export function JobRow({ job, score, onSave, onDismiss }: JobRowProps) {
 
       <div className="flex shrink-0 items-center gap-1">
         <Button variant="ghost" size="icon-sm" aria-label="Why this is a match" onClick={() => setInsightOpen(true)}>
-          <Sparkles className="size-4" />
+          <Target className="size-4" />
         </Button>
         {onSave ? (
           <Button variant="ghost" size="icon-sm" aria-label="Save job" onClick={() => onSave(job.id)}>

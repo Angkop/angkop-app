@@ -1,4 +1,4 @@
-import { Mail, MapPin, PencilLine, Sparkles, Upload } from 'lucide-react'
+import { Mail, MapPin, PencilLine, Upload } from 'lucide-react'
 import { CAREER_LEVEL_LABELS, type CareerLevel } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -74,10 +74,7 @@ export function ProfileHeader({
 
           {isOpenToWork ? (
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="gap-1.5">
-                <Sparkles className="size-3.5 text-primary" />
-                Open to work
-              </Badge>
+              <Badge variant="outline">Open to work</Badge>
             </div>
           ) : null}
         </div>

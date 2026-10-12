@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PageLoader } from '@/components/page-loader'
 import { useOnboardingWizard } from './hooks/use-onboarding-wizard'
@@ -117,7 +117,7 @@ export function OnboardingPage() {
             {wizard.step === STEPS.length - 1 ? (
               <Button type="button" onClick={wizard.handleFinish} disabled={wizard.isSaving}>
                 {wizard.isSaving ? 'Saving…' : 'Finish setup'}
-                <Sparkles className="size-4" />
+                <Check className="size-4" />
               </Button>
             ) : (
               <Button type="button" onClick={wizard.goNext} disabled={!wizard.canContinue}>

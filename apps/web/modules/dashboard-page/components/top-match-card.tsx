@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronRight, Sparkles } from 'lucide-react'
+import { ChevronRight, Target } from 'lucide-react'
 import type { JobMatch } from '@angkop/shared'
 import { MatchScoreBadge } from '@/components/match-score-badge'
 import { MatchInsightDialog } from '@/components/match-insight-dialog'
@@ -29,7 +29,7 @@ export function TopMatchCard({ match, rank }: { match: JobMatch; rank: number })
       </Link>
 
       <Button variant="ghost" size="icon-sm" aria-label="Why this is a match" onClick={() => setInsightOpen(true)}>
-        <Sparkles className="size-4" />
+        <Target className="size-4" />
       </Button>
 
       <MatchInsightDialog

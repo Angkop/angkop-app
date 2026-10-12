@@ -34,11 +34,9 @@ export function SkillGapCard({
 }) {
   return (
     <div className="rounded-lg border border-border p-4">
-      <div className="flex items-center gap-2.5">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <GraduationCap className="size-4" />
-        </span>
-        <p className="text-sm font-semibold text-foreground">Add {gap.skill}</p>
+      <div className="flex items-center gap-2">
+        <GraduationCap className="size-4 shrink-0 text-primary" />
+        <p className="font-display text-sm font-medium text-foreground">Add {gap.skill}</p>
       </div>
       {gap.courses.length > 0 ? (
         <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
