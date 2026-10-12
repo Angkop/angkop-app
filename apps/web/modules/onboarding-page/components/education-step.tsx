@@ -12,7 +12,7 @@ export function EducationStep({
   return (
     <StepSection
       title="Education"
-      description="Fresh graduate with no work experience yet? That's completely fine — the Experience step is optional."
+      description="Fresh graduate with no work experience yet? That's completely fine. The Experience step is optional."
     >
       <EducationFields education={education} educationHelpers={educationHelpers} />
     </StepSection>

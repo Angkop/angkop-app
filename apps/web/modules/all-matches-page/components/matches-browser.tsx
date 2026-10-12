@@ -88,7 +88,7 @@ export function MatchesBrowser({
       ) : items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
           {query || skill !== ALL_FILTER_VALUE ? (
-            'No matches found for these filters — try a different search or skill.'
+            'No matches found for these filters. Try a different search or skill.'
           ) : (
             <>
               No job matches yet. Run{' '}

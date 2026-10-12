@@ -13,7 +13,7 @@ function CourseRow({ course, onSelect }: { course: Course; onSelect: (course: Co
         {course.thumbnail ? (
           <Image src={course.thumbnail} alt="" width={56} height={56} className="size-14 object-cover" unoptimized />
         ) : (
-          <BookOpen className="size-5 text-muted-foreground" strokeWidth={1.5} />
+          <BookOpen className="size-5 text-muted-foreground" />
         )}
       </div>
       <div className="min-w-0 flex-1">

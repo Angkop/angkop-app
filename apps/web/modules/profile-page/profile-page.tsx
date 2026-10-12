@@ -152,7 +152,7 @@ export function ProfilePage() {
               <AccordionTrigger className="font-display font-medium text-foreground">About</AccordionTrigger>
               <AccordionContent>
                 <p className="text-sm whitespace-pre-wrap text-foreground">
-                  {profile?.about || 'Nothing added yet — click Edit to introduce yourself.'}
+                  {profile?.about || 'Nothing added yet. Click Edit to introduce yourself.'}
                 </p>
               </AccordionContent>
             </AccordionItem>

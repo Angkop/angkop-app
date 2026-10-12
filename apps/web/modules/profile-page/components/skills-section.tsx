@@ -4,7 +4,7 @@ import type { MeProfile } from '../types'
 
 export function SkillsSection({ skills }: { skills: MeProfile['skills'] }) {
   if (skills.length === 0) {
-    return <p className="text-sm text-muted-foreground">No skills added yet — edit your profile below.</p>
+    return <p className="text-sm text-muted-foreground">No skills added yet. Edit your profile below.</p>
   }
 
   return (

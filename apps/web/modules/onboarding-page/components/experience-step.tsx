@@ -12,7 +12,7 @@ export function ExperienceStep({
   return (
     <StepSection
       title="Work experience"
-      description="Internships count. Leave this empty if you don't have any yet — we'll match mostly on your skills and projects."
+      description="Internships count. Leave this empty if you don't have any yet, and we'll match mostly on your skills and projects."
     >
       <ExperienceFields experience={experience} experienceHelpers={experienceHelpers} />
     </StepSection>

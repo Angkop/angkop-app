@@ -67,7 +67,7 @@ export function AboutFields({
           value={about}
           onChange={(event) => onAboutChange(event.target.value)}
           rows={4}
-          placeholder="A short introduction — what you do and what you're looking for."
+          placeholder="A short introduction: what you do and what you're looking for."
         />
       </div>
     </>

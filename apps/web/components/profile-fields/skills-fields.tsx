@@ -23,7 +23,7 @@ export function SkillsFields({
         />
         {skills.length === 0 ? (
           <p className="mt-3 text-xs text-muted-foreground">
-            No skills yet — matches will lean on your resume once you upload it.
+            No skills yet. Matches will lean on your resume once you upload it.
           </p>
         ) : null}
       </div>

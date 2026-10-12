@@ -115,7 +115,7 @@ export function ListingsBrowser({
         <LoadingSkeleton rows={4} heightClassName="h-20" />
       ) : data.items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          No jobs match these filters — try a different search, source, or skill.
+          No jobs match these filters. Try a different search, source, or skill.
         </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">

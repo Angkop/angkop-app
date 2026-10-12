@@ -76,7 +76,7 @@ function dateRange(start: string | null, end: string | null, current?: boolean):
   const endLabel = current ? 'Present' : formatMonthYear(end)
   if (!startLabel && !endLabel) return ''
   if (!endLabel) return startLabel
-  return `${startLabel} – ${endLabel}`
+  return `${startLabel} - ${endLabel}`
 }
 
 
@@ -207,7 +207,7 @@ export function ResumeImportDialog({
           <DialogTitle>Import from resume</DialogTitle>
           <DialogDescription>
             Upload a resume (PDF or DOCX) and we&apos;ll read it to fill in your headline, skills, experience,
-            education, certifications, projects, and languages — you&apos;ll review everything before it&apos;s applied.
+            education, certifications, projects, and languages. You&apos;ll review everything before it&apos;s applied.
           </DialogDescription>
         </DialogHeader>
 
@@ -253,7 +253,7 @@ export function ResumeImportDialog({
             {isCacheHit ? (
               <div className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-xs font-medium text-accent-foreground">
                 <Zap className="size-3.5" />
-                Matched an earlier upload — nothing new to process
+                Matched an earlier upload. Nothing new to process.
               </div>
             ) : null}
 
@@ -294,7 +294,7 @@ export function ResumeImportDialog({
                           <p className="text-xs text-muted-foreground">
                             {[entry.degree, entry.fieldOfStudy].filter(Boolean).join(' in ')}
                             {entry.startYear || entry.endYear
-                              ? ` · ${entry.startYear ?? ''}${entry.endYear ? `–${entry.endYear}` : ''}`
+                              ? ` · ${entry.startYear ?? ''}${entry.endYear ? `-${entry.endYear}` : ''}`
                               : ''}
                           </p>
                           {entry.description ? <ExpandableText text={entry.description} /> : null}

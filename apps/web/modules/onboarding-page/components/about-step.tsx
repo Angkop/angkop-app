@@ -60,7 +60,7 @@ export function AboutStep({
           Import from resume
         </Button>
         <p className="text-xs text-muted-foreground">
-          Optional shortcut — skip manually filling in the fields below if your resume already covers them.
+          Optional shortcut: skip manually filling in the fields below if your resume already covers them.
         </p>
       </div>
 

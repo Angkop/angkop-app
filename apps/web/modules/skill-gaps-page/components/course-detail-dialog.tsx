@@ -33,7 +33,7 @@ export function CourseDetailDialog({
                 <Lightbulb className="mt-0.5 size-4 shrink-0 text-primary" />
                 <p className="text-xs leading-relaxed text-foreground">
                   Suggested because <span className="font-medium">{skill}</span> showed up as a gap against your
-                  saved jobs — it&apos;s required by at least one of them but isn&apos;t reflected in your profile
+                  saved jobs. It&apos;s required by at least one of them but isn&apos;t reflected in your profile
                   yet.
                 </p>
               </div>
@@ -51,7 +51,7 @@ export function CourseDetailDialog({
                 />
               ) : (
                 <div className="flex aspect-video w-full items-center justify-center">
-                  <BookOpen className="size-10 text-muted-foreground" strokeWidth={1.5} />
+                  <BookOpen className="size-10 text-muted-foreground" />
                 </div>
               )}
             </div>
