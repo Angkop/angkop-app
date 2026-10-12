@@ -1,5 +1,4 @@
-import { Briefcase, CalendarClock, CheckCircle2, Hourglass } from 'lucide-react'
-import { StatCard } from '@/components/stat-card'
+import { StatStrip } from '@/components/stat-strip'
 
 type SavedJobStats = {
   total: number
@@ -10,21 +9,13 @@ type SavedJobStats = {
 
 export function ApplicationStatsRow({ stats }: { stats: SavedJobStats }) {
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      <StatCard label="Total Applications" value={stats.total} caption="Jobs you're tracking" icon={Briefcase} />
-      <StatCard
-        label="In Progress"
-        value={stats.inProgress}
-        caption="Applied through interviewed"
-        icon={Hourglass}
-      />
-      <StatCard
-        label="Interviews Scheduled"
-        value={stats.upcomingInterviews}
-        caption="With a set interview date"
-        icon={CalendarClock}
-      />
-      <StatCard label="Successful" value={stats.successful} caption="Offers and acceptances" icon={CheckCircle2} />
-    </div>
+    <StatStrip
+      items={[
+        { label: 'Total applications', value: stats.total, caption: "Jobs you're tracking" },
+        { label: 'In progress', value: stats.inProgress, caption: 'Applied through interviewed' },
+        { label: 'Interviews scheduled', value: stats.upcomingInterviews, caption: 'With a set interview date' },
+        { label: 'Successful', value: stats.successful, caption: 'Offers and acceptances' }
+      ]}
+    />
   )
 }
