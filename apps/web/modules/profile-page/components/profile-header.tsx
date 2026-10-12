@@ -3,6 +3,7 @@ import { CAREER_LEVEL_LABELS, type CareerLevel } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getInitials } from '@/lib/utils'
 import { OPEN_TO_WORK_LEVELS } from '../constants'
 
@@ -42,15 +43,20 @@ export function ProfileHeader({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-1.5">
               <h1 className="text-xl font-semibold tracking-tight text-foreground">{name ?? email}</h1>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Edit profile"
-                onClick={onEditClick}
-                className="text-muted-foreground"
-              >
-                <PencilLine className="size-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Edit profile"
+                    onClick={onEditClick}
+                    className="text-muted-foreground"
+                  >
+                    <PencilLine className="size-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Edit profile</TooltipContent>
+              </Tooltip>
             </div>
             <Button type="button" variant="outline" size="sm" onClick={onImportResumeClick} className="gap-1.5">
               <Upload className="size-3.5" />

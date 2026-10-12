@@ -5,6 +5,7 @@ import { Check, Loader2, Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export function ChipList({
   items,
@@ -45,15 +46,20 @@ export function ChipList({
         return (
           <Badge key={item} variant="secondary">
             {item}
-            <button
-              type="button"
-              aria-label={isRemoving ? `Removing ${item}` : `Remove ${item}`}
-              disabled={isRemoving}
-              onClick={() => onRemove(item)}
-              className="cursor-pointer rounded-full p-0.5 hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isRemoving ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={isRemoving ? `Removing ${item}` : `Remove ${item}`}
+                  disabled={isRemoving}
+                  onClick={() => onRemove(item)}
+                  className="cursor-pointer rounded-full p-0.5 hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isRemoving ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Remove</TooltipContent>
+            </Tooltip>
           </Badge>
         )
       })}

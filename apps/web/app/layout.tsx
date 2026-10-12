@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from 'next/font/google'
 import { AppApolloProvider } from '@/providers/apollo-provider'
 import { AuthSyncProvider } from '@/providers/auth-sync-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
 
 const inter = Inter({
@@ -27,7 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang='en' className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}>
       <body className='min-h-full flex flex-col'>
         <AuthSyncProvider>
-          <AppApolloProvider>{children}</AppApolloProvider>
+          <AppApolloProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </AppApolloProvider>
         </AuthSyncProvider>
         <Toaster />
       </body>

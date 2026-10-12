@@ -164,3 +164,10 @@ body {
     animation: none !important;
   }
 }
+
+/* Tooltip (components/ui/tooltip.tsx) — reuses the fade keyframes above. */
+@media (prefers-reduced-motion: reduce) {
+  .angkop-tooltip-content {
+    animation: none !important;
+  }
+}

@@ -7,6 +7,7 @@ import { Bookmark, BookmarkCheck, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAVE_JOB_MUTATION } from '@/lib/job-matches'
 import { getStoredToken } from '@/lib/auth'
 import type { ListingSummary } from '../types'
@@ -56,16 +57,21 @@ export function ListingRow({
         </Link>
         <div className="flex shrink-0 items-center gap-1">
           <Badge variant="outline">{listing.sourceName}</Badge>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={isSaved ? 'Saved to your applications' : 'Save job'}
-            disabled={isSaved || isSaving}
-            onClick={handleSave}
-          >
-            {isSaved ? <BookmarkCheck className="size-4 text-primary" /> : <Bookmark className="size-4" />}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={isSaved ? 'Saved to your applications' : 'Save job'}
+                disabled={isSaved || isSaving}
+                onClick={handleSave}
+              >
+                {isSaved ? <BookmarkCheck className="size-4 text-primary" /> : <Bookmark className="size-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{isSaved ? 'Saved to your applications' : 'Save job'}</TooltipContent>
+          </Tooltip>
         </div>
       </div>
       <Link href={`/listings/${listing.id}`} className="flex flex-wrap gap-1.5">

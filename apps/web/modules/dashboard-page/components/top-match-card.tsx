@@ -7,6 +7,7 @@ import type { JobMatch } from '@angkop/shared'
 import { MatchScoreBadge } from '@/components/match-score-badge'
 import { MatchInsightDialog } from '@/components/match-insight-dialog'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export function TopMatchCard({ match, rank }: { match: JobMatch; rank: number }) {
   const [insightOpen, setInsightOpen] = useState(false)
@@ -28,9 +29,14 @@ export function TopMatchCard({ match, rank }: { match: JobMatch; rank: number })
         <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
       </Link>
 
-      <Button variant="ghost" size="icon-sm" aria-label="Why this is a match" onClick={() => setInsightOpen(true)}>
-        <Target className="size-4" />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon-sm" aria-label="Why this is a match" onClick={() => setInsightOpen(true)}>
+            <Target className="size-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Why this is a match</TooltipContent>
+      </Tooltip>
 
       <MatchInsightDialog
         open={insightOpen}

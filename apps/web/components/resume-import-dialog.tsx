@@ -28,6 +28,7 @@ import { API_URL } from '@/constants/api'
 import { getStoredToken } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Dialog,
   DialogContent,
@@ -314,15 +315,20 @@ export function ResumeImportDialog({
                   <p className="truncate text-sm font-medium text-foreground">{selectedFile.name}</p>
                   <p className="text-xs text-muted-foreground">{formatFileSize(selectedFile.size)}</p>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleRemoveSelectedFile}
-                  aria-label="Remove selected file"
-                >
-                  <X className="size-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleRemoveSelectedFile}
+                      aria-label="Remove selected file"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove file</TooltipContent>
+                </Tooltip>
               </div>
             )}
             {selectionError ? <p className="text-xs text-destructive">{selectionError}</p> : null}

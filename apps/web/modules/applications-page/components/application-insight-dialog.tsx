@@ -24,6 +24,7 @@ import {
 } from '@/lib/job-match-insight'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Dialog,
   DialogContent,
@@ -121,14 +122,19 @@ export function ApplicationInsightDialog({
                 </DialogDescription>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={expanded ? 'Shrink dialog' : 'Enlarge dialog'}
-              onClick={() => setExpanded((value) => !value)}
-            >
-              {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={expanded ? 'Shrink dialog' : 'Enlarge dialog'}
+                  onClick={() => setExpanded((value) => !value)}
+                >
+                  {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left">{expanded ? 'Shrink dialog' : 'Enlarge dialog'}</TooltipContent>
+            </Tooltip>
           </div>
         </DialogHeader>
 

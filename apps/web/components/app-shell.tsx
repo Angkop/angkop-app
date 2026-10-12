@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { NAV_LINKS } from '@/constants/nav'
 import { clearStoredToken, getStoredToken } from '@/lib/auth'
 import { supabaseClient } from '@/lib/supabase-client'
@@ -181,15 +182,20 @@ export function AppShell({
                 </SheetBody>
               </SheetContent>
             </Sheet>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setMobileOpen((prev) => !prev)}
-              aria-label="Toggle navigation"
-            >
-              {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  onClick={() => setMobileOpen((prev) => !prev)}
+                  aria-label="Toggle navigation"
+                >
+                  {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{mobileOpen ? 'Close menu' : 'Open menu'}</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 

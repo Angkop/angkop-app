@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ChipList } from '@/components/chip-list'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MatchScoreBadge } from '@/components/match-score-badge'
 import { STATUS_ORDER } from '../constants'
@@ -45,23 +46,33 @@ export function ApplicationCard({
           <p className="truncate text-xs text-muted-foreground">{savedJob.job.company}</p>
         </Link>
         <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="View match details"
-            onClick={() => onViewInsight(savedJob)}
-          >
-            <Eye className="size-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Remove application"
-            disabled={isUnsavePending}
-            onClick={() => setConfirmUnsaveOpen(true)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="View match details"
+                onClick={() => onViewInsight(savedJob)}
+              >
+                <Eye className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View match details</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Remove application"
+                disabled={isUnsavePending}
+                onClick={() => setConfirmUnsaveOpen(true)}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Remove application</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 

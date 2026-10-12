@@ -1,6 +1,7 @@
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ArrayHelpers, EducationEntry } from '@/lib/profile-form'
 
 export function EducationFields({
@@ -47,15 +48,20 @@ export function EducationFields({
                 placeholder="End year"
               />
               {education.length > 1 ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Remove education entry"
-                  onClick={() => educationHelpers.remove(index)}
-                >
-                  <X className="size-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Remove education entry"
+                      onClick={() => educationHelpers.remove(index)}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove education entry</TooltipContent>
+                </Tooltip>
               ) : null}
             </div>
           </div>

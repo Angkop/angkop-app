@@ -3,6 +3,7 @@ import { LANGUAGE_PROFICIENCY_LABELS, type LanguageProficiency } from '@angkop/s
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ArrayHelpers, LanguageEntry } from '@/lib/profile-form'
 
 export function LanguagesFields({
@@ -39,15 +40,20 @@ export function LanguagesFields({
               )}
             </SelectContent>
           </Select>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Remove language"
-            onClick={() => languageHelpers.remove(index)}
-          >
-            <X className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Remove language"
+                onClick={() => languageHelpers.remove(index)}
+              >
+                <X className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Remove language</TooltipContent>
+          </Tooltip>
         </div>
       ))}
       <Button type="button" variant="outline" size="sm" onClick={languageHelpers.add}>

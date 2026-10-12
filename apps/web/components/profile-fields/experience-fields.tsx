@@ -3,6 +3,7 @@ import { EMPLOYMENT_TYPE_LABELS, type EmploymentType } from '@angkop/shared'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ArrayHelpers, ExperienceEntry } from '@/lib/profile-form'
 
 export function ExperienceFields({
@@ -73,15 +74,20 @@ export function ExperienceFields({
                 />
                 Current
               </label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Remove experience entry"
-                onClick={() => experienceHelpers.remove(index)}
-              >
-                <X className="size-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Remove experience entry"
+                    onClick={() => experienceHelpers.remove(index)}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Remove experience entry</TooltipContent>
+              </Tooltip>
             </div>
           </div>
           <Textarea

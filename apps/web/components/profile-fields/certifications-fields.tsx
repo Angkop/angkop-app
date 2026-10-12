@@ -1,6 +1,7 @@
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ArrayHelpers, CertificationEntry } from '@/lib/profile-form'
 
 export function CertificationsFields({
@@ -40,15 +41,20 @@ export function CertificationsFields({
               placeholder="Expiration (optional)"
             />
             <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Remove certification"
-                onClick={() => certificationHelpers.remove(index)}
-              >
-                <X className="size-4" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label="Remove certification"
+                    onClick={() => certificationHelpers.remove(index)}
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Remove certification</TooltipContent>
+              </Tooltip>
             </div>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">

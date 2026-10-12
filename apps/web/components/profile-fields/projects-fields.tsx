@@ -2,6 +2,7 @@ import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ChipList } from '@/components/chip-list'
 import { Input, Textarea } from '@/components/ui/input'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { ArrayHelpers, ProjectEntry } from '@/lib/profile-form'
 
 export function ProjectsFields({
@@ -21,15 +22,20 @@ export function ProjectsFields({
               onChange={(event) => projectHelpers.update(index, 'name', event.target.value)}
               placeholder="Project name"
             />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Remove project"
-              onClick={() => projectHelpers.remove(index)}
-            >
-              <X className="size-4" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Remove project"
+                  onClick={() => projectHelpers.remove(index)}
+                >
+                  <X className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Remove project</TooltipContent>
+            </Tooltip>
           </div>
           <Textarea
             value={item.description}

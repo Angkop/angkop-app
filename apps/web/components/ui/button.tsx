@@ -28,8 +28,11 @@ export const buttonVariants = cva(
   }
 )
 
-export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof buttonVariants>
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
+  VariantProps<typeof buttonVariants> & { ref?: React.Ref<HTMLButtonElement> }
 
-export function Button({ className, variant, size, ...props }: ButtonProps) {
-  return <button className={cn(buttonVariants({ variant, size, className }))} {...props} />
+// `ref` is destructured as a plain prop (React 19 no longer needs forwardRef for this) so
+// Radix's TooltipTrigger/DialogTrigger `asChild` can attach its own ref to the real <button>.
+export function Button({ className, variant, size, ref, ...props }: ButtonProps) {
+  return <button ref={ref} className={cn(buttonVariants({ variant, size, className }))} {...props} />
 }
