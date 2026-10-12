@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, Plus, X } from 'lucide-react'
+import { Check, Loader2, Plus, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,12 +10,18 @@ export function ChipList({
   items,
   onAdd,
   onRemove,
-  placeholder
+  placeholder,
+  // Defaults to "nothing in flight" so callers backed by synchronous local state (the
+  // profile-fields editors) can skip this entirely. The "add" control doesn't need an
+  // equivalent prop — commit() below already unmounts it synchronously on click, before
+  // a second click could ever land, so there's no window to protect there.
+  removingItem = null
 }: {
   items: string[]
   onAdd: (value: string) => void
   onRemove: (value: string) => void
   placeholder: string
+  removingItem?: string | null
 }) {
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState('')
@@ -34,19 +40,23 @@ export function ChipList({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {items.map((item) => (
-        <Badge key={item} variant="secondary">
-          {item}
-          <button
-            type="button"
-            aria-label={`Remove ${item}`}
-            onClick={() => onRemove(item)}
-            className="cursor-pointer rounded-full p-0.5 hover:bg-foreground/10"
-          >
-            <X className="size-3" />
-          </button>
-        </Badge>
-      ))}
+      {items.map((item) => {
+        const isRemoving = removingItem === item
+        return (
+          <Badge key={item} variant="secondary">
+            {item}
+            <button
+              type="button"
+              aria-label={isRemoving ? `Removing ${item}` : `Remove ${item}`}
+              disabled={isRemoving}
+              onClick={() => onRemove(item)}
+              className="cursor-pointer rounded-full p-0.5 hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isRemoving ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
+            </button>
+          </Badge>
+        )
+      })}
       {adding ? (
         <div className="inline-flex items-center gap-1">
           <Input

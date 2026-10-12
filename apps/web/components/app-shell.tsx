@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
 import { LogOut, Menu, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -53,6 +54,7 @@ export function AppShell({
   // only ever updated from the effect below, never read during render, so the client's
   // first render still matches the server's and React doesn't flag a hydration mismatch.
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const { data } = useQuery<MeQueryResult>(ME_QUERY, { skip: isChecking || !isAuthenticated })
 
   useEffect(() => {
@@ -74,9 +76,15 @@ export function AppShell({
   const initials = email ? getInitials(name, email) : ''
 
   async function handleSignOut() {
-    await supabaseClient.auth.signOut()
-    clearStoredToken()
-    router.replace('/')
+    setIsSigningOut(true)
+    try {
+      await supabaseClient.auth.signOut()
+      clearStoredToken()
+      router.replace('/')
+    } catch {
+      toast.error('Could not sign out')
+      setIsSigningOut(false)
+    }
   }
 
   return (
@@ -143,11 +151,12 @@ export function AppShell({
                     variant="outline"
                     size="sm"
                     onClick={handleSignOut}
-                    aria-label="Sign out"
+                    disabled={isSigningOut}
+                    aria-label={isSigningOut ? 'Signing out' : 'Sign out'}
                     className="gap-1.5"
                   >
                     <LogOut className="size-3.5" />
-                    <span className="hidden sm:inline">Sign out</span>
+                    <span className="hidden sm:inline">{isSigningOut ? 'Signing out…' : 'Sign out'}</span>
                   </Button>
                   <Button
                     variant="ghost"

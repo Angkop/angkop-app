@@ -22,6 +22,11 @@ export function AllMatchesPage() {
   // (each a cache miss right after invalidateMatchScoresForUser) just to reflect one
   // removal — slow, and the other jobs' scores haven't meaningfully changed anyway.
   const [hiddenJobIds, setHiddenJobIds] = useState<Set<string>>(new Set())
+  // Apollo's mutation `loading` flag is shared across every call made from that one hook
+  // instance, so it can't tell which row is in flight when several jobs render at once —
+  // track per-job IDs here instead so one row's save/dismiss doesn't disable every row.
+  const [savingJobIds, setSavingJobIds] = useState<Set<string>>(new Set())
+  const [dismissingJobIds, setDismissingJobIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     getListingSkills().then(setSkills)
@@ -40,6 +45,7 @@ export function AllMatchesPage() {
   const [saveJob] = useMutation(SAVE_JOB_MUTATION)
 
   async function handleSave(jobId: string) {
+    setSavingJobIds((prev) => new Set(prev).add(jobId))
     try {
       await saveJob({ variables: { jobId } })
       setHiddenJobIds((prev) => new Set(prev).add(jobId))
@@ -48,10 +54,17 @@ export function AllMatchesPage() {
       toast.error('Could not save this job', {
         description: saveError instanceof Error ? saveError.message : undefined
       })
+    } finally {
+      setSavingJobIds((prev) => {
+        const next = new Set(prev)
+        next.delete(jobId)
+        return next
+      })
     }
   }
 
   async function handleDismiss(jobId: string) {
+    setDismissingJobIds((prev) => new Set(prev).add(jobId))
     try {
       await logInteraction({ variables: { jobId, eventType: 'dismiss' } })
       setHiddenJobIds((prev) => new Set(prev).add(jobId))
@@ -59,6 +72,12 @@ export function AllMatchesPage() {
     } catch (dismissError) {
       toast.error('Could not dismiss this job', {
         description: dismissError instanceof Error ? dismissError.message : undefined
+      })
+    } finally {
+      setDismissingJobIds((prev) => {
+        const next = new Set(prev)
+        next.delete(jobId)
+        return next
       })
     }
   }
@@ -87,6 +106,8 @@ export function AllMatchesPage() {
           onPageChange={filters.goToPage}
           onSave={handleSave}
           onDismiss={handleDismiss}
+          savingJobIds={savingJobIds}
+          dismissingJobIds={dismissingJobIds}
         />
       )}
     </div>

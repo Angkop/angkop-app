@@ -17,15 +17,23 @@ export function ApplicationCard({
   onAddTag,
   onRemoveTag,
   onUnsave,
-  onViewInsight
+  onViewInsight,
+  isStatusPending = false,
+  isInterviewDatePending = false,
+  removingTag = null,
+  isUnsavePending = false
 }: {
   savedJob: SavedJob
   onStatusChange: (jobId: string, status: ApplicationStatus) => void
   onInterviewDateChange: (jobId: string, interviewDate: string) => void
   onAddTag: (jobId: string, tag: string) => void
   onRemoveTag: (jobId: string, tag: string) => void
-  onUnsave: (jobId: string) => void
+  onUnsave: (jobId: string) => Promise<void>
   onViewInsight: (savedJob: SavedJob) => void
+  isStatusPending?: boolean
+  isInterviewDatePending?: boolean
+  removingTag?: string | null
+  isUnsavePending?: boolean
 }) {
   const [confirmUnsaveOpen, setConfirmUnsaveOpen] = useState(false)
 
@@ -49,6 +57,7 @@ export function ApplicationCard({
             variant="ghost"
             size="icon-sm"
             aria-label="Remove application"
+            disabled={isUnsavePending}
             onClick={() => setConfirmUnsaveOpen(true)}
           >
             <Trash2 className="size-4" />
@@ -65,6 +74,7 @@ export function ApplicationCard({
           </label>
           <Select
             value={savedJob.status}
+            disabled={isStatusPending}
             onValueChange={(value) => onStatusChange(savedJob.job.id, value as ApplicationStatus)}
           >
             <SelectTrigger id={`status-${savedJob.id}`} className="w-48">
@@ -93,6 +103,7 @@ export function ApplicationCard({
               id={`interview-date-${savedJob.id}`}
               type="date"
               value={savedJob.interviewDate ? savedJob.interviewDate.slice(0, 10) : ''}
+              disabled={isInterviewDatePending}
               onChange={(event) => onInterviewDateChange(savedJob.job.id, event.target.value)}
               className="h-8 w-36 text-xs"
             />
@@ -107,6 +118,7 @@ export function ApplicationCard({
           onAdd={(tag) => onAddTag(savedJob.job.id, tag)}
           onRemove={(tag) => onRemoveTag(savedJob.job.id, tag)}
           placeholder="e.g. Dream job"
+          removingItem={removingTag}
         />
       </div>
 
@@ -116,7 +128,12 @@ export function ApplicationCard({
         title="Remove this application?"
         description={`"${savedJob.job.title}" at ${savedJob.job.company} will be removed from your tracked applications, including its status, tags, and interview date.`}
         confirmLabel="Remove"
-        onConfirm={() => onUnsave(savedJob.job.id)}
+        confirmingLabel="Removing…"
+        isConfirming={isUnsavePending}
+        onConfirm={async () => {
+          await onUnsave(savedJob.job.id)
+          setConfirmUnsaveOpen(false)
+        }}
       />
     </div>
   )

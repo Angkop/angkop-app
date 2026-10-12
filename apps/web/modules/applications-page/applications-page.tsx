@@ -39,10 +39,39 @@ type SavedJobStatsQueryResult = {
   savedJobStats: SavedJobStats
 }
 
+type JobPendingState = {
+  status: boolean
+  interviewDate: boolean
+  removingTag: string | null
+  unsave: boolean
+}
+
+const EMPTY_PENDING_STATE: JobPendingState = {
+  status: false,
+  interviewDate: false,
+  removingTag: null,
+  unsave: false
+}
+
 export function ApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>(ALL_FILTER_VALUE)
   const [page, setPage] = useState(1)
   const [insightTarget, setInsightTarget] = useState<SavedJob | null>(null)
+  // Each card has five independently-triggerable mutations, and Apollo's mutation `loading`
+  // is shared across every row — keyed per-job state is what lets one job's tag edit stay
+  // disabled without freezing every other card's controls too.
+  const [pendingByJob, setPendingByJob] = useState<Record<string, JobPendingState>>({})
+
+  function getPending(jobId: string): JobPendingState {
+    return pendingByJob[jobId] ?? EMPTY_PENDING_STATE
+  }
+
+  function setPendingField<K extends keyof JobPendingState>(jobId: string, field: K, value: JobPendingState[K]) {
+    setPendingByJob((prev) => ({
+      ...prev,
+      [jobId]: { ...(prev[jobId] ?? EMPTY_PENDING_STATE), [field]: value }
+    }))
+  }
 
   const status = statusFilter === ALL_FILTER_VALUE ? undefined : (statusFilter as ApplicationStatus)
 
@@ -78,6 +107,7 @@ export function ApplicationsPage() {
   }
 
   async function handleStatusChange(jobId: string, newStatus: ApplicationStatus) {
+    setPendingField(jobId, 'status', true)
     try {
       await updateStatus({ variables: { jobId, status: newStatus } })
       await Promise.all([refetch(), refetchStats()])
@@ -86,10 +116,13 @@ export function ApplicationsPage() {
       toast.error('Could not update status', {
         description: error instanceof Error ? error.message : undefined
       })
+    } finally {
+      setPendingField(jobId, 'status', false)
     }
   }
 
   async function handleInterviewDateChange(jobId: string, interviewDate: string) {
+    setPendingField(jobId, 'interviewDate', true)
     try {
       await setInterviewDate({ variables: { jobId, interviewDate: interviewDate || null } })
       await Promise.all([refetch(), refetchStats()])
@@ -98,6 +131,8 @@ export function ApplicationsPage() {
       toast.error('Could not update interview date', {
         description: error instanceof Error ? error.message : undefined
       })
+    } finally {
+      setPendingField(jobId, 'interviewDate', false)
     }
   }
 
@@ -114,6 +149,7 @@ export function ApplicationsPage() {
   }
 
   async function handleRemoveTag(jobId: string, tag: string) {
+    setPendingField(jobId, 'removingTag', tag)
     try {
       await removeTag({ variables: { jobId, tag } })
       await refetch()
@@ -122,10 +158,13 @@ export function ApplicationsPage() {
       toast.error('Could not remove tag', {
         description: error instanceof Error ? error.message : undefined
       })
+    } finally {
+      setPendingField(jobId, 'removingTag', null)
     }
   }
 
   async function handleUnsave(jobId: string) {
+    setPendingField(jobId, 'unsave', true)
     try {
       await unsaveJob({ variables: { jobId } })
       await Promise.all([refetch(), refetchStats()])
@@ -134,6 +173,8 @@ export function ApplicationsPage() {
       toast.error('Could not remove this job', {
         description: unsaveError instanceof Error ? unsaveError.message : undefined
       })
+    } finally {
+      setPendingField(jobId, 'unsave', false)
     }
   }
 
@@ -179,18 +220,25 @@ export function ApplicationsPage() {
           ) : (
             <>
               <div className="flex flex-col gap-3">
-                {pageItems.map((savedJob) => (
-                  <ApplicationCard
-                    key={savedJob.id}
-                    savedJob={savedJob}
-                    onStatusChange={handleStatusChange}
-                    onInterviewDateChange={handleInterviewDateChange}
-                    onAddTag={handleAddTag}
-                    onRemoveTag={handleRemoveTag}
-                    onUnsave={handleUnsave}
-                    onViewInsight={setInsightTarget}
-                  />
-                ))}
+                {pageItems.map((savedJob) => {
+                  const pending = getPending(savedJob.job.id)
+                  return (
+                    <ApplicationCard
+                      key={savedJob.id}
+                      savedJob={savedJob}
+                      onStatusChange={handleStatusChange}
+                      onInterviewDateChange={handleInterviewDateChange}
+                      onAddTag={handleAddTag}
+                      onRemoveTag={handleRemoveTag}
+                      onUnsave={handleUnsave}
+                      onViewInsight={setInsightTarget}
+                      isStatusPending={pending.status}
+                      isInterviewDatePending={pending.interviewDate}
+                      removingTag={pending.removingTag}
+                      isUnsavePending={pending.unsave}
+                    />
+                  )
+                })}
               </div>
 
               <PaginationControls page={page} pageCount={pageCount} onChange={setPage} />

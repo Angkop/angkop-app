@@ -25,7 +25,9 @@ export function MatchesBrowser({
   onApply,
   onPageChange,
   onSave,
-  onDismiss
+  onDismiss,
+  savingJobIds,
+  dismissingJobIds
 }: {
   items: JobMatch[]
   total: number
@@ -41,7 +43,9 @@ export function MatchesBrowser({
   onApply: () => void
   onPageChange: (page: number) => void
   onSave: (jobId: string) => void
-  onDismiss: (jobId: string) => void
+  onDismiss: (jobId: string) => Promise<void>
+  savingJobIds: Set<string>
+  dismissingJobIds: Set<string>
 }) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
 
@@ -107,6 +111,8 @@ export function MatchesBrowser({
                 score={match.hybridScore}
                 onSave={onSave}
                 onDismiss={onDismiss}
+                isSaving={savingJobIds.has(match.job.id)}
+                isDismissing={dismissingJobIds.has(match.job.id)}
               />
             ))}
           </div>
