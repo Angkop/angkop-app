@@ -1,7 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import type { ListingDetail } from '../types'
 import { DescriptionAccordion } from './description-accordion'
-import { LanguageNotice } from './language-notice'
 import { ListingFacts } from './listing-facts'
 import { MentionedLanguagesList } from './mentioned-languages-list'
 import { SkillsList } from './skills-list'
@@ -27,10 +26,6 @@ export function ListingCard({ listing }: { listing: ListingDetail }) {
       </div>
 
       <ListingFacts listing={listing} />
-
-      {listing.detectedLanguage ? (
-        <LanguageNotice detectedLanguage={listing.detectedLanguage} sourceUrl={listing.sourceUrl} />
-      ) : null}
 
       {/* Full flattened text for the extension's scraper contract — the Accordion below is
           what sighted users actually read. */}
