@@ -110,7 +110,15 @@ export function ApplicationsPage() {
     setPendingField(jobId, 'status', true)
     try {
       await updateStatus({ variables: { jobId, status: newStatus } })
-      await Promise.all([refetch(), refetchStats()])
+      // The mutation's own response already updates this row's status everywhere it's
+      // cached (Apollo normalizes by SavedJob.id) - an unfiltered view just reflects the
+      // new value in place. A status filter is the one case a list refetch still earns
+      // its keep: the row may no longer belong in the current filtered page at all, and
+      // only the server knows what should replace it.
+      await Promise.all([
+        statusFilter === ALL_FILTER_VALUE ? Promise.resolve() : refetch(),
+        refetchStats()
+      ])
       toast.success(`Status updated to ${APPLICATION_STATUS_LABELS[newStatus]}`)
     } catch (error) {
       toast.error('Could not update status', {
@@ -125,7 +133,10 @@ export function ApplicationsPage() {
     setPendingField(jobId, 'interviewDate', true)
     try {
       await setInterviewDate({ variables: { jobId, interviewDate: interviewDate || null } })
-      await Promise.all([refetch(), refetchStats()])
+      // interviewDate never changes which page or status filter a row belongs in - the
+      // mutation's own response already updates this row via Apollo's normalized cache.
+      // Only the (cheap, non-scoring) stats row needs a fresh read.
+      await refetchStats()
       toast.success(interviewDate ? 'Interview date saved' : 'Interview date cleared')
     } catch (error) {
       toast.error('Could not update interview date', {
@@ -138,8 +149,10 @@ export function ApplicationsPage() {
 
   async function handleAddTag(jobId: string, tag: string) {
     try {
+      // Tags never affect list membership, page, or the stats row - the mutation's own
+      // response already updates this row via Apollo's normalized cache, so no follow-up
+      // network call is needed at all.
       await addTag({ variables: { jobId, tag } })
-      await refetch()
       toast.success(`Tag "${tag}" added`)
     } catch (error) {
       toast.error('Could not add tag', {
@@ -152,7 +165,6 @@ export function ApplicationsPage() {
     setPendingField(jobId, 'removingTag', tag)
     try {
       await removeTag({ variables: { jobId, tag } })
-      await refetch()
       toast.success(`Tag "${tag}" removed`)
     } catch (error) {
       toast.error('Could not remove tag', {
@@ -166,6 +178,9 @@ export function ApplicationsPage() {
   async function handleUnsave(jobId: string) {
     setPendingField(jobId, 'unsave', true)
     try {
+      // Unlike the field edits above, this changes list membership and total count - a
+      // point cache update can't safely express "and the next row from the following page
+      // now belongs here instead" without asking the server, so this one keeps the refetch.
       await unsaveJob({ variables: { jobId } })
       await Promise.all([refetch(), refetchStats()])
       toast.success('Removed from your applications')

@@ -6,6 +6,13 @@ from pydantic import BaseModel
 
 from app.config import GEMINI_API_KEY, GEMINI_MODEL
 
+# A fresh genai.Client() per call was recreating the same HTTP client (connection pool
+# included) on every resume parse - a module-level singleton reuses it instead. Longer
+# timeout than match_insight.py's since a full resume's 8192-token output budget can
+# genuinely take longer to generate than a short match explanation.
+_REQUEST_TIMEOUT_MS = 45_000
+_client = genai.Client(api_key=GEMINI_API_KEY, http_options=types.HttpOptions(timeout=_REQUEST_TIMEOUT_MS))
+
 _CAREER_LEVELS = {"STUDENT", "ENTRY_LEVEL", "JUNIOR", "MID_LEVEL", "SENIOR", "LEAD", "MANAGER"}
 _EMPLOYMENT_TYPES = {"FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP", "FREELANCE"}
 _SKILL_LEVELS = {"BEGINNER", "INTERMEDIATE", "ADVANCED"}
@@ -146,8 +153,7 @@ def parse_resume(resume_text: str, contact_hints: ContactHints | None = None) ->
     if "lite" not in GEMINI_MODEL:
         config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
 
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    response = client.models.generate_content(
+    response = _client.models.generate_content(
         model=GEMINI_MODEL,
         contents=f"{_PROMPT}{hints_block}\nRESUME TEXT:\n{resume_text}",
         config=types.GenerateContentConfig(**config_kwargs),

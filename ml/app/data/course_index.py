@@ -4,6 +4,8 @@ back to a YouTube Data API v3 search (free tier, no OAuth), cached in-process pe
 so the ~100 searches/day quota is only ever spent once per distinct skill, not once per
 request."""
 
+from collections import OrderedDict
+
 import httpx
 
 from app.config import YOUTUBE_API_KEY
@@ -53,7 +55,19 @@ COURSE_INDEX: dict[str, list[dict[str, str]]] = {
 }
 
 
-_youtube_cache: dict[str, list[dict[str, str]]] = {}
+# Bounded LRU, not a plain dict - a long-running process would otherwise accumulate one
+# entry per distinct skill ever searched, forever. 500 distinct skills comfortably covers
+# a job-matching thesis's actual skill vocabulary without ever evicting in practice, while
+# still giving the process a real ceiling instead of none.
+_YOUTUBE_CACHE_MAX_SIZE = 500
+_youtube_cache: "OrderedDict[str, list[dict[str, str]]]" = OrderedDict()
+
+
+def _cache_courses(key: str, courses: list[dict[str, str]]) -> None:
+    _youtube_cache[key] = courses
+    _youtube_cache.move_to_end(key)
+    if len(_youtube_cache) > _YOUTUBE_CACHE_MAX_SIZE:
+        _youtube_cache.popitem(last=False)
 
 
 def _search_youtube(skill: str) -> list[dict[str, str]] | None:
@@ -108,8 +122,9 @@ def courses_for_skill(skill: str) -> list[dict[str, str]]:
         return COURSE_INDEX[key]
 
     if key in _youtube_cache:
+        _youtube_cache.move_to_end(key)
         return _youtube_cache[key]
 
     courses = _search_youtube(key) or _fallback_search_link(skill)
-    _youtube_cache[key] = courses
+    _cache_courses(key, courses)
     return courses

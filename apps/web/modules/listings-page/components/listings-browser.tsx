@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@apollo/client/react'
 import { Search } from 'lucide-react'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
@@ -38,8 +38,31 @@ export function ListingsBrowser({
   })
   const savedJobIds = new Set(savedJobIdsData?.savedJobIds ?? [])
 
+  // The server already fetched this exact page/filter combination for initialPage (see
+  // listings-page.tsx - same searchParams this hook reads on first render) - skip the
+  // redundant client-side refetch on mount when nothing's changed since then. Only guards
+  // the very first run; any later filter/page change still refetches normally.
+  const isFirstRun = useRef(true)
+  const initialFilters = useRef({
+    page: filters.page,
+    query: filters.appliedQuery,
+    source: filters.appliedSource,
+    skill: filters.appliedSkill
+  })
+
   // Refetch whenever the URL's *applied* filters/page actually change.
   useEffect(() => {
+    if (isFirstRun.current) {
+      isFirstRun.current = false
+      const initial = initialFilters.current
+      const unchanged =
+        filters.page === initial.page &&
+        filters.appliedQuery === initial.query &&
+        filters.appliedSource === initial.source &&
+        filters.appliedSkill === initial.skill
+      if (unchanged) return
+    }
+
     let cancelled = false
     setIsLoading(true)
     getListings({

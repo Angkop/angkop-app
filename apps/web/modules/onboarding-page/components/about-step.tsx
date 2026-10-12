@@ -1,12 +1,19 @@
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { Upload } from 'lucide-react'
 import type { CareerLevel, ParsedResumeProfile } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { AboutFields } from '@/components/profile-fields/about-fields'
-import { ResumeImportDialog } from '@/components/resume-import-dialog'
 import { getInitials } from '@/lib/utils'
 import { StepSection } from './step-section'
+
+// Only needed once the user actually opens this dialog during onboarding, not on every
+// onboarding page load.
+const ResumeImportDialog = dynamic(
+  () => import('@/components/resume-import-dialog').then((mod) => mod.ResumeImportDialog),
+  { ssr: false }
+)
 
 export function AboutStep({
   email,

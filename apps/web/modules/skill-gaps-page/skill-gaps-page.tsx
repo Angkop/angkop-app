@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useQuery } from '@apollo/client/react'
 import type { Course } from '@angkop/shared'
 import { PageHeader } from '@/components/page-header'
@@ -10,10 +11,16 @@ import { BrandLoader } from '@/components/brand-loader'
 import { StepProgress } from '@/components/step-progress'
 import { SkillGapCard } from './components/skill-gap-card'
 import { SkillGapsSkeleton } from './components/skill-gaps-skeleton'
-import { CourseDetailDialog } from './components/course-detail-dialog'
 import { PAGE_SIZE } from './constants'
 import { SKILL_GAPS_LOADING_STEPS, SKILL_GAPS_QUERY } from './queries'
 import type { SkillGapsQueryResult } from './types'
+
+// Only needed once the user actually clicks into a specific skill gap, not on every
+// skill-gaps page load.
+const CourseDetailDialog = dynamic(
+  () => import('./components/course-detail-dialog').then((mod) => mod.CourseDetailDialog),
+  { ssr: false }
+)
 
 // How long to wait before swapping the plain skeleton for the "Building your report"
 // step-by-step animation. The report is Redis-cached server-side (see getOrSetSkillGaps),

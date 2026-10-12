@@ -1,5 +1,9 @@
 const ANGKOP_API_URL = 'http://localhost:4000'
 const ANGKOP_DEMO_USER_ID = 'demo-user-1'
+// The Express API call plus the ML-backed match-score computation behind it can
+// occasionally run long - without a bound, a stuck request leaves the overlay waiting
+// forever instead of failing fast.
+const FETCH_TIMEOUT_MS = 8000
 
 function scrapeDemoPlatform() {
   const listing = document.querySelector('[data-angkop-platform]')
@@ -15,67 +19,18 @@ function scrapeDemoPlatform() {
   }
 }
 
-// Best-effort selectors for real platforms — not verified against live pages from this
-// environment (no live browser available while building this). If a selector below
-// returns null, that platform's DOM structure has likely changed; inspect the live page
-// and update the selector here.
-function scrapeJobStreet() {
-  const title = document.querySelector('h1')?.textContent?.trim()
-  if (!title) return null
-  return {
-    platform: 'jobstreet',
-    platformJobId: window.location.pathname,
-    title,
-    company: document.querySelector('[data-automation="advertiser-name"]')?.textContent?.trim() ?? 'Unknown Company',
-    description: document.querySelector('[data-automation="jobAdDetails"]')?.textContent?.trim() ?? '',
-    requiredSkills: [],
-    url: window.location.href
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } finally {
+    clearTimeout(timeout)
   }
-}
-
-function scrapeLinkedIn() {
-  const title = document
-    .querySelector('.job-details-jobs-unified-top-card__job-title, h1')
-    ?.textContent?.trim()
-  if (!title) return null
-  return {
-    platform: 'linkedin',
-    platformJobId: window.location.pathname,
-    title,
-    company:
-      document.querySelector('.job-details-jobs-unified-top-card__company-name')?.textContent?.trim() ??
-      'Unknown Company',
-    description: document.querySelector('.jobs-description__content')?.textContent?.trim() ?? '',
-    requiredSkills: [],
-    url: window.location.href
-  }
-}
-
-function scrapeIndeed() {
-  const title = document.querySelector('h1.jobsearch-JobInfoHeader-title, h1')?.textContent?.trim()
-  if (!title) return null
-  return {
-    platform: 'indeed',
-    platformJobId: window.location.pathname,
-    title,
-    company: document.querySelector('[data-company-name="true"]')?.textContent?.trim() ?? 'Unknown Company',
-    description: document.querySelector('#jobDescriptionText')?.textContent?.trim() ?? '',
-    requiredSkills: [],
-    url: window.location.href
-  }
-}
-
-function scrapeCurrentPage() {
-  const host = window.location.hostname
-  if (host.includes('localhost')) return scrapeDemoPlatform()
-  if (host.includes('jobstreet')) return scrapeJobStreet()
-  if (host.includes('linkedin')) return scrapeLinkedIn()
-  if (host.includes('indeed')) return scrapeIndeed()
-  return null
 }
 
 async function logEvent(job, eventType) {
-  const response = await fetch(`${ANGKOP_API_URL}/api/events`, {
+  const response = await fetchWithTimeout(`${ANGKOP_API_URL}/api/events`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId: ANGKOP_DEMO_USER_ID, eventType, job })
@@ -85,13 +40,13 @@ async function logEvent(job, eventType) {
 }
 
 async function fetchMatchScore(jobId) {
-  const response = await fetch(`${ANGKOP_API_URL}/api/match-score/${jobId}?userId=${ANGKOP_DEMO_USER_ID}`)
+  const response = await fetchWithTimeout(`${ANGKOP_API_URL}/api/match-score/${jobId}?userId=${ANGKOP_DEMO_USER_ID}`)
   if (!response.ok) throw new Error('Failed to fetch match score')
   return response.json()
 }
 
 async function main() {
-  const job = scrapeCurrentPage()
+  const job = scrapeDemoPlatform()
   if (!job) {
     console.warn('[Angkop] Could not find a supported job listing on this page.')
     return
@@ -105,7 +60,11 @@ async function main() {
       onDismiss: () => logEvent(job, 'dismiss').catch((error) => console.error('[Angkop]', error))
     })
   } catch (error) {
-    console.error('[Angkop] Failed to compute match score — is the Express API running on :4000?', error)
+    if (error.name === 'AbortError') {
+      console.error(`[Angkop] Request timed out after ${FETCH_TIMEOUT_MS}ms — is the Express API running on :4000?`)
+    } else {
+      console.error('[Angkop] Failed to compute match score — is the Express API running on :4000?', error)
+    }
   }
 }
 

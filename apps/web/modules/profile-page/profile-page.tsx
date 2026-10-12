@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useQuery } from '@apollo/client/react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AboutFields } from '@/components/profile-fields/about-fields'
@@ -15,7 +16,6 @@ import { Button } from '@/components/ui/button'
 import { StatStrip } from '@/components/stat-strip'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
-import { ResumeImportDialog } from '@/components/resume-import-dialog'
 import { useProfileEditor } from '@/hooks/use-profile-editor'
 import { ProfileHeader } from './components/profile-header'
 import { ExperienceSection } from './components/experience-section'
@@ -28,6 +28,14 @@ import { PreferencesSection } from './components/preferences-section'
 import { ProfileFieldSection } from './components/profile-field-section'
 import { APPLIED_JOB_COUNT_QUERY } from './queries'
 import type { AppliedJobCountQueryResult } from './types'
+
+// Only needed once the user actually opens this dialog, not on every profile-editor
+// mount - no reason for its code to ship as part of this (already lazily-loaded, see
+// app-shell.tsx) module's own bundle either.
+const ResumeImportDialog = dynamic(
+  () => import('@/components/resume-import-dialog').then((mod) => mod.ResumeImportDialog),
+  { ssr: false }
+)
 
 export function ProfilePage() {
   const editor = useProfileEditor()

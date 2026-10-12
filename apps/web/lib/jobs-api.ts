@@ -38,14 +38,19 @@ export async function getListings(params: GetListingsParams = {}): Promise<Listi
   return response.json()
 }
 
+// The set of sources/skills across all ingested jobs barely changes between ingestion
+// runs - no-store meant every visitor re-fetched this from scratch on every page load.
+// A 5-minute window is long enough to cut that down to one fetch per filter-dropdown
+// population per revalidation period, short enough that a new source/skill shows up soon
+// after the next ingestion run, not hours later.
 export async function getListingSources(): Promise<string[]> {
-  const response = await fetch(`${API_URL}/api/jobs/sources`, { cache: 'no-store' })
+  const response = await fetch(`${API_URL}/api/jobs/sources`, { next: { revalidate: 300 } })
   if (!response.ok) return []
   return response.json()
 }
 
 export async function getListingSkills(): Promise<string[]> {
-  const response = await fetch(`${API_URL}/api/jobs/skills`, { cache: 'no-store' })
+  const response = await fetch(`${API_URL}/api/jobs/skills`, { next: { revalidate: 300 } })
   if (!response.ok) return []
   return response.json()
 }

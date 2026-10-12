@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { usePathname, useRouter } from 'next/navigation'
 import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
@@ -10,11 +11,18 @@ import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { ProfilePage } from '@/modules/profile-page/profile-page'
 import { NAV_LINKS } from '@/constants/nav'
 import { clearStoredToken, getStoredToken } from '@/lib/auth'
 import { supabaseClient } from '@/lib/supabase-client'
 import { cn, getInitials } from '@/lib/utils'
+
+// The profile editor (and everything it pulls in - its field sections, the resume import
+// dialog) only ever renders once the user opens this sheet, so its JS has no reason to
+// ship in app-shell's own bundle, which every single page pays for on load.
+const ProfilePage = dynamic(
+  () => import('@/modules/profile-page/profile-page').then((mod) => mod.ProfilePage),
+  { ssr: false }
+)
 
 const ME_QUERY = gql`
   query AppShellMe {

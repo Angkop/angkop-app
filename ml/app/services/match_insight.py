@@ -6,6 +6,14 @@ from pydantic import BaseModel
 
 from app.config import GEMINI_API_KEY, GEMINI_MODEL
 
+# A fresh genai.Client() per call was recreating the same HTTP client (connection pool
+# included) on every match-insight request - a module-level singleton reuses it instead.
+# The timeout is explicit because the SDK default is no timeout at all, so a stuck Gemini
+# request would otherwise hang this call indefinitely instead of surfacing as a retryable
+# error to requestMatchInsightWithRetry's caller (helpers.ts).
+_REQUEST_TIMEOUT_MS = 30_000
+_client = genai.Client(api_key=GEMINI_API_KEY, http_options=types.HttpOptions(timeout=_REQUEST_TIMEOUT_MS))
+
 
 class MatchInsightResult(BaseModel):
     explanation: str
@@ -90,8 +98,7 @@ def generate_match_insight(
         f"CANDIDATE SKILLS:\n{user_skills_text or '(no profile skills on file)'}\n"
     )
 
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    response = client.models.generate_content(
+    response = _client.models.generate_content(
         model=GEMINI_MODEL,
         contents=contents,
         config=types.GenerateContentConfig(**config_kwargs),
