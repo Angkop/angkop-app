@@ -87,7 +87,7 @@ export function AppShell({
             <span className="flex size-7 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
               A
             </span>
-            <span className="text-sm font-semibold tracking-tight text-foreground">Angkop</span>
+            <span className="font-display text-sm font-medium tracking-tight text-foreground">Angkop</span>
           </Link>
 
           <nav className="ml-6 hidden items-center gap-1 lg:flex">

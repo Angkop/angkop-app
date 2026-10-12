@@ -12,7 +12,9 @@ export function MatchScoreBadge({ score }: { score: number }) {
   const percent = Math.round(score * 100)
   return (
     <div className="flex items-center gap-2">
-      <Badge variant={variantForScore(score)}>{percent}%</Badge>
+      <Badge variant={variantForScore(score)} className="font-display tabular-nums">
+        {percent}%
+      </Badge>
       <span className="text-sm text-muted-foreground">{getMatchLabel(score)}</span>
     </div>
   )

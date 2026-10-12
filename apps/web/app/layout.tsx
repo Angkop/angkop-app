@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Space_Grotesk } from 'next/font/google'
 import { AppApolloProvider } from '@/providers/apollo-provider'
 import { AuthSyncProvider } from '@/providers/auth-sync-provider'
 import { Toaster } from '@/components/ui/sonner'
@@ -10,6 +10,13 @@ const inter = Inter({
   subsets: ['latin']
 })
 
+// Headings and match-score numerals read through font-display instead of Inter —
+// Space Grotesk's tabular numerals treat the score as a measured readout, not a badge.
+const spaceGrotesk = Space_Grotesk({
+  variable: '--font-space-grotesk',
+  subsets: ['latin']
+})
+
 export const metadata: Metadata = {
   title: 'Angkop',
   description: 'Hybrid semantic job matching for Filipino job seekers'
@@ -17,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en' className={`${inter.variable} h-full antialiased`}>
+    <html lang='en' className={`${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}>
       <body className='min-h-full flex flex-col'>
         <AuthSyncProvider>
           <AppApolloProvider>{children}</AppApolloProvider>
