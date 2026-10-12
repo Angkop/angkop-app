@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery } from '@apollo/client/react'
-import { Briefcase, ClipboardList, Sparkles } from 'lucide-react'
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AboutFields } from '@/components/profile-fields/about-fields'
 import { SkillsFields } from '@/components/profile-fields/skills-fields'
 import { EducationFields } from '@/components/profile-fields/education-fields'
@@ -12,7 +12,7 @@ import { ProjectsFields } from '@/components/profile-fields/projects-fields'
 import { LanguagesFields } from '@/components/profile-fields/languages-fields'
 import { PreferencesFields } from '@/components/profile-fields/preferences-fields'
 import { Button } from '@/components/ui/button'
-import { StatCard } from '@/components/stat-card'
+import { StatStrip } from '@/components/stat-strip'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { ErrorMessage } from '@/components/error-message'
 import { ResumeImportDialog } from '@/components/resume-import-dialog'
@@ -75,10 +75,14 @@ export function ProfilePage() {
         }}
       />
 
-      <div className="mt-4 grid grid-cols-3 gap-3">
-        <StatCard label="Skills listed" value={profile?.skills.length ?? 0} icon={Sparkles} />
-        <StatCard label="Jobs applied" value={jobsAppliedCount} icon={ClipboardList} />
-        <StatCard label="Experience" value={profile?.experience.length ?? 0} icon={Briefcase} />
+      <div className="mt-4">
+        <StatStrip
+          items={[
+            { label: 'Skills listed', value: profile?.skills.length ?? 0 },
+            { label: 'Jobs applied', value: jobsAppliedCount },
+            { label: 'Experience', value: profile?.experience.length ?? 0 }
+          ]}
+        />
       </div>
 
       {isEditing ? (
@@ -143,20 +147,73 @@ export function ProfilePage() {
         </div>
       ) : (
         <>
-          <div className="mt-4 rounded-lg border border-border p-5">
-            <h2 className="text-sm font-semibold text-foreground">About</h2>
-            <p className="mt-2 text-sm whitespace-pre-wrap text-foreground">
-              {profile?.about || 'Nothing added yet — click Edit to introduce yourself.'}
-            </p>
-          </div>
+          <Accordion type="multiple" defaultValue={['about']} className="mt-4 rounded-lg border border-border px-5">
+            <AccordionItem value="about">
+              <AccordionTrigger className="font-display font-medium text-foreground">About</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-sm whitespace-pre-wrap text-foreground">
+                  {profile?.about || 'Nothing added yet — click Edit to introduce yourself.'}
+                </p>
+              </AccordionContent>
+            </AccordionItem>
 
-          <ExperienceSection experience={profile?.experience ?? []} />
-          <EducationSection education={profile?.education ?? []} />
-          <SkillsSection skills={profile?.skills ?? []} />
-          <CertificationsSection certifications={profile?.certifications ?? []} />
-          <ProjectsSection projects={profile?.projects ?? []} />
-          <LanguagesSection languages={profile?.languages ?? []} />
-          <PreferencesSection preferences={profile?.preferences ?? null} resumeFileName={profile?.resumeFileName} />
+            <AccordionItem value="experience">
+              <AccordionTrigger className="font-display font-medium text-foreground">Experience</AccordionTrigger>
+              <AccordionContent>
+                <ExperienceSection experience={profile?.experience ?? []} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="education">
+              <AccordionTrigger className="font-display font-medium text-foreground">Education</AccordionTrigger>
+              <AccordionContent>
+                <EducationSection education={profile?.education ?? []} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="skills">
+              <AccordionTrigger className="font-display font-medium text-foreground">
+                Skills ({profile?.skills.length ?? 0})
+              </AccordionTrigger>
+              <AccordionContent>
+                <SkillsSection skills={profile?.skills ?? []} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="certifications">
+              <AccordionTrigger className="font-display font-medium text-foreground">
+                Certifications ({profile?.certifications.length ?? 0})
+              </AccordionTrigger>
+              <AccordionContent>
+                <CertificationsSection certifications={profile?.certifications ?? []} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="projects">
+              <AccordionTrigger className="font-display font-medium text-foreground">
+                Projects ({profile?.projects.length ?? 0})
+              </AccordionTrigger>
+              <AccordionContent>
+                <ProjectsSection projects={profile?.projects ?? []} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="languages">
+              <AccordionTrigger className="font-display font-medium text-foreground">
+                Languages ({profile?.languages.length ?? 0})
+              </AccordionTrigger>
+              <AccordionContent>
+                <LanguagesSection languages={profile?.languages ?? []} />
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="preferences">
+              <AccordionTrigger className="font-display font-medium text-foreground">Looking for</AccordionTrigger>
+              <AccordionContent>
+                <PreferencesSection preferences={profile?.preferences ?? null} resumeFileName={profile?.resumeFileName} />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           {savedMessage ? <p className="mt-4 text-sm text-muted-foreground">{savedMessage}</p> : null}
         </>

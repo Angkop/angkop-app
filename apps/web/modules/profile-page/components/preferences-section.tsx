@@ -14,10 +14,9 @@ export function PreferencesSection({
   const salaryRange = preferences ? formatSalaryRange(preferences.minimumSalary, preferences.maximumSalary) : null
 
   return (
-    <div className="mt-4 rounded-lg border border-border p-5">
-      <h2 className="text-sm font-semibold text-foreground">Looking for</h2>
+    <div>
       {preferences && preferences.desiredRoles.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {preferences.desiredRoles.map((role) => (
             <Badge key={role} variant="secondary">
               {role}
@@ -25,7 +24,7 @@ export function PreferencesSection({
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-muted-foreground">No desired roles added yet.</p>
+        <p className="text-sm text-muted-foreground">No desired roles added yet.</p>
       )}
 
       {preferences ? (
