@@ -1,4 +1,4 @@
-import { MATCH_SCORE_THRESHOLDS } from '@angkop/shared'
+import { MATCH_SCORE_THRESHOLDS, type Course } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { skillGap as skillGapRequest } from '../../lib/ml-client'
 import { getOrSetSkillGaps } from '../../lib/redis'
@@ -135,20 +135,30 @@ export const queryResolvers = {
         jobRequiredSkills
       })
 
-      if (savedJobs[0]) {
-        await Promise.all(
-          computed.missingSkills.map((gap) =>
-            prisma.skillGapRecord.create({
-              data: {
-                userId: context.userId,
-                jobId: savedJobs[0].job.id,
-                skill: gap.skill,
-                confidence: gap.confidence,
-                courses: gap.courses
-              }
-            })
-          )
-        ).catch((error) => logger.warn({ error }, 'Failed to persist skill gap records'))
+      if (savedJobs[0] && computed.missingSkills.length > 0) {
+        // One create() per missing skill in parallel used to mean N round trips to
+        // Postgres on every cache-miss recompute - createMany sends every row in a
+        // single statement regardless of how many missing skills come back.
+        const jobId = savedJobs[0].job.id
+        const data: {
+          userId: string
+          jobId: string
+          skill: string
+          confidence: number
+          courses: Course[]
+        }[] = []
+        for (const gap of computed.missingSkills) {
+          data.push({
+            userId: context.userId,
+            jobId,
+            skill: gap.skill,
+            confidence: gap.confidence,
+            courses: gap.courses
+          })
+        }
+        await prisma.skillGapRecord
+          .createMany({ data })
+          .catch((error) => logger.warn({ error }, 'Failed to persist skill gap records'))
       }
 
       return computed

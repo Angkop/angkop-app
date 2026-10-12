@@ -1,4 +1,5 @@
 import { INTERACTION_WEIGHTS, type ApplicationStatus, type InteractionEventType } from '@angkop/shared'
+import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma'
 import { invalidateMatchScoresForUser, invalidateSkillGapsForUser } from '../../lib/redis'
 import { embed } from '../../lib/ml-client'
@@ -14,7 +15,15 @@ export const mutationResolvers = {
   ) => {
     const input = args.input
 
-    const skills = input.skills.filter((skill) => skill.name.trim().length > 0)
+    // Deduped by name up front: the bulk upsert below sends every skill as one multi-row
+    // statement, and a duplicate name in the same statement would make Postgres try to
+    // update the same ON CONFLICT target twice, which it rejects outright. Last occurrence
+    // wins, same as a plain object/Map would behave.
+    const skillsByName = new Map<string, (typeof input.skills)[number]>()
+    for (const skill of input.skills) {
+      if (skill.name.trim().length > 0) skillsByName.set(skill.name, skill)
+    }
+    const skills = Array.from(skillsByName.values())
     const education = input.education.filter((entry) => entry.school.trim().length > 0)
     const experience = input.experience.filter(
       (entry) => entry.title.trim().length > 0 && entry.company.trim().length > 0 && entry.startDate
@@ -43,18 +52,49 @@ export const mutationResolvers = {
     // skillsText's embedding is computed once here and stored, instead of the job feed
     // re-embedding it from scratch for every job on every feed load (see computeJobMatches
     // in helpers.ts) - that redundant re-embedding was the main cause of the feed being slow.
+    //
+    // skill.upsert used to run once per skill via Promise.all(skills.map(...)) - fine at a
+    // handful of skills, but 50 submitted at once means 50 simultaneous queries fighting over
+    // the Supabase pooler's connection slots, which is exactly the shape of problem the comment
+    // below describes for userSkill. A single multi-row INSERT ... ON CONFLICT is one round
+    // trip no matter how many skills come in.
+    // "updatedAt" is included explicitly below (and in the UserSkill insert further down) -
+    // @updatedAt is a Prisma Client-side convenience, not a database default, so a raw
+    // INSERT that skips it hits a NOT NULL violation (Postgres code 23502) instead of
+    // getting a timestamp for free the way a normal Prisma Client call would.
+    const skillValues: Prisma.Sql[] = []
+    for (const skill of skills) {
+      skillValues.push(Prisma.sql`(${skill.name}, ${skill.category ?? null}, now())`)
+    }
+
     const [{ embedding }, skillRecords] = await Promise.all([
       embed({ text: skillsText }),
-      Promise.all(
-        skills.map((skillInput) =>
-          prisma.skill.upsert({
-            where: { name: skillInput.name },
-            update: skillInput.category ? { category: skillInput.category } : {},
-            create: { name: skillInput.name, category: skillInput.category ?? null }
-          })
-        )
-      )
+      skillValues.length > 0
+        ? prisma.$queryRaw<{ id: number; name: string }[]>`
+            INSERT INTO "Skill" (name, category, "updatedAt")
+            VALUES ${Prisma.join(skillValues)}
+            ON CONFLICT (name) DO UPDATE SET
+              category = COALESCE(EXCLUDED.category, "Skill"."category"),
+              "updatedAt" = now()
+            RETURNING id, name
+          `
+        : Promise.resolve([] as { id: number; name: string }[])
     ])
+
+    const skillIdByName = new Map<string, number>()
+    for (const skill of skillRecords) {
+      skillIdByName.set(skill.name, skill.id)
+    }
+
+    const userSkillValues: Prisma.Sql[] = []
+    for (const skill of skills) {
+      const skillId = skillIdByName.get(skill.name)
+      if (skillId === undefined) continue
+      userSkillValues.push(
+        Prisma.sql`(${context.userId}, ${skillId}, ${skill.level ?? null}::"SkillLevel",
+          ${skill.years ?? null}, false, now())`
+      )
+    }
 
     // Interactive transactions ($transaction(async tx => ...)) need one connection held
     // open across every round-trip while app code runs in between. Supabase's DATABASE_URL
@@ -117,22 +157,23 @@ export const mutationResolvers = {
         where: { userProfileId: profile.id, deleted: false },
         data: { deleted: true }
       }),
-      ...skillRecords.map((skill, index) =>
-        prisma.userSkill.upsert({
-          where: { userId_skillId: { userId: context.userId, skillId: skill.id } },
-          update: {
-            level: skills[index].level ?? null,
-            years: skills[index].years ?? null,
-            deleted: false
-          },
-          create: {
-            userId: context.userId,
-            skillId: skill.id,
-            level: skills[index].level ?? null,
-            years: skills[index].years ?? null
-          }
-        })
-      ),
+      // Same N-round-trips problem as the skill.upsert above, but worse here since every one
+      // of these was also spread into this transaction's statement list individually - a
+      // single multi-row upsert keeps the transaction small regardless of skill count.
+      ...(userSkillValues.length > 0
+        ? [
+            prisma.$executeRaw`
+              INSERT INTO "UserSkill"
+                ("userId", "skillId", "level", "years", "deleted", "updatedAt")
+              VALUES ${Prisma.join(userSkillValues)}
+              ON CONFLICT ("userId", "skillId") DO UPDATE SET
+                level = EXCLUDED.level,
+                years = EXCLUDED.years,
+                deleted = false,
+                "updatedAt" = now()
+            `
+          ]
+        : []),
       ...(education.length > 0
         ? [
             prisma.education.createMany({

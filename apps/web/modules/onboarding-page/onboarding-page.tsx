@@ -22,11 +22,16 @@ export function OnboardingPage() {
   if (wizard.isChecking) return <PageLoader label="Setting up your account…" />
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-[380px_1fr]">
-      <SidebarNav step={wizard.step} progress={wizard.progress} onStepClick={wizard.setStep} />
+    <div className="grid h-screen overflow-hidden bg-background lg:grid-cols-[380px_1fr]">
+      <SidebarNav
+        step={wizard.step}
+        progress={wizard.progress}
+        navUnlocked={wizard.navUnlocked}
+        onStepClick={wizard.setStep}
+      />
 
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-center justify-between gap-4 border-b border-border px-6 py-4 sm:px-10">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-6 py-4 sm:px-10">
           <div className="flex items-center gap-2 lg:hidden">
             <span className="flex size-6 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
               A
@@ -46,7 +51,7 @@ export function OnboardingPage() {
           </button>
         </div>
 
-        <div className="mx-auto w-full max-w-2xl flex-1 px-6 py-10 sm:px-10">
+        <div className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-6 py-10 sm:px-10">
           {wizard.activeStep.id === 'about' ? (
             <AboutStep
               email={wizard.email}

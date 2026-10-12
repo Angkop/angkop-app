@@ -33,6 +33,10 @@ export function useOnboardingWizard() {
   const activeStep = STEPS[step]
   const progress = Math.round(((step + 1) / STEPS.length) * 100)
   const canContinue = step !== 0 || profileEditor.careerLevel !== ''
+  // A resume import prefills every later step's state up front (see importParsedResume in
+  // use-profile-editor.ts), so once that's happened there's no "unvisited" step left to
+  // protect the user from — let the sidebar jump anywhere instead of forward-only.
+  const navUnlocked = profileEditor.resumeFileName !== ''
 
   function goNext() {
     setStep((current) => Math.min(current + 1, STEPS.length - 1))
@@ -66,6 +70,7 @@ export function useOnboardingWizard() {
     activeStep,
     progress,
     canContinue,
+    navUnlocked,
     goNext,
     goBack,
     handleFinish,

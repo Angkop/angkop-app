@@ -231,6 +231,15 @@ model Job {
   updatedAt      DateTime         @updatedAt
 
   @@unique([platform, platformJobId])
+  @@index([deleted, platform])
+  @@index([deleted, sourceName])
+  // Backs the title/company `contains` (case-insensitive) search in routes/jobs.ts — a
+  // plain btree index can't serve an infix ILIKE, pg_trgm's GIN index can. Requires the
+  // pg_trgm extension, which doesn't exist on a fresh Supabase DB by default — run
+  // `CREATE EXTENSION IF NOT EXISTS pg_trgm;` (Supabase dashboard's SQL editor, or
+  // Database > Extensions) once before `prisma migrate dev` picks up this migration.
+  @@index([title(ops: raw("gin_trgm_ops"))], map: "Job_title_trgm_idx", type: Gin)
+  @@index([company(ops: raw("gin_trgm_ops"))], map: "Job_company_trgm_idx", type: Gin)
 }
 
 model JobDescriptionSection {
@@ -261,6 +270,9 @@ model Interaction {
   platform  String
   deleted   Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId, deleted, eventType])
+  @@index([jobId, deleted])
 }
 
 model SkillGapRecord {
@@ -274,6 +286,8 @@ model SkillGapRecord {
   courses    Json
   deleted    Boolean  @default(false)
   createdAt  DateTime @default(now())
+
+  @@index([userId, jobId, deleted])
 }
 
 // "Why this is a match" dialog content — the algorithm's score breakdown plus Gemini's
@@ -332,6 +346,7 @@ model SavedJob {
   updatedAt     DateTime          @updatedAt
 
   @@unique([userId, jobId])
+  @@index([userId, deleted])
 }
 
 model SavedCourse {

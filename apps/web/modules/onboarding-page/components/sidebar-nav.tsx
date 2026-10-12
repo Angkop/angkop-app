@@ -6,10 +6,12 @@ import { STEPS } from '../constants'
 export function SidebarNav({
   step,
   progress,
+  navUnlocked,
   onStepClick
 }: {
   step: number
   progress: number
+  navUnlocked: boolean
   onStepClick: (index: number) => void
 }) {
   return (
@@ -49,12 +51,13 @@ export function SidebarNav({
             const Icon = s.icon
             const isActive = index === step
             const isDone = index < step
+            const isLocked = !navUnlocked && index > step
             return (
               <button
                 key={s.id}
                 type="button"
-                onClick={() => index <= step && onStepClick(index)}
-                disabled={index > step}
+                onClick={() => !isLocked && onStepClick(index)}
+                disabled={isLocked}
                 className={cn(
                   'flex cursor-pointer items-center gap-2.5 rounded-lg border border-transparent px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed',
                   isActive && 'bg-primary-foreground/10 font-medium text-primary-foreground',
