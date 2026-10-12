@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { supabaseClient } from '@/lib/supabase-client'
 import { useProfileEditor } from '@/hooks/use-profile-editor'
 import { STEPS } from '../constants'
@@ -49,17 +50,25 @@ export function useOnboardingWizard() {
   // Finishing and skipping both save whatever's been filled in so far and land on the
   // dashboard — "skip" just means "stop here," not "discard this." Either one is enough
   // for /auth/callback to treat this user as already onboarded next time they sign in.
-  async function saveAndGoToDashboard() {
-    await profileEditor.submit()
+  async function saveAndGoToDashboard(successMessage: string) {
+    try {
+      await profileEditor.submit()
+    } catch {
+      // profileEditor.saveError already surfaces the failure inline on the review step —
+      // just stop here instead of navigating away from a profile that didn't actually save.
+      toast.error('Could not save your profile')
+      return
+    }
+    toast.success(successMessage)
     router.push('/dashboard')
   }
 
   async function handleFinish() {
-    await saveAndGoToDashboard()
+    await saveAndGoToDashboard('Profile saved')
   }
 
   async function handleSkip() {
-    await saveAndGoToDashboard()
+    await saveAndGoToDashboard('Progress saved — finish your profile anytime')
   }
 
   return {
