@@ -40,27 +40,39 @@ eventsRouter.post('/', async (req, res) => {
   }
 
   const userId = body.userId ?? DEMO_USER_ID
-  const user = await prisma.user.findFirst({ where: { id: userId, deleted: false } })
+  // Independent reads/writes - the job upsert's input is entirely body.job.*, never the
+  // user lookup's result, so there's no data dependency between them. The one behavior
+  // change: an unrecognized userId now still upserts the job before the 404 below, instead
+  // of short-circuiting first. Harmless here - Job is a shared catalog row, not user-owned
+  // data, and would need to exist regardless of which user's event triggered it.
+  const [user, job] = await Promise.all([
+    prisma.user.findFirst({ where: { id: userId, deleted: false } }),
+    prisma.job.upsert({
+      where: {
+        platform_platformJobId: {
+          platform: body.job.platform,
+          platformJobId: body.job.platformJobId
+        }
+      },
+      update: {},
+      create: {
+        id: randomUUID(),
+        platformJobId: body.job.platformJobId,
+        platform: body.job.platform,
+        title: body.job.title,
+        company: body.job.company ?? 'Unknown Company',
+        description: body.job.description ?? '',
+        requiredSkills: body.job.requiredSkills ?? [],
+        url: body.job.url,
+        embedding: []
+      }
+    })
+  ])
+
   if (!user) {
     res.status(404).json({ error: `Unknown userId ${userId}` })
     return
   }
-
-  const job = await prisma.job.upsert({
-    where: { platform_platformJobId: { platform: body.job.platform, platformJobId: body.job.platformJobId } },
-    update: {},
-    create: {
-      id: randomUUID(),
-      platformJobId: body.job.platformJobId,
-      platform: body.job.platform,
-      title: body.job.title,
-      company: body.job.company ?? 'Unknown Company',
-      description: body.job.description ?? '',
-      requiredSkills: body.job.requiredSkills ?? [],
-      url: body.job.url,
-      embedding: []
-    }
-  })
 
   const interaction = await prisma.interaction.create({
     data: {

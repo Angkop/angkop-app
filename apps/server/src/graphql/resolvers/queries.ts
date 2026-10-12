@@ -156,8 +156,11 @@ export const queryResolvers = {
             courses: gap.courses
           })
         }
+        // skipDuplicates backed by SkillGapRecord's @@unique([userId, jobId, skill]) -
+        // a recompute after a cache miss shouldn't pile up repeat rows for a skill that
+        // was already recorded against this saved job.
         await prisma.skillGapRecord
-          .createMany({ data })
+          .createMany({ data, skipDuplicates: true })
           .catch((error) => logger.warn({ error }, 'Failed to persist skill gap records'))
       }
 

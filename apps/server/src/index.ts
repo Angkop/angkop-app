@@ -15,6 +15,11 @@ import { prisma } from './lib/prisma'
 
 const PORT = Number(process.env.PORT ?? 4000)
 
+// Every GraphQL request re-upserts the signed-in user, which only ever needs to happen
+// once - after the first request from a given user, their email/name in Supabase won't
+// change mid-process. A process restart just re-upserts once more, which is harmless.
+const upsertedUserIds = new Set<string>()
+
 async function main() {
   const app = express()
   // The extension's content script only runs on Angkop's own listing pages (see
@@ -44,11 +49,14 @@ async function main() {
 
         // First request after a real Google sign-in — mirrors the upsert pattern already
         // used in prisma/seed.ts, since User.id has no default and must be supplied.
-        await prisma.user.upsert({
-          where: { id: userId },
-          update: { email, name },
-          create: { id: userId, email, name }
-        })
+        if (!upsertedUserIds.has(userId)) {
+          await prisma.user.upsert({
+            where: { id: userId },
+            update: { email, name },
+            create: { id: userId, email, name }
+          })
+          upsertedUserIds.add(userId)
+        }
 
         return { userId }
       }

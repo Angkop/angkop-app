@@ -288,6 +288,10 @@ model SkillGapRecord {
   createdAt  DateTime @default(now())
 
   @@index([userId, jobId, deleted])
+  // Lets the createMany in skillGaps (queries.ts) use skipDuplicates instead of relying on
+  // never being called twice for the same (userId, jobId, skill) - a recompute after a
+  // cache miss shouldn't pile up repeat rows for skills that were already recorded.
+  @@unique([userId, jobId, skill])
 }
 
 // "Why this is a match" dialog content — the algorithm's score breakdown plus Gemini's
