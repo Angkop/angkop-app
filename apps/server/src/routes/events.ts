@@ -3,6 +3,7 @@ import { Router } from 'express'
 import { INTERACTION_WEIGHTS, type InteractionEventType, type Platform } from '@angkop/shared'
 import { prisma } from '../lib/prisma'
 import { invalidateMatchScoresForUser } from '../lib/redis'
+import { embed } from '../lib/ml-client'
 import { logger } from '../lib/logger'
 
 const DEMO_USER_ID = 'demo-user-1'
@@ -74,10 +75,21 @@ eventsRouter.post('/', async (req, res) => {
     return
   }
 
+  // A job the upsert above just created (not already ingested - this route is a defensive
+  // fallback, since the extension is only supposed to see jobs Angkop already ingested) has
+  // no embedding yet. Unlike UserProfile.embedding, nothing downstream resolves a missing
+  // Job.embedding to a neutral vector - cosine_similarity would throw on a length mismatch
+  // the first time it's scored. Backfill it once, here, before it's ever read for scoring.
+  let scorableJob = job
+  if (job.embedding.length === 0) {
+    const { embedding } = await embed({ text: `${job.title}. ${job.description}` })
+    scorableJob = await prisma.job.update({ where: { id: job.id }, data: { embedding } })
+  }
+
   const interaction = await prisma.interaction.create({
     data: {
       userId,
-      jobId: job.id,
+      jobId: scorableJob.id,
       eventType: body.eventType,
       weight: INTERACTION_WEIGHTS[body.eventType],
       platform: body.job.platform
@@ -88,6 +100,6 @@ eventsRouter.post('/', async (req, res) => {
   // just this one — see the same invalidation in the logInteraction GraphQL resolver.
   await invalidateMatchScoresForUser(userId)
 
-  logger.info({ userId, jobId: job.id, eventType: body.eventType }, 'Interaction logged')
-  res.status(201).json({ interactionId: interaction.id, jobId: job.id })
+  logger.info({ userId, jobId: scorableJob.id, eventType: body.eventType }, 'Interaction logged')
+  res.status(201).json({ interactionId: interaction.id, jobId: scorableJob.id })
 })
