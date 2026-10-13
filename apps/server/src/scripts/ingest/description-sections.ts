@@ -13,6 +13,15 @@ export function parseDescriptionSections(html: string): DescriptionSection[] {
   const sections: DescriptionSection[] = [{ heading: null, items: [] }]
   const current = () => sections[sections.length - 1]
 
+  // cheerio's .text() concatenates descendant text nodes with no separator, so a <br> or a
+  // nested block element (e.g. <p> inside <li>) between two sentences collapses into nothing
+  // ("...required.Join a German tech company..."). Replacing them with a newline first keeps
+  // the whitespace a reader would actually see.
+  function textWithBreaks(element: ReturnType<typeof $>): string {
+    element.find('br, p, div').after('\n')
+    return element.text().replace(/\s*\n\s*/g, ' ').trim()
+  }
+
   function isPseudoHeading(element: ReturnType<typeof $>): string | null {
     const children = element.children()
     if (children.length !== 1) return null
@@ -41,20 +50,20 @@ export function parseDescriptionSections(html: string): DescriptionSection[] {
           sections.push({ heading: pseudoHeading, items: [] })
           return
         }
-        const text = $element.text().trim()
+        const text = textWithBreaks($element)
         if (text) current().items.push(text)
         return
       }
 
       if (tag === 'ul' || tag === 'ol') {
         $element.find('li').each((_li, li) => {
-          const text = $(li).text().trim()
+          const text = textWithBreaks($(li))
           if (text) current().items.push(text)
         })
         return
       }
 
-      const text = $element.text().trim()
+      const text = textWithBreaks($element)
       if (text) current().items.push(text)
     })
 

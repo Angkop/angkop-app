@@ -13,10 +13,12 @@ NCF_ID_MAPPING_PATH = os.getenv("NCF_ID_MAPPING_PATH", "./weights/id_mappings.js
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
-# Used by gemini_client.generate_content_with_fallback when GEMINI_MODEL hits its RPM
-# quota (HTTP 429) - must be a different model from GEMINI_MODEL so it draws from a
-# separate quota, or the retry just gets rate-limited again.
-GEMINI_MODEL_FALLBACK = os.getenv("GEMINI_MODEL_FALLBACK", "gemini-2.5-flash-lite")
+# Used by gemini_client.generate_content_with_fallback when GEMINI_MODEL is rate-limited,
+# erroring, or timing out. Must be a different, currently-available pinned model from
+# GEMINI_MODEL so it draws from a separate quota - confirmed live against this project's API
+# key (gemini-2.5-flash-lite is listed by the API but 404s as deprecated for new projects;
+# aliases like gemini-flash-lite-latest risk resolving to the same model as GEMINI_MODEL).
+GEMINI_MODEL_FALLBACK = os.getenv("GEMINI_MODEL_FALLBACK", "gemini-3.1-flash-lite")
 
 # Fallback course lookup (app/data/course_index.py) for skills the static index doesn't
 # cover. Free tier, no OAuth — see https://console.cloud.google.com/apis/credentials.
