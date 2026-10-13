@@ -4,7 +4,8 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 
-from app.config import GEMINI_API_KEY, GEMINI_MODEL
+from app.config import GEMINI_API_KEY
+from app.services.gemini_client import generate_content_with_fallback
 
 # A fresh genai.Client() per call was recreating the same HTTP client (connection pool
 # included) on every resume parse - a module-level singleton reuses it instead. Longer
@@ -142,24 +143,15 @@ def parse_resume(resume_text: str, contact_hints: ContactHints | None = None) ->
         hint_lines.append(f"- Known phone (already verified, don't propose a different one): {contact_hints.phone}")
     hints_block = ("\n" + "\n".join(hint_lines) + "\n") if hint_lines else ""
 
-    config_kwargs: dict[str, object] = {
-        "response_mime_type": "application/json",
-        "response_schema": ParsedResumeProfile,
-        "temperature": 0,
-        "max_output_tokens": _MAX_OUTPUT_TOKENS,
-    }
-    # "Lite" models have no thinking capability to configure — passing thinking_config to
-    # one is a 400 INVALID_ARGUMENT, confirmed live against the current Gemini API.
-    if "lite" not in GEMINI_MODEL:
-        config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
-
-    response = _client.models.generate_content(
-        model=GEMINI_MODEL,
+    response_text = generate_content_with_fallback(
+        _client,
         contents=f"{_PROMPT}{hints_block}\nRESUME TEXT:\n{resume_text}",
-        config=types.GenerateContentConfig(**config_kwargs),
+        response_schema=ParsedResumeProfile,
+        temperature=0,
+        max_output_tokens=_MAX_OUTPUT_TOKENS,
     )
 
-    parsed = ParsedResumeProfile.model_validate(json.loads(response.text))
+    parsed = ParsedResumeProfile.model_validate(json.loads(response_text))
 
     parsed.careerLevel = _clamp_enum(parsed.careerLevel, _CAREER_LEVELS)
     for skill in parsed.skills:

@@ -4,7 +4,8 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 
-from app.config import GEMINI_API_KEY, GEMINI_MODEL
+from app.config import GEMINI_API_KEY
+from app.services.gemini_client import generate_content_with_fallback
 
 # A fresh genai.Client() per call was recreating the same HTTP client (connection pool
 # included) on every match-insight request - a module-level singleton reuses it instead.
@@ -75,17 +76,6 @@ def generate_match_insight(
     collaborative_score: float,
     hybrid_score: float,
 ) -> MatchInsightResult:
-    config_kwargs: dict[str, object] = {
-        "response_mime_type": "application/json",
-        "response_schema": MatchInsightResult,
-        "temperature": 0.4,
-        "max_output_tokens": _MAX_OUTPUT_TOKENS,
-    }
-    # "Lite" models have no thinking capability to configure — passing thinking_config to
-    # one is a 400 INVALID_ARGUMENT, confirmed live against the current Gemini API.
-    if "lite" not in GEMINI_MODEL:
-        config_kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
-
     required_skills_text = ", ".join(job_required_skills) if job_required_skills else "(none listed)"
     contents = (
         f"{_PROMPT}\n"
@@ -98,10 +88,12 @@ def generate_match_insight(
         f"CANDIDATE SKILLS:\n{user_skills_text or '(no profile skills on file)'}\n"
     )
 
-    response = _client.models.generate_content(
-        model=GEMINI_MODEL,
+    response_text = generate_content_with_fallback(
+        _client,
         contents=contents,
-        config=types.GenerateContentConfig(**config_kwargs),
+        response_schema=MatchInsightResult,
+        temperature=0.4,
+        max_output_tokens=_MAX_OUTPUT_TOKENS,
     )
 
-    return MatchInsightResult.model_validate(json.loads(response.text))
+    return MatchInsightResult.model_validate(json.loads(response_text))
