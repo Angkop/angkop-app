@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
+import { toast } from 'sonner'
 import { useQuery } from '@apollo/client/react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AboutFields } from '@/components/profile-fields/about-fields'
@@ -52,8 +53,16 @@ export function ProfilePage() {
 
   async function handleSave() {
     setSavedMessage(null)
-    await editor.submit()
+    try {
+      await editor.submit()
+    } catch {
+      // editor.saveError already surfaces the failure inline below the form —
+      // just stop here instead of closing out of an edit that didn't actually save.
+      toast.error('Could not save your profile')
+      return
+    }
     setSavedMessage('Profile saved. New match scores will reflect this on next load.')
+    toast.success('Profile saved')
     setIsEditing(false)
   }
 
