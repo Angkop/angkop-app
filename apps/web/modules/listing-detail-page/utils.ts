@@ -18,8 +18,10 @@ export type GroupedDescriptionSection = {
 // so two listings never land on the same labels — which makes a per-job accordion feel
 // arbitrary rather than scannable. This sorts every raw heading into one fixed taxonomy
 // (same order, same labels, on every listing) so a reader can learn the shape once and
-// then skim any posting the same way. A listing that's missing a category just skips it —
-// never shown empty.
+// then skim any posting the same way. Every category always renders, even with nothing in
+// it — a category that's unexpectedly missing (parsing failed, or this source just never
+// mentions it) should look different from one a reader never thought to look for, not be
+// silently absent.
 const CATEGORIES: { value: string; label: string; keywords: string[] }[] = [
   {
     value: 'overview',
@@ -79,8 +81,6 @@ export function groupDescriptionSections(sections: ListingDetail['descriptionSec
     }
   }
 
-  const order = [...CATEGORIES, OTHER_CATEGORY].map((category) => category.value)
-  return order
-    .map((value) => itemsByCategory.get(value))
-    .filter((group): group is GroupedDescriptionSection => group !== undefined && group.items.length > 0)
+  const order = [...CATEGORIES, OTHER_CATEGORY]
+  return order.map((category) => itemsByCategory.get(category.value) ?? { ...category, items: [] })
 }

@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client'
 import { Router } from 'express'
 import { prisma } from '../lib/prisma'
 import { detectMentionedLanguages } from '../lib/language-detection'
+import { joinSections } from '../scripts/ingest/description-sections'
 
 export const jobsRouter = Router()
 
@@ -121,6 +122,11 @@ jobsRouter.get('/:id', async (req, res) => {
     workSetup: job.workSetup,
     employmentType: job.employmentType,
     detectedLanguage: job.detectedLanguage,
-    mentionedLanguages: detectMentionedLanguages(job.description)
+    experienceLevel: job.experienceLevel,
+    // Scanned against the full, untruncated section text rather than job.description
+    // (which is flattened and truncated to MAX_DESCRIPTION_LENGTH at ingest time) — a
+    // language mention near the bottom of a long posting would otherwise be truncated
+    // away before this regex ever saw it.
+    mentionedLanguages: detectMentionedLanguages(joinSections(job.descriptionSections))
   })
 })

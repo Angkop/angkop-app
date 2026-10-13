@@ -2,9 +2,24 @@ import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { logger } from '../lib/logger'
 import { embed } from '../lib/ml-client'
+import { detectExperienceLevel } from '../lib/experience-detection'
+import { detectSkillsFromTaxonomy } from '../lib/skill-detection'
+import { joinSections } from './ingest/description-sections'
 import { detectLanguage } from './ingest/posting-language'
 import { fetchArbeitnow } from './ingest/sources/arbeitnow'
 import { fetchRemoteOk } from './ingest/sources/remoteok'
+
+const MAX_REQUIRED_SKILLS = 8
+
+// Tops up a source's own (often sparse) tags with skills mentioned in the free-text
+// description, instead of replacing them — the source's own tags are more reliable
+// when present. `skillNames` is the live Skill taxonomy (see main()), not a hardcoded list.
+function withSkillFallback(requiredSkills: string[], fullText: string, skillNames: string[]): string[] {
+  if (requiredSkills.length >= MAX_REQUIRED_SKILLS) return requiredSkills
+  const existingLower = new Set(requiredSkills.map((skill) => skill.toLowerCase()))
+  const detected = detectSkillsFromTaxonomy(fullText, skillNames).filter((skill) => !existingLower.has(skill.toLowerCase()))
+  return [...requiredSkills, ...detected].slice(0, MAX_REQUIRED_SKILLS)
+}
 
 const prisma = new PrismaClient()
 const WEB_URL = process.env.WEB_URL ?? 'http://localhost:3000'
@@ -20,7 +35,14 @@ async function main() {
 
   logger.info(`Ingesting ${listings.length} real listings (${remoteOk.length} RemoteOK, ${arbeitnow.length} Arbeitnow)...`)
 
+  // Loaded once per run, not per listing: the canonical skill names job seekers have
+  // actually entered on their profiles, spanning whatever industries are on the platform.
+  const skillNames = (await prisma.skill.findMany({ where: { deleted: false }, select: { name: true } })).map(
+    (skill) => skill.name
+  )
+
   for (const listing of listings) {
+    const fullText = joinSections(listing.descriptionSections)
     const [{ embedding }, detectedLanguage] = await Promise.all([
       embed({ text: `${listing.title}. ${listing.description}` }),
       detectLanguage(listing.description)
@@ -30,7 +52,8 @@ async function main() {
       company: listing.company,
       description: listing.description,
       detectedLanguage,
-      requiredSkills: listing.requiredSkills,
+      requiredSkills: withSkillFallback(listing.requiredSkills, fullText, skillNames),
+      experienceLevel: detectExperienceLevel(fullText),
       url: `${WEB_URL}/listings/${listing.id}`,
       sourceName: listing.sourceName,
       sourceUrl: listing.sourceUrl,

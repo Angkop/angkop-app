@@ -220,6 +220,7 @@ model Job {
   salaryMax      Float?
   workSetup      WorkSetup?
   employmentType EmploymentType?
+  experienceLevel     CareerLevel?
   detectedLanguage    String?
   descriptionSections JobDescriptionSection[]
   interactions   Interaction[]

@@ -1,5 +1,5 @@
-import { Banknote, Briefcase, Globe, MapPin } from 'lucide-react'
-import { EMPLOYMENT_TYPE_LABELS, WORK_SETUP_LABELS } from '@angkop/shared'
+import { Banknote, Briefcase, GraduationCap, Globe, MapPin } from 'lucide-react'
+import { CAREER_LEVEL_LABELS, EMPLOYMENT_TYPE_LABELS, WORK_SETUP_LABELS } from '@angkop/shared'
 import { formatSalaryRange } from '../utils'
 import type { ListingDetail } from '../types'
 
@@ -11,6 +11,11 @@ export function ListingFacts({ listing }: { listing: ListingDetail }) {
       icon: Briefcase,
       label: 'Employment Type',
       value: listing.employmentType ? EMPLOYMENT_TYPE_LABELS[listing.employmentType] : null
+    },
+    {
+      icon: GraduationCap,
+      label: 'Experience Level',
+      value: listing.experienceLevel ? CAREER_LEVEL_LABELS[listing.experienceLevel] : null
     },
     { icon: Banknote, label: 'Salary', value: formatSalaryRange(listing.salaryMin, listing.salaryMax) }
   ]

@@ -1,4 +1,4 @@
-import type { DescriptionSection, EmploymentType, WorkSetup } from '@angkop/shared'
+import type { CareerLevel, DescriptionSection, EmploymentType, WorkSetup } from '@angkop/shared'
 
 export type ListingDetail = {
   id: string
@@ -15,6 +15,7 @@ export type ListingDetail = {
   salaryMax: number | null
   workSetup: WorkSetup | null
   employmentType: EmploymentType | null
+  experienceLevel: CareerLevel | null
   detectedLanguage: string | null
   mentionedLanguages: string[]
 }

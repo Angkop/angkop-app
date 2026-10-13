@@ -61,9 +61,12 @@ export function parseDescriptionSections(html: string): DescriptionSection[] {
   return sections.filter((section) => section.items.length > 0)
 }
 
-export function flattenSections(sections: DescriptionSection[]): string {
+export function joinSections(sections: DescriptionSection[]): string {
   return sections
     .flatMap((section) => (section.heading ? [section.heading, ...section.items] : section.items))
     .join('. ')
-    .slice(0, MAX_DESCRIPTION_LENGTH)
+}
+
+export function flattenSections(sections: DescriptionSection[]): string {
+  return joinSections(sections).slice(0, MAX_DESCRIPTION_LENGTH)
 }
