@@ -1,6 +1,11 @@
-import { Button } from '@/components/ui/button'
+import { BrandMark } from '@/components/brand-mark'
 import { ErrorMessage } from '@/components/error-message'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { CapybaraStage } from './capybara-stage'
 import { GoogleIcon } from './google-icon'
+import { MatchDemo } from './match-demo'
+import { RISE } from './rise'
 
 export function SignInPanel({
   isLoading,
@@ -12,31 +17,50 @@ export function SignInPanel({
   onSignIn: () => void
 }) {
   return (
-    <div className="flex flex-1 items-center justify-center p-8 sm:p-12 lg:p-16">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex items-center gap-2 lg:hidden">
-          <span className="flex size-7 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
-            A
-          </span>
-          <span className="text-base font-semibold tracking-tight text-foreground">Angkop</span>
+    <main className="angkop-login relative flex min-h-screen flex-col overflow-hidden bg-background text-foreground">
+      <header className="mx-auto flex w-full max-w-7xl items-center gap-2.5 px-6 py-8 sm:px-12">
+        <BrandMark className="size-9" />
+        <span className="text-lg font-semibold tracking-tight">Angkop</span>
+      </header>
+
+      {/* Bottom padding on small screens keeps the form clear of the capybara below it. */}
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-6 pb-[70vw] sm:px-12 lg:pb-28">
+        <div className="flex w-full max-w-2xl flex-col">
+          <h1
+            className={cn(
+              RISE,
+              'max-w-md text-4xl leading-[1.15] font-semibold tracking-tight sm:text-[2.75rem] xl:max-w-none'
+            )}
+          >
+            Matches that actually fit, <br className="hidden xl:block" />
+            not just keywords that match.
+          </h1>
+          <p className={cn(RISE, 'mt-6 max-w-md text-lg text-muted-foreground [animation-delay:80ms]')}>
+            Angkop ranks job postings against your real skills and experience, then shows you exactly
+            what&apos;s missing for the ones you want.
+          </p>
+
+          <div className={cn(RISE, 'mt-10 flex max-w-sm flex-col gap-2 [animation-delay:160ms]')}>
+            <Button
+              variant="outline"
+              className="h-12 w-full border-foreground/15 bg-background shadow-sm hover:bg-accent/60"
+              onClick={onSignIn}
+              disabled={isLoading}
+            >
+              <GoogleIcon className="size-4" />
+              {isLoading ? 'Signing in…' : 'Continue with Google'}
+            </Button>
+            {error && <ErrorMessage>{error}</ErrorMessage>}
+          </div>
         </div>
-
-        <h2 className="text-xl font-semibold tracking-tight text-foreground">Welcome back</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sign in to see your matches and pick up where you left off.
-        </p>
-
-        <Button
-          variant="outline"
-          className="mt-6 w-full border-foreground/15 shadow-sm hover:bg-accent/60"
-          onClick={onSignIn}
-          disabled={isLoading}
-        >
-          <GoogleIcon className="size-4" />
-          {isLoading ? 'Signing in…' : 'Continue with Google'}
-        </Button>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
       </div>
-    </div>
+
+      <div className="pointer-events-none absolute right-1/2 bottom-0 w-[78vw] max-w-sm translate-x-1/2 animate-[angkop-peek_0.9s_cubic-bezier(0.22,1,0.36,1)_both] [animation-delay:150ms] lg:right-[5vw] lg:w-[min(44vw,640px,82vh)] lg:max-w-none lg:translate-x-0">
+        <CapybaraStage />
+        <MatchDemo
+          className={cn(RISE, 'absolute right-[78%] bottom-[12%] hidden [animation-delay:700ms] min-[1400px]:block')}
+        />
+      </div>
+    </main>
   )
 }

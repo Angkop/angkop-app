@@ -88,6 +88,96 @@ body {
   }
 }
 
+/* Sign-in screen (modules/login-page) — the form rises in on a stagger and the hero capybara
+   rises up from the bottom edge, then blinks while its match check bobs. Beside it, the match
+   demo cycles through three examples (angkop-slide), each filling its score bar (angkop-bar). */
+@keyframes angkop-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes angkop-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes angkop-peek {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes angkop-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* One example's third of the 12s loop: fade in, hold, fade out, then wait for the other two. */
+@keyframes angkop-slide {
+  0%,
+  33.3%,
+  100% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  3%,
+  30% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes angkop-bar {
+  0%,
+  4% {
+    transform: scaleX(0);
+  }
+  14%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.angkop-bob {
+  animation: angkop-bob 2.4s ease-in-out 0.8s infinite;
+}
+
+.angkop-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: angkop-blink 5s ease-in-out 1.5s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .angkop-login *,
+  .angkop-bob,
+  .angkop-blink {
+    animation: none !important;
+  }
+}
+
 /* Sheet (components/ui/sheet.tsx) — slide-over panel open/close + overlay fade. */
 @keyframes angkop-sheet-slide-in {
   from {
