@@ -29,7 +29,8 @@
   --match-weak-foreground: oklch(0.98 0.02 25);
 
   --font-sans: var(--font-inter);
-  --font-display: var(--font-space-grotesk);
+  /* Headings and match-score numerals keep their own font-display hook, now set in Inter too. */
+  --font-display: var(--font-inter);
 }
 
 @theme inline {
