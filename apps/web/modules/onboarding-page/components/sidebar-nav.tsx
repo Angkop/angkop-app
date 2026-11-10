@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Check } from 'lucide-react'
+import { BrandMark } from '@/components/brand-mark'
 import { cn } from '@/lib/utils'
 import { STEPS } from '../constants'
 
@@ -17,22 +18,10 @@ export function SidebarNav({
   disabled?: boolean
 }) {
   return (
-    <div className="relative hidden flex-col justify-between overflow-hidden bg-primary p-8 text-primary-foreground sm:p-12 lg:flex lg:p-12">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)',
-          backgroundSize: '36px 36px'
-        }}
-      />
-
-      <div className="relative">
+    <div className="hidden flex-col justify-between bg-primary p-8 text-primary-foreground sm:p-12 lg:flex lg:p-12">
+      <div>
         <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm font-medium">
-          <span className="flex size-7 items-center justify-center rounded-md bg-primary-foreground/15 text-xs font-semibold">
-            A
-          </span>
+          <BrandMark />
           Angkop
         </Link>
 
@@ -86,7 +75,7 @@ export function SidebarNav({
         </nav>
       </div>
 
-      <p className="relative text-xs text-primary-foreground/50">Angkop</p>
+      <p className="text-xs text-primary-foreground/50">Angkop</p>
     </div>
   )
 }

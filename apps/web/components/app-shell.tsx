@@ -8,6 +8,7 @@ import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
 import { LogOut, Menu, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { BrandMark } from '@/components/brand-mark'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -101,9 +102,7 @@ export function AppShell({
       <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="flex h-14 w-full items-center gap-2 px-4 sm:px-6 lg:px-8">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
-              A
-            </span>
+            <BrandMark />
             <span className="font-display text-sm font-medium tracking-tight text-foreground">Angkop</span>
           </Link>
 
