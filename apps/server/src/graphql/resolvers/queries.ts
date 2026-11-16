@@ -15,8 +15,9 @@ import {
 } from './constants'
 import {
   computeHybridScoresByJobId,
-  computeJobMatches,
+  computeScoredJobs,
   getJobMatchInsight,
+  hydrateJobMatches,
   loadProfileForMe,
   serializeSavedJob
 } from './helpers'
@@ -47,33 +48,19 @@ export const queryResolvers = {
       id: user.id,
       email: user.email,
       name: user.name,
-      profile: await loadProfileForMe(context.userId)
+      // A function, not an awaited value: graphql-js's default field resolver calls it only
+      // when the query actually selects `profile`. Awaiting it here ran the profile's ~8
+      // queries on every page, because AppShellMe (email + name only) hits this resolver too.
+      profile: () => loadProfileForMe(context.userId)
     }
   },
 
   jobMatches: async (_parent: unknown, args: JobMatchesArgs, context: GraphQLContext) => {
-    const [allMatches, savedJobs, dismissedInteractions] = await Promise.all([
-      computeJobMatches(context.userId),
-      prisma.savedJob.findMany({
-        where: { userId: context.userId, deleted: false },
-        select: { jobId: true }
-      }),
-      prisma.interaction.findMany({
-        where: { userId: context.userId, deleted: false, eventType: 'dismiss' },
-        select: { jobId: true }
-      })
-    ])
-    // Saved jobs move to the Applications page and dismissed jobs are a negative signal —
-    // neither belongs in the browse list anymore, otherwise Save/Dismiss appear to do nothing.
-    const hiddenJobIds = new Set([
-      ...savedJobs.map((savedJob) => savedJob.jobId),
-      ...dismissedInteractions.map((interaction) => interaction.jobId)
-    ])
+    // Saved and dismissed jobs are already excluded here (see computeScoredJobs).
+    const allMatches = await computeScoredJobs(context.userId)
     // Below MINIMUM the match is too weak to be worth showing at all — excluded from the
     // browse list entirely, not just styled differently like the STRONG/PARTIAL labels.
-    const visibleMatches = allMatches.filter(
-      (match) => !hiddenJobIds.has(match.job.id) && match.hybridScore >= MATCH_SCORE_THRESHOLDS.MINIMUM
-    )
+    const visibleMatches = allMatches.filter((match) => match.hybridScore >= MATCH_SCORE_THRESHOLDS.MINIMUM)
     const strongMatchCount = visibleMatches.filter(
       (match) => match.hybridScore >= MATCH_SCORE_THRESHOLDS.STRONG
     ).length
@@ -83,19 +70,19 @@ export const queryResolvers = {
     const filtered = visibleMatches
       .filter((match) =>
         search
-          ? match.job.title.toLowerCase().includes(search) ||
-            match.job.company.toLowerCase().includes(search) ||
-            match.job.requiredSkills.some((jobSkill) => jobSkill.toLowerCase().includes(search))
+          ? match.title.toLowerCase().includes(search) ||
+            match.company.toLowerCase().includes(search) ||
+            match.requiredSkills.some((jobSkill) => jobSkill.toLowerCase().includes(search))
           : true
       )
-      .filter((match) => (skill ? match.job.requiredSkills.includes(skill) : true))
+      .filter((match) => (skill ? match.requiredSkills.includes(skill) : true))
 
     const page = Math.max(1, args.page ?? 1)
     const pageSize = Math.min(Math.max(1, args.pageSize ?? DEFAULT_JOB_MATCHES_PAGE_SIZE), MAX_JOB_MATCHES_PAGE_SIZE)
     const start = (page - 1) * pageSize
 
     return {
-      items: filtered.slice(start, start + pageSize),
+      items: await hydrateJobMatches(filtered.slice(start, start + pageSize)),
       total: filtered.length,
       strongMatchCount
     }

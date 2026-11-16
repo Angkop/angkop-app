@@ -12,7 +12,6 @@ export const JOB_MATCHES_QUERY = gql`
           id
           title
           company
-          description
           platform
           requiredSkills
           url

@@ -147,84 +147,141 @@ export async function loadProfileForMe(userId: string) {
   }
 }
 
-// Scores every job against the user's stored embedding in one batched ML request - both
+// Scores the given jobs against the user's stored embedding in one batched ML request - both
 // embeddings are precomputed (Job.embedding at ingestion, UserProfile.embedding on profile
 // save), so this is cosine-similarity + NCF lookup, not live Sentence-BERT inference, and
-// the cache misses across the whole feed go out as a single /recommend/batch call instead
-// of one request per job.
-async function scoreJobs(
-  userId: string,
-  jobs: { id: string; embedding: number[] }[],
-  userEmbedding: number[],
-  interactionCount: number
-): Promise<Map<string, RecommendResponse>> {
-  const jobsById = new Map(jobs.map((job) => [job.id, job]))
+// the cache misses go out as a single /recommend/batch call instead of one request per job.
+//
+// Takes ids, not job rows: the 384-float embeddings (~9 MB across the whole catalog), the
+// profile, and the interaction count are only read from Postgres inside the cache-miss
+// callback, so a fully cached feed never pays to load them.
+async function scoreJobs(userId: string, jobIds: string[]): Promise<Map<string, RecommendResponse>> {
+  return getOrSetMatchScores(userId, jobIds, async (missingJobIds) => {
+    const [jobs, profile, interactionCount] = await Promise.all([
+      prisma.job.findMany({
+        where: { id: { in: missingJobIds }, deleted: false },
+        select: { id: true, embedding: true }
+      }),
+      prisma.userProfile.findUnique({ where: { userId }, select: { embedding: true } }),
+      prisma.interaction.count({ where: { userId, deleted: false } })
+    ])
 
-  return getOrSetMatchScores(
-    userId,
-    jobs.map((job) => job.id),
-    async (missingJobIds) => {
-      const { results } = await recommendBatch({
-        userId,
-        userEmbedding,
-        userInteractionCount: interactionCount,
-        jobs: missingJobIds.map((jobId) => ({
-          jobId,
-          jobEmbedding: jobsById.get(jobId)!.embedding
-        }))
-      })
-      return new Map(results.map((result) => [result.jobId, result]))
-    }
-  )
+    const { results } = await recommendBatch({
+      userId,
+      userEmbedding: resolveUserEmbedding(profile),
+      userInteractionCount: interactionCount,
+      jobs: jobs.map((job) => ({ jobId: job.id, jobEmbedding: job.embedding }))
+    })
+    return new Map(results.map((result) => [result.jobId, result]))
+  })
 }
 
-export async function computeJobMatches(userId: string): Promise<JobMatch[]> {
-  const [jobs, profile, interactionCount] = await Promise.all([
-    prisma.job.findMany({ where: { deleted: false } }),
-    prisma.userProfile.findUnique({ where: { userId } }),
-    prisma.interaction.count({ where: { userId, deleted: false } })
+// The fields jobMatches needs to rank, filter (search/skill) and paginate every job - the
+// description and embedding stay out of it, and the page's full rows are loaded afterwards
+// by hydrateJobMatches.
+export type ScoredJob = {
+  id: string
+  title: string
+  company: string
+  requiredSkills: string[]
+  semanticScore: number
+  collaborativeScore: number
+  hybridScore: number
+}
+
+// Every non-hidden job with its score, best match first. Saved and dismissed jobs are
+// excluded before scoring so they're never scored (or cached) for nothing.
+export async function computeScoredJobs(userId: string): Promise<ScoredJob[]> {
+  const [jobs, savedJobs, dismissedInteractions] = await Promise.all([
+    prisma.job.findMany({
+      where: { deleted: false },
+      select: { id: true, title: true, company: true, requiredSkills: true },
+      // Without a tiebreaker, equal scores come back in whatever order Postgres returns them,
+      // so a job could appear on two pages (or none) as the user pages through.
+      orderBy: { id: 'asc' }
+    }),
+    prisma.savedJob.findMany({ where: { userId, deleted: false }, select: { jobId: true } }),
+    prisma.interaction.findMany({
+      where: { userId, deleted: false, eventType: 'dismiss' },
+      select: { jobId: true }
+    })
   ])
 
-  const scoresByJobId = await scoreJobs(userId, jobs, resolveUserEmbedding(profile), interactionCount)
+  // Saved jobs move to the Applications page and dismissed jobs are a negative signal —
+  // neither belongs in the browse list anymore, otherwise Save/Dismiss appear to do nothing.
+  const hiddenJobIds = new Set([
+    ...savedJobs.map((savedJob) => savedJob.jobId),
+    ...dismissedInteractions.map((interaction) => interaction.jobId)
+  ])
+  const visibleJobs = jobs.filter((job) => !hiddenJobIds.has(job.id))
 
-  const matches = jobs.map((job) => {
-    const scores = scoresByJobId.get(job.id)!
-    return {
-      job: {
-        id: job.id,
-        platformJobId: job.platformJobId,
-        platform: job.platform,
-        title: job.title,
-        company: job.company,
-        description: job.description,
-        requiredSkills: job.requiredSkills,
-        url: job.url,
-        sourceName: job.sourceName
-      },
+  const scoresByJobId = await scoreJobs(
+    userId,
+    visibleJobs.map((job) => job.id)
+  )
+
+  const scoredJobs: ScoredJob[] = []
+  for (const job of visibleJobs) {
+    const scores = scoresByJobId.get(job.id)
+    if (!scores) continue
+    scoredJobs.push({
+      id: job.id,
+      title: job.title,
+      company: job.company,
+      requiredSkills: job.requiredSkills,
       semanticScore: scores.semanticScore,
       collaborativeScore: scores.collaborativeScore,
       hybridScore: scores.hybridScore
-    } as JobMatch
-  })
+    })
+  }
 
-  return matches.sort((a, b) => b.hybridScore - a.hybridScore)
+  return scoredJobs.sort((a, b) => b.hybridScore - a.hybridScore)
+}
+
+// Loads the full job rows for just the page being returned, in the page's own order -
+// the one place jobMatches reads descriptions and URLs, for ~15 jobs instead of the catalog.
+export async function hydrateJobMatches(scoredJobs: ScoredJob[]): Promise<JobMatch[]> {
+  if (scoredJobs.length === 0) return []
+
+  const jobs = await prisma.job.findMany({
+    where: { id: { in: scoredJobs.map((scoredJob) => scoredJob.id) }, deleted: false },
+    select: {
+      id: true,
+      platformJobId: true,
+      platform: true,
+      title: true,
+      company: true,
+      description: true,
+      requiredSkills: true,
+      url: true,
+      sourceName: true
+    }
+  })
+  const jobsById = new Map(jobs.map((job) => [job.id, job]))
+
+  const matches: JobMatch[] = []
+  for (const scoredJob of scoredJobs) {
+    const job = jobsById.get(scoredJob.id)
+    if (!job) continue
+    matches.push({
+      job,
+      semanticScore: scoredJob.semanticScore,
+      collaborativeScore: scoredJob.collaborativeScore,
+      hybridScore: scoredJob.hybridScore
+    } as JobMatch)
+  }
+  return matches
 }
 
 // Scores only the given jobs (e.g. a user's saved jobs) instead of every ingested job like
-// computeJobMatches — cheap even though scores are cached, since saved-job lists are small
-// and this runs on every Applications page load.
+// computeScoredJobs — cheap even though scores are cached, since saved-job lists are small
+// and this runs on every Applications page load. The caller already filtered out deleted jobs.
 export async function computeHybridScoresByJobId(userId: string, jobIds: string[]): Promise<Map<string, number>> {
   if (jobIds.length === 0) return new Map()
 
-  const [jobs, profile, interactionCount] = await Promise.all([
-    prisma.job.findMany({ where: { id: { in: jobIds }, deleted: false } }),
-    prisma.userProfile.findUnique({ where: { userId } }),
-    prisma.interaction.count({ where: { userId, deleted: false } })
-  ])
+  const scoresByJobId = await scoreJobs(userId, jobIds)
 
-  const scoresByJobId = await scoreJobs(userId, jobs, resolveUserEmbedding(profile), interactionCount)
-
-  return new Map(jobs.map((job) => [job.id, scoresByJobId.get(job.id)!.hybridScore]))
+  return new Map(Array.from(scoresByJobId, ([jobId, scores]) => [jobId, scores.hybridScore]))
 }
 
 const MAX_INSIGHT_RETRIES = 2

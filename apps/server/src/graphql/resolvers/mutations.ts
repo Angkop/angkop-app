@@ -50,7 +50,7 @@ export const mutationResolvers = {
     })
 
     // skillsText's embedding is computed once here and stored, instead of the job feed
-    // re-embedding it from scratch for every job on every feed load (see computeJobMatches
+    // re-embedding it from scratch for every job on every feed load (see computeScoredJobs
     // in helpers.ts) - that redundant re-embedding was the main cause of the feed being slow.
     //
     // skill.upsert used to run once per skill via Promise.all(skills.map(...)) - fine at a

@@ -25,7 +25,9 @@ async function main() {
   // The extension's content script only runs on Angkop's own listing pages (see
   // CLAUDE.md), so its fetch() calls to /api/events and /api/match-score carry the
   // dashboard's own origin — one allowed origin covers both the dashboard and the extension.
-  app.use(cors({ origin: process.env.WEB_URL }))
+  // maxAge lets the browser cache the OPTIONS preflight (Chrome's default is 5s) - without it,
+  // nearly every GraphQL POST pays a second round trip first, which hurts most on a slow link.
+  app.use(cors({ origin: process.env.WEB_URL, maxAge: 60 * 60 * 24 }))
   app.use(express.json())
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))
