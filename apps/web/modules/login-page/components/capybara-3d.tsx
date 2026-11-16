@@ -3,18 +3,7 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-
-// three.js can't parse oklch(), so each palette token is painted onto a 1px canvas and read
-// back as sRGB — the scene stays on the globals.css tokens without hardcoding any hex.
-function readToken(token: string): THREE.Color {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim()
-  const context = document.createElement('canvas').getContext('2d', { willReadFrequently: true })
-  if (!context) return new THREE.Color()
-  context.fillStyle = value
-  context.fillRect(0, 0, 1, 1)
-  const [r, g, b] = context.getImageData(0, 0, 1, 1).data
-  return new THREE.Color().setRGB(r / 255, g / 255, b / 255, THREE.SRGBColorSpace)
-}
+import { readToken } from './read-token'
 
 // A rounded line between two points on the z = `z` plane, for the cleft above the mouth.
 function stroke(from: [number, number], to: [number, number], radius: number, z: number, material: THREE.Material) {

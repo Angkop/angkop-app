@@ -26,6 +26,15 @@ const FUR_TUFTS = [
 export function CapybaraHero({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 600 540" aria-hidden="true" className={cn('block', className)}>
+      <CapybaraArt />
+    </svg>
+  )
+}
+
+// The drawing itself, in a 600 x 540 box, so MatcherMachine can lay it on a face of its standee.
+export function CapybaraArt() {
+  return (
+    <>
       {/* Shoulders, darker than the head, with the shadow the head casts on them */}
       <path d="M20 540 C20 430 96 356 200 346 L400 346 C504 356 580 430 580 540 Z" className="fill-primary" />
       <path
@@ -152,6 +161,6 @@ export function CapybaraHero({ className }: { className?: string }) {
         <path d="M380 338 L454 340" />
         <path d="M376 350 L444 368" />
       </g>
-    </svg>
+    </>
   )
 }

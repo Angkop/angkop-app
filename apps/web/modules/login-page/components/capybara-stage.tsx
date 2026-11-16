@@ -1,3 +1,21 @@
+import { cn } from '@/lib/utils'
+import { CapybaraShift } from './capybara-shift'
+
+// The hero: a soft 3D capybara works a digital marketing desk and a construction desk in turn
+// (CapybaraShift). The earlier heroes are kept below, commented out, for reference; the isometric
+// desk version is still in workstation.tsx.
+export function CapybaraStage({ className }: { className?: string }) {
+  return (
+    <div className={cn('relative', className)}>
+      <CapybaraShift />
+    </div>
+  )
+}
+
+/*
+// Previous hero: the flat capybara held the space (and stayed for reduced motion or no WebGL);
+// the 3D one took over once it had drawn its first frame, and its thoughts popped up beside its
+// head one at a time (angkop-slide in globals.css).
 'use client'
 
 import { useCallback, useState } from 'react'
@@ -9,9 +27,6 @@ import { CapybaraHero } from './capybara-hero'
 // three.js is only worth downloading on this one screen, and only in the browser.
 const Capybara3D = dynamic(() => import('./capybara-3d').then((mod) => mod.Capybara3D), { ssr: false })
 
-// The flat capybara holds the space (and stays for reduced motion or no WebGL); the 3D one
-// takes over once it has drawn its first frame. Its thoughts pop up beside its head one at a
-// time (angkop-slide in globals.css); with reduced motion only the first one shows.
 export function CapybaraStage({ className }: { className?: string }) {
   const [isReady, setIsReady] = useState(false)
   const handleReady = useCallback(() => setIsReady(true), [])
@@ -42,3 +57,4 @@ export function CapybaraStage({ className }: { className?: string }) {
     </div>
   )
 }
+*/

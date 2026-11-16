@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { CapybaraStage } from './capybara-stage'
 import { GoogleIcon } from './google-icon'
-import { MatchDemo } from './match-demo'
 import { RISE } from './rise'
 
 export function SignInPanel({
@@ -55,11 +54,8 @@ export function SignInPanel({
         </div>
       </div>
 
-      <div className="pointer-events-none absolute right-1/2 bottom-0 w-[78vw] max-w-sm translate-x-1/2 animate-[angkop-peek_0.9s_cubic-bezier(0.22,1,0.36,1)_both] [animation-delay:150ms] lg:right-[5vw] lg:w-[min(44vw,640px,82vh)] lg:max-w-none lg:translate-x-0">
+      <div className="pointer-events-none absolute right-1/2 bottom-0 w-[94vw] max-w-xl translate-x-1/2 animate-[angkop-peek_0.9s_cubic-bezier(0.22,1,0.36,1)_both] [animation-delay:150ms] lg:right-[5vw] lg:w-[min(46vw,700px,88vh)] lg:max-w-none lg:translate-x-0">
         <CapybaraStage />
-        <MatchDemo
-          className={cn(RISE, 'absolute right-[78%] bottom-[12%] hidden [animation-delay:700ms] min-[1400px]:block')}
-        />
       </div>
     </main>
   )
