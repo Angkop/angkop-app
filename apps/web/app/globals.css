@@ -89,8 +89,7 @@ body {
 }
 
 /* Sign-in screen (modules/login-page) — the form rises in on a stagger and the hero capybara
-   rises up from the bottom edge, then blinks while its match check bobs. Beside it, the match
-   demo cycles through three examples (angkop-slide), each filling its score bar (angkop-bar). */
+   rises up from the bottom edge, then blinks. Each job bubble fills its score bar (angkop-bar). */
 @keyframes angkop-rise {
   from {
     opacity: 0;
@@ -99,16 +98,6 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes angkop-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
   }
 }
 
@@ -134,21 +123,6 @@ body {
   }
 }
 
-/* One example's third of the 12s loop: fade in, hold, fade out, then wait for the other two. */
-@keyframes angkop-slide {
-  0%,
-  33.3%,
-  100% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  3%,
-  30% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes angkop-bar {
   0%,
   4% {
@@ -160,10 +134,6 @@ body {
   }
 }
 
-.angkop-bob {
-  animation: angkop-bob 2.4s ease-in-out 0.8s infinite;
-}
-
 .angkop-blink {
   transform-box: fill-box;
   transform-origin: center;
@@ -172,7 +142,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .angkop-login *,
-  .angkop-bob,
   .angkop-blink {
     animation: none !important;
   }
