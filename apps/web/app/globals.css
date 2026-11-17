@@ -71,15 +71,68 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Angkop's loading mark: a candidate (center) with job matches orbiting at
-   different radii/speeds until one locks in — see components/brand-loader.tsx. */
-@keyframes angkop-orbit {
+/* Angkop's loading mark: the capybara running in place — see components/brand-loader.tsx.
+   Diagonal gait: two legs swing together, the other pair half a cycle behind. */
+@keyframes angkop-capy-run {
+  0%,
+  100% {
+    transform: rotate(-32deg);
+  }
+  50% {
+    transform: rotate(32deg);
+  }
+}
+
+@keyframes angkop-capy-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* One dash period is 24 viewBox units, so the loop is seamless. */
+@keyframes angkop-capy-ground {
   from {
-    transform: translate(-50%, -50%) rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
+    transform: translateX(0);
   }
   to {
-    transform: translate(-50%, -50%) rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
+    transform: translateX(-24px);
   }
+}
+
+/* Held back briefly so a load that finishes fast never flashes the loader. */
+@keyframes angkop-loader-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.angkop-loader-delay {
+  animation: angkop-loader-in 0.2s ease-out 0.15s both;
+}
+
+.angkop-capy-leg {
+  transform-box: fill-box;
+  transform-origin: 50% 8%;
+  animation: angkop-capy-run 0.56s ease-in-out infinite;
+}
+
+.angkop-capy-leg-alt {
+  animation-delay: -0.28s;
+}
+
+.angkop-capy-bob {
+  animation: angkop-capy-bob 0.28s ease-in-out infinite;
+}
+
+.angkop-capy-ground {
+  animation: angkop-capy-ground 0.48s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
