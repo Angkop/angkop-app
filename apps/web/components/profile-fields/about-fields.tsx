@@ -14,13 +14,18 @@ export function AboutFields() {
 
   return (
     <>
-      <FormField id="headline" label="Headline" error={errors.headline?.message}>
+      <FormField id="headline" orientation="horizontal" label="Headline" error={errors.headline?.message}>
         {(controlProps) => (
           <Input {...controlProps} {...register('headline')} placeholder="e.g. Front-End Developer" />
         )}
       </FormField>
 
-      <FormField id="career-level" label="Where are you in your career?" error={errors.careerLevel?.message}>
+      <FormField
+        id="career-level"
+        orientation="horizontal"
+        label="Where are you in your career?"
+        error={errors.careerLevel?.message}
+      >
         {(controlProps) => (
           <Controller
             control={control}
@@ -41,13 +46,13 @@ export function AboutFields() {
         )}
       </FormField>
 
-      <FormField id="location" label="Where are you based?" error={errors.location?.message}>
+      <FormField id="location" orientation="horizontal" label="Where are you based?" error={errors.location?.message}>
         {(controlProps) => (
           <Input {...controlProps} {...register('location')} placeholder="e.g. Muntinlupa City, Metro Manila" />
         )}
       </FormField>
 
-      <FormField id="about" label="About" error={errors.about?.message}>
+      <FormField id="about" orientation="horizontal" label="About" error={errors.about?.message}>
         {(controlProps) => (
           <Textarea
             {...controlProps}

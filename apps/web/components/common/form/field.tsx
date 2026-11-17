@@ -28,6 +28,7 @@ export function Field<T extends FieldValues>({
   name,
   label,
   hideLabel,
+  orientation,
   help,
   placeholder,
   disabled,
@@ -162,6 +163,7 @@ export function Field<T extends FieldValues>({
       id={id}
       label={label}
       hideLabel={hideLabel}
+      orientation={orientation}
       inlineLabel={INLINE_LABEL_TYPES.includes(fieldType)}
       required={required}
       help={help}

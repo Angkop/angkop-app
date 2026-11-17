@@ -66,8 +66,13 @@ export function PreferencesFields() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField id="work-setup" label="Work setup" error={preferenceErrors?.workSetup?.message}>
+      <div className="space-y-4">
+        <FormField
+          id="work-setup"
+          orientation="horizontal"
+          label="Work setup"
+          error={preferenceErrors?.workSetup?.message}
+        >
           {(controlProps) => (
             <Controller
               control={control}
@@ -88,34 +93,39 @@ export function PreferencesFields() {
           )}
         </FormField>
 
-        <div className="grid grid-cols-2 items-start gap-2">
-          <FormField id="min-salary" label="Min. salary (₱)" error={preferenceErrors?.minimumSalary?.message}>
-            {(controlProps) => (
-              <Input
-                {...controlProps}
-                {...register('preferences.minimumSalary')}
-                type="number"
-                min="0"
-                placeholder="25000"
-              />
-            )}
-          </FormField>
-          <FormField id="max-salary" label="Max. salary (₱)" error={preferenceErrors?.maximumSalary?.message}>
-            {(controlProps) => (
-              <Input
-                {...controlProps}
-                {...register('preferences.maximumSalary')}
-                type="number"
-                min="0"
-                placeholder="45000"
-              />
-            )}
-          </FormField>
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <FormField id="willing-to-relocate" label="Willing to relocate?">
+        <FormField
+          id="min-salary"
+          orientation="horizontal"
+          label="Min. salary (₱)"
+          error={preferenceErrors?.minimumSalary?.message}
+        >
+          {(controlProps) => (
+            <Input
+              {...controlProps}
+              {...register('preferences.minimumSalary')}
+              type="number"
+              min="0"
+              placeholder="25000"
+            />
+          )}
+        </FormField>
+        <FormField
+          id="max-salary"
+          orientation="horizontal"
+          label="Max. salary (₱)"
+          error={preferenceErrors?.maximumSalary?.message}
+        >
+          {(controlProps) => (
+            <Input
+              {...controlProps}
+              {...register('preferences.maximumSalary')}
+              type="number"
+              min="0"
+              placeholder="45000"
+            />
+          )}
+        </FormField>
+        <FormField id="willing-to-relocate" orientation="horizontal" label="Willing to relocate?">
           {(controlProps) => (
             <Controller
               control={control}
@@ -134,7 +144,7 @@ export function PreferencesFields() {
             />
           )}
         </FormField>
-        <FormField id="willing-to-remote" label="Open to remote?">
+        <FormField id="willing-to-remote" orientation="horizontal" label="Open to remote?">
           {(controlProps) => (
             <Controller
               control={control}

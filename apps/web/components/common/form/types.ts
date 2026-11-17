@@ -4,6 +4,8 @@ import type { FieldType } from './constants/field-type'
 export type FieldOption = {
   label: string
   value: string
+  // A second, muted line under the label in the open list.
+  description?: string
   disabled?: boolean
 }
 
@@ -17,6 +19,8 @@ export type FormFieldProps<T extends FieldValues> = {
   label: string
   // Keeps the label for screen readers only, for rows that show just a placeholder.
   hideLabel?: boolean
+  // Label above the control (default) or in a column beside it from `sm` up.
+  orientation?: 'vertical' | 'horizontal'
   help?: string
   placeholder?: string
   disabled?: boolean
