@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
 import { withSearchParams } from '@/lib/utils'
@@ -7,6 +7,9 @@ export function useListingsFilters() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  // Changing the URL re-renders the server page with the new results; the transition's
+  // pending flag is what lets the list show a loading state while that happens.
+  const [isPending, startTransition] = useTransition()
 
   const page = Number(searchParams.get('page')) || 1
   const appliedQuery = searchParams.get('q') ?? ''
@@ -32,7 +35,9 @@ export function useListingsFilters() {
 
   function updateParams(patch: Record<string, string | number | undefined>) {
     const next = withSearchParams(searchParams, patch)
-    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false })
+    startTransition(() => {
+      router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false })
+    })
   }
 
   function applyFilters() {
@@ -60,6 +65,7 @@ export function useListingsFilters() {
     draftSkill,
     setDraftSkill,
     hasPendingChanges,
+    isPending,
     applyFilters,
     goToPage
   }

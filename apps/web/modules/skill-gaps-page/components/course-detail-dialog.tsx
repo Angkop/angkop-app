@@ -60,7 +60,6 @@ export function CourseDetailDialog({
                   width={480}
                   height={270}
                   className="aspect-video w-full object-cover"
-                  unoptimized
                 />
               ) : (
                 <div className="flex aspect-video w-full items-center justify-center">

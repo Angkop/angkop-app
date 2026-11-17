@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { FormProvider } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { PageLoader } from '@/components/page-loader'
 import { useOnboardingWizard } from './hooks/use-onboarding-wizard'
@@ -53,67 +54,27 @@ export function OnboardingPage() {
         </div>
 
         <div className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-6 py-10 sm:px-10">
-          {wizard.activeStep.id === 'about' ? (
-            <AboutStep
-              email={wizard.email}
-              name={wizard.name}
-              headline={wizard.headline}
-              onHeadlineChange={wizard.setHeadline}
-              careerLevel={wizard.careerLevel}
-              onCareerLevelChange={wizard.setCareerLevel}
-              location={wizard.location}
-              onLocationChange={wizard.setLocation}
-              about={wizard.about}
-              onAboutChange={wizard.setAbout}
-              onImportParsedResume={wizard.importParsedResume}
-            />
-          ) : null}
+          <FormProvider {...wizard.form}>
+            {wizard.activeStep.id === 'about' ? (
+              <AboutStep
+                email={wizard.email}
+                name={wizard.name}
+                onImportParsedResume={wizard.importParsedResume}
+              />
+            ) : null}
 
-          {wizard.activeStep.id === 'skills' ? <SkillsStep skills={wizard.skills} setSkills={wizard.setSkills} /> : null}
+            {wizard.activeStep.id === 'skills' ? <SkillsStep /> : null}
+            {wizard.activeStep.id === 'education' ? <EducationStep /> : null}
+            {wizard.activeStep.id === 'experience' ? <ExperienceStep /> : null}
+            {wizard.activeStep.id === 'certifications' ? <CertificationsStep /> : null}
+            {wizard.activeStep.id === 'projects' ? <ProjectsStep /> : null}
+            {wizard.activeStep.id === 'languages' ? <LanguagesStep /> : null}
+            {wizard.activeStep.id === 'preferences' ? <PreferencesStep /> : null}
 
-          {wizard.activeStep.id === 'education' ? (
-            <EducationStep education={wizard.education} educationHelpers={wizard.educationHelpers} />
-          ) : null}
-
-          {wizard.activeStep.id === 'experience' ? (
-            <ExperienceStep experience={wizard.experience} experienceHelpers={wizard.experienceHelpers} />
-          ) : null}
-
-          {wizard.activeStep.id === 'certifications' ? (
-            <CertificationsStep
-              certifications={wizard.certifications}
-              certificationHelpers={wizard.certificationHelpers}
-            />
-          ) : null}
-
-          {wizard.activeStep.id === 'projects' ? (
-            <ProjectsStep projects={wizard.projects} projectHelpers={wizard.projectHelpers} />
-          ) : null}
-
-          {wizard.activeStep.id === 'languages' ? (
-            <LanguagesStep languages={wizard.languages} languageHelpers={wizard.languageHelpers} />
-          ) : null}
-
-          {wizard.activeStep.id === 'preferences' ? (
-            <PreferencesStep preferences={wizard.preferences} setPreferences={wizard.setPreferences} />
-          ) : null}
-
-          {wizard.activeStep.id === 'review' ? (
-            <ReviewStep
-              email={wizard.email}
-              headline={wizard.headline}
-              careerLevel={wizard.careerLevel}
-              location={wizard.location}
-              skills={wizard.skills}
-              education={wizard.education}
-              experience={wizard.experience}
-              certifications={wizard.certifications}
-              projects={wizard.projects}
-              preferences={wizard.preferences}
-              resumeFileName={wizard.resumeFileName}
-              saveError={wizard.saveError}
-            />
-          ) : null}
+            {wizard.activeStep.id === 'review' ? (
+              <ReviewStep email={wizard.email} saveError={wizard.saveError} />
+            ) : null}
+          </FormProvider>
 
           <div className="mt-8 flex items-center justify-between border-t border-border pt-4">
             <Button
@@ -131,7 +92,7 @@ export function OnboardingPage() {
                 <Check className="size-4" />
               </Button>
             ) : (
-              <Button type="button" onClick={wizard.goNext} disabled={!wizard.canContinue || wizard.isSaving}>
+              <Button type="button" onClick={wizard.goNext} disabled={wizard.isSaving}>
                 Continue
                 <ArrowRight className="size-4" />
               </Button>

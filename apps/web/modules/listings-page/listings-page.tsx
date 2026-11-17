@@ -14,7 +14,7 @@ export async function ListingsPage({
   const source = searchParams.source?.trim() || undefined
   const skill = searchParams.skill?.trim() || undefined
 
-  const [initialPage, sources, skills] = await Promise.all([
+  const [listings, sources, skills] = await Promise.all([
     getListings({ page, pageSize: PAGE_SIZE, q, source, skill }),
     getListingSources(),
     getListingSkills()
@@ -27,14 +27,12 @@ export async function ListingsPage({
         description="Real postings pulled from public job APIs, re-served here for the browser extension to read."
       />
 
-      {initialPage.total === 0 && !q && !source && !skill ? (
+      {listings.total === 0 && !q && !source && !skill ? (
         <p className="text-sm text-muted-foreground">
-          No real listings ingested yet. Run{' '}
-          <code className="rounded bg-muted px-1 py-0.5">pnpm --filter @angkop/server run ingest:jobs</code> to pull
-          some in.
+          No listings are available yet. New postings are added regularly, so check back soon.
         </p>
       ) : (
-        <ListingsBrowser initialPage={initialPage} sources={sources} skills={skills} pageSize={PAGE_SIZE} />
+        <ListingsBrowser listings={listings} sources={sources} skills={skills} pageSize={PAGE_SIZE} />
       )}
     </div>
   )

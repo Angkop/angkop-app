@@ -1,1 +1,1 @@
-export type { JobMatchesQueryResult } from '@/lib/job-matches'
+export type { JobMatchesQueryResult, JobMatchSummary } from '@/lib/job-matches'

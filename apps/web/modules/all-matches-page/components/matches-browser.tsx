@@ -1,7 +1,7 @@
 'use client'
 
+import Link from 'next/link'
 import { Search } from 'lucide-react'
-import type { JobMatch } from '@angkop/shared'
 import { JobRow } from '@/components/job-row'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { PaginationControls } from '@/components/pagination-controls'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
+import type { JobMatchSummary } from '../types'
 
 export function MatchesBrowser({
   items,
@@ -26,10 +27,11 @@ export function MatchesBrowser({
   onPageChange,
   onSave,
   onDismiss,
+  onViewInsight,
   savingJobIds,
   dismissingJobIds
 }: {
-  items: JobMatch[]
+  items: JobMatchSummary[]
   total: number
   page: number
   pageSize: number
@@ -44,6 +46,7 @@ export function MatchesBrowser({
   onPageChange: (page: number) => void
   onSave: (jobId: string) => void
   onDismiss: (jobId: string) => Promise<void>
+  onViewInsight: (job: JobMatchSummary['job']) => void
   savingJobIds: Set<string>
   dismissingJobIds: Set<string>
 }) {
@@ -95,9 +98,11 @@ export function MatchesBrowser({
             'No matches found for these filters. Try a different search or skill.'
           ) : (
             <>
-              No job matches yet. Run{' '}
-              <code className="rounded bg-muted px-1 py-0.5">pnpm --filter @angkop/server run ingest:jobs</code> to
-              pull in real listings, then refresh.
+              No job matches yet.{' '}
+              <Link href="/listings" className="font-medium text-primary hover:underline">
+                Browse listings
+              </Link>{' '}
+              to see what&apos;s available now. New postings are added regularly, so check back soon.
             </>
           )}
         </p>
@@ -111,6 +116,7 @@ export function MatchesBrowser({
                 score={match.hybridScore}
                 onSave={onSave}
                 onDismiss={onDismiss}
+                onViewInsight={onViewInsight}
                 isSaving={savingJobIds.has(match.job.id)}
                 isDismissing={dismissingJobIds.has(match.job.id)}
               />

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation, useQuery } from '@apollo/client/react'
+import dynamic from 'next/dynamic'
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { toast } from 'sonner'
 import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type SavedJob } from '@angkop/shared'
 import { PageHeader } from '@/components/page-header'
@@ -9,10 +10,10 @@ import { ErrorMessage } from '@/components/error-message'
 import { PaginationControls } from '@/components/pagination-controls'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
+import { invalidateCachedFields } from '@/lib/job-cache'
 import { ApplicationStatsRow } from './components/application-stats-row'
 import { ApplicationCard } from './components/application-card'
 import { ApplicationsSkeleton } from './components/applications-skeleton'
-import { ApplicationInsightDialog } from './components/application-insight-dialog'
 import { PAGE_SIZE, STATUS_ORDER } from './constants'
 import {
   ADD_TAG_MUTATION,
@@ -23,6 +24,12 @@ import {
   UNSAVE_JOB_MUTATION,
   UPDATE_STATUS_MUTATION
 } from './queries'
+
+// Only needed once the user opens a job's match details, not on every applications load.
+const ApplicationInsightDialog = dynamic(
+  () => import('./components/application-insight-dialog').then((mod) => mod.ApplicationInsightDialog),
+  { ssr: false }
+)
 
 type SavedJobsQueryResult = {
   savedJobs: { items: SavedJob[]; total: number }
@@ -54,6 +61,7 @@ const EMPTY_PENDING_STATE: JobPendingState = {
 }
 
 export function ApplicationsPage() {
+  const apolloClient = useApolloClient()
   const [statusFilter, setStatusFilter] = useState<string>(ALL_FILTER_VALUE)
   const [page, setPage] = useState(1)
   const [insightTarget, setInsightTarget] = useState<SavedJob | null>(null)
@@ -115,7 +123,9 @@ export function ApplicationsPage() {
       // new value in place. A status filter is the one case a list refetch still earns
       // its keep: the row may no longer belong in the current filtered page at all, and
       // only the server knows what should replace it.
-      await Promise.all([
+      // allSettled: the status is already saved, so a failed refresh must not read as a failed
+      // update. The list and stats keep their current values until the next load.
+      await Promise.allSettled([
         statusFilter === ALL_FILTER_VALUE ? Promise.resolve() : refetch(),
         refetchStats()
       ])
@@ -136,7 +146,7 @@ export function ApplicationsPage() {
       // interviewDate never changes which page or status filter a row belongs in - the
       // mutation's own response already updates this row via Apollo's normalized cache.
       // Only the (cheap, non-scoring) stats row needs a fresh read.
-      await refetchStats()
+      await Promise.allSettled([refetchStats()])
       toast.success(interviewDate ? 'Interview date saved' : 'Interview date cleared')
     } catch (error) {
       toast.error('Could not update interview date', {
@@ -182,7 +192,10 @@ export function ApplicationsPage() {
       // point cache update can't safely express "and the next row from the following page
       // now belongs here instead" without asking the server, so this one keeps the refetch.
       await unsaveJob({ variables: { jobId } })
-      await Promise.all([refetch(), refetchStats()])
+      await Promise.allSettled([refetch(), refetchStats()])
+      // This page refreshed its own list and stats above. Everything else that reads the saved
+      // set - the skill gap report, saved ids on Listings, the matches feed - is now stale.
+      invalidateCachedFields(apolloClient, ['jobMatches', 'savedJobIds', 'savedJobCount', 'skillGaps'])
       toast.success('Removed from your applications')
     } catch (unsaveError) {
       toast.error('Could not remove this job', {
@@ -200,7 +213,9 @@ export function ApplicationsPage() {
       {(loading && !data) || (statsLoading && !statsData) ? (
         <ApplicationsSkeleton />
       ) : error ? (
-        <ErrorMessage>Could not load applications: {error.message}</ErrorMessage>
+        <ErrorMessage onRetry={refetch} retryLabel="Reload Applications">
+          Could not load applications: {error.message}
+        </ErrorMessage>
       ) : !stats || stats.total === 0 ? (
         <p className="text-sm text-muted-foreground">
           No saved jobs yet. Save a job from your matches to start tracking its status here.

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { toast } from 'sonner'
+import { FormProvider } from 'react-hook-form'
 import { useQuery } from '@apollo/client/react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { AboutFields } from '@/components/profile-fields/about-fields'
@@ -46,27 +47,30 @@ export function ProfilePage() {
   const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false)
 
   if (editor.loading) return <LoadingSkeleton heightClassName="h-48" />
-  if (editor.error) return <ErrorMessage>Could not load profile: {editor.error.message}</ErrorMessage>
+  if (editor.error) {
+    return (
+      <ErrorMessage onRetry={editor.refetch} retryLabel="Reload Profile">
+        Could not load profile: {editor.error.message}
+      </ErrorMessage>
+    )
+  }
 
   const profile = editor.profile
   const jobsAppliedCount = appliedJobCountData?.appliedJobCount ?? 0
 
   async function handleSave() {
     setSavedMessage(null)
-    try {
-      await editor.submit()
-    } catch {
-      // editor.saveError already surfaces the failure inline below the form —
-      // just stop here instead of closing out of an edit that didn't actually save.
-      toast.error('Could not save your profile')
-      return
-    }
+    // editor.save() toasts and shows the inline error when it fails — stay in edit mode
+    // instead of closing out of an edit that didn't actually save.
+    if (!(await editor.save())) return
     setSavedMessage('Profile saved. New match scores will reflect this on next load.')
     toast.success('Profile saved')
     setIsEditing(false)
   }
 
   function handleCancel() {
+    // Back to the last saved values, so reopening Edit doesn't show abandoned changes.
+    editor.form.reset()
     setSavedMessage(null)
     setIsEditing(false)
   }
@@ -103,65 +107,55 @@ export function ProfilePage() {
       </div>
 
       {isEditing ? (
-        <div className="scroll-mt-6">
-          <ProfileFieldSection title="About">
-            <AboutFields
-              headline={editor.headline}
-              onHeadlineChange={editor.setHeadline}
-              careerLevel={editor.careerLevel}
-              onCareerLevelChange={editor.setCareerLevel}
-              location={editor.location}
-              onLocationChange={editor.setLocation}
-              about={editor.about}
-              onAboutChange={editor.setAbout}
-            />
-          </ProfileFieldSection>
+        <FormProvider {...editor.form}>
+          <div className="scroll-mt-6">
+            <ProfileFieldSection title="About">
+              <AboutFields />
+            </ProfileFieldSection>
 
-          <ProfileFieldSection title="Skills">
-            <SkillsFields skills={editor.skills} setSkills={editor.setSkills} />
-          </ProfileFieldSection>
+            <ProfileFieldSection title="Skills">
+              <SkillsFields />
+            </ProfileFieldSection>
 
-          <ProfileFieldSection title="Education">
-            <EducationFields education={editor.education} educationHelpers={editor.educationHelpers} />
-          </ProfileFieldSection>
+            <ProfileFieldSection title="Education">
+              <EducationFields />
+            </ProfileFieldSection>
 
-          <ProfileFieldSection title="Experience">
-            <ExperienceFields experience={editor.experience} experienceHelpers={editor.experienceHelpers} />
-          </ProfileFieldSection>
+            <ProfileFieldSection title="Experience">
+              <ExperienceFields />
+            </ProfileFieldSection>
 
-          <ProfileFieldSection title="Certifications">
-            <CertificationsFields
-              certifications={editor.certifications}
-              certificationHelpers={editor.certificationHelpers}
-            />
-          </ProfileFieldSection>
+            <ProfileFieldSection title="Certifications">
+              <CertificationsFields />
+            </ProfileFieldSection>
 
-          <ProfileFieldSection title="Projects">
-            <ProjectsFields projects={editor.projects} projectHelpers={editor.projectHelpers} />
-          </ProfileFieldSection>
+            <ProfileFieldSection title="Projects">
+              <ProjectsFields />
+            </ProfileFieldSection>
 
-          <ProfileFieldSection title="Languages">
-            <LanguagesFields languages={editor.languages} languageHelpers={editor.languageHelpers} />
-          </ProfileFieldSection>
+            <ProfileFieldSection title="Languages">
+              <LanguagesFields />
+            </ProfileFieldSection>
 
-          <ProfileFieldSection title="Looking for">
-            <PreferencesFields preferences={editor.preferences} setPreferences={editor.setPreferences} />
-          </ProfileFieldSection>
+            <ProfileFieldSection title="Looking for">
+              <PreferencesFields />
+            </ProfileFieldSection>
 
-          <div className="sticky bottom-0 -mx-5 -mb-5 border-t border-border bg-card px-5 pt-4 pb-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="button" onClick={handleSave} disabled={editor.isSaving}>
-                {editor.isSaving ? 'Saving…' : 'Save changes'}
-              </Button>
-              <Button type="button" variant="outline" onClick={handleCancel} disabled={editor.isSaving}>
-                Cancel
-              </Button>
+            <div className="sticky bottom-0 -mx-5 -mb-5 border-t border-border bg-card px-5 pt-4 pb-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="button" onClick={handleSave} disabled={editor.isSaving}>
+                  {editor.isSaving ? 'Saving…' : 'Save changes'}
+                </Button>
+                <Button type="button" variant="outline" onClick={handleCancel} disabled={editor.isSaving}>
+                  Cancel
+                </Button>
+              </div>
+              {editor.saveError ? (
+                <ErrorMessage>Could not save your profile: {editor.saveError.message}</ErrorMessage>
+              ) : null}
             </div>
-            {editor.saveError ? (
-              <ErrorMessage>Could not save your profile: {editor.saveError.message}</ErrorMessage>
-            ) : null}
           </div>
-        </div>
+        </FormProvider>
       ) : (
         <>
           <Accordion type="multiple" defaultValue={['about']} className="mt-4 rounded-lg border border-border px-5">

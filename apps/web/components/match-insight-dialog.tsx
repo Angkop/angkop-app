@@ -167,7 +167,7 @@ export function MatchInsightDialog({
   jobTitle: string
   jobCompany: string
 }) {
-  const { data, loading, error } = useQuery<JobMatchInsightQueryResult>(JOB_MATCH_INSIGHT_QUERY, {
+  const { data, loading, error, refetch } = useQuery<JobMatchInsightQueryResult>(JOB_MATCH_INSIGHT_QUERY, {
     variables: { jobId },
     skip: !open
   })
@@ -207,7 +207,9 @@ export function MatchInsightDialog({
             <span className="flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertTriangle className="size-5" />
             </span>
-            <ErrorMessage>Could not load this match&apos;s insight: {error.message}</ErrorMessage>
+            <ErrorMessage onRetry={refetch} retryLabel="Reload Insight">
+              Could not load this match&apos;s insight: {error.message}
+            </ErrorMessage>
           </div>
         ) : null}
 

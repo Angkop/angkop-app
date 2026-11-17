@@ -1,26 +1,19 @@
-import { useState } from 'react'
+import { useMemo } from 'react'
 import { gql } from '@apollo/client'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
-import type { CareerLevel, ParsedResumeProfile, UserProfile as SharedUserProfile } from '@angkop/shared'
+import { useForm, type FieldErrors } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
+import type { ParsedResumeProfile } from '@angkop/shared'
 import {
-  EMPTY_CERTIFICATION,
-  EMPTY_EDUCATION,
-  EMPTY_EXPERIENCE,
-  EMPTY_LANGUAGE,
-  EMPTY_PREFERENCES,
-  EMPTY_PROJECT,
+  EMPTY_PROFILE_FORM_VALUES,
   buildCompleteOnboardingInput,
-  makeArrayHelpers,
-  monthInputFromIso,
-  profileEntriesFromParsedResume,
-  type CertificationEntry,
-  type EducationEntry,
-  type ExperienceEntry,
-  type LanguageEntry,
-  type PreferencesEntry,
-  type ProfileSkillEntry,
-  type ProjectEntry
+  profileEntriesFrom,
+  profileFormValuesFromProfile,
+  type MeProfile,
+  type ProfileFormValues
 } from '@/lib/profile-form'
+import { createProfileSchema } from '@/lib/profile-schema'
 
 const ME_QUERY = gql`
   query ProfileEditorMe {
@@ -101,138 +94,51 @@ const COMPLETE_ONBOARDING_MUTATION = gql`
   }
 `
 
-export type MeProfile = Omit<SharedUserProfile, 'id' | 'userId' | 'skillsText'>
+export type { MeProfile }
 
 type MeQueryResult = {
   me: { email: string; name: string | null; profile: MeProfile | null }
 }
 
-export function useProfileEditor() {
+export function useProfileEditor({ requireCareerLevel = false }: { requireCareerLevel?: boolean } = {}) {
   const apolloClient = useApolloClient()
   const { data, loading, error, refetch } = useQuery<MeQueryResult>(ME_QUERY)
-  const [completeOnboarding, { loading: isSaving, error: saveError }] = useMutation(COMPLETE_ONBOARDING_MUTATION)
+  const [completeOnboarding, { loading: isMutating, error: saveError }] = useMutation(COMPLETE_ONBOARDING_MUTATION)
 
-  const [headline, setHeadline] = useState('')
-  const [about, setAbout] = useState('')
-  const [careerLevel, setCareerLevel] = useState<CareerLevel | ''>('')
-  const [location, setLocation] = useState('')
-  const [skills, setSkills] = useState<ProfileSkillEntry[]>([])
-  const [education, setEducation] = useState<EducationEntry[]>([EMPTY_EDUCATION])
-  const [experience, setExperience] = useState<ExperienceEntry[]>([])
-  const [certifications, setCertifications] = useState<CertificationEntry[]>([])
-  const [projects, setProjects] = useState<ProjectEntry[]>([])
-  const [languages, setLanguages] = useState<LanguageEntry[]>([])
-  const [preferences, setPreferences] = useState<PreferencesEntry>(EMPTY_PREFERENCES)
-  const [resumeFileName, setResumeFileName] = useState('')
+  const savedValues = useMemo(
+    () => (data?.me.profile ? profileFormValuesFromProfile(data.me.profile) : undefined),
+    [data?.me.profile]
+  )
+  const schema = useMemo(() => createProfileSchema({ requireCareerLevel }), [requireCareerLevel])
 
-  const [loadedProfile, setLoadedProfile] = useState<MeProfile | null | undefined>(undefined)
+  // `values` prefills the form from whatever was saved before. keepDirtyValues stops a later
+  // refetch from clobbering what the user has already edited.
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: EMPTY_PROFILE_FORM_VALUES,
+    values: savedValues,
+    resetOptions: { keepDirtyValues: true }
+  })
 
-  // Deriving form state from the query result during render (React's documented pattern
-  // for this), so the form prefills from whatever was saved before, and editing
-  // afterward isn't clobbered by a refetch: https://react.dev/learn/you-might-not-need-an-effect
-  if (data?.me.profile && data.me.profile !== loadedProfile) {
-    const profile = data.me.profile
-    setLoadedProfile(profile)
-    setHeadline(profile.headline ?? '')
-    setAbout(profile.about ?? '')
-    setCareerLevel(profile.careerLevel ?? '')
-    setLocation(profile.location ?? '')
-    setResumeFileName(profile.resumeFileName ?? '')
-    setSkills(
-      profile.skills.map((skill) => ({
-        name: skill.name,
-        category: skill.category ?? undefined,
-        level: skill.level ?? undefined,
-        years: skill.years ?? undefined
-      }))
-    )
-    setEducation(
-      profile.education.length > 0
-        ? profile.education.map((entry) => ({
-            school: entry.school,
-            degree: entry.degree ?? '',
-            fieldOfStudy: entry.fieldOfStudy ?? '',
-            startYear: entry.startYear ? String(entry.startYear) : '',
-            endYear: entry.endYear ? String(entry.endYear) : '',
-            description: entry.description ?? ''
-          }))
-        : [EMPTY_EDUCATION]
-    )
-    setExperience(
-      profile.experience.map((entry) => ({
-        title: entry.title,
-        company: entry.company,
-        location: entry.location ?? '',
-        employmentType: entry.employmentType ?? undefined,
-        description: entry.description ?? '',
-        startDate: monthInputFromIso(entry.startDate),
-        endDate: monthInputFromIso(entry.endDate),
-        current: entry.current
-      }))
-    )
-    setCertifications(
-      profile.certifications.map((entry) => ({
-        name: entry.name,
-        issuer: entry.issuer,
-        issueDate: monthInputFromIso(entry.issueDate),
-        expirationDate: monthInputFromIso(entry.expirationDate),
-        credentialId: entry.credentialId ?? '',
-        credentialUrl: entry.credentialUrl ?? ''
-      }))
-    )
-    setProjects(
-      profile.projects.map((entry) => ({
-        name: entry.name,
-        description: entry.description,
-        technologies: entry.technologies,
-        url: entry.url ?? '',
-        startDate: monthInputFromIso(entry.startDate),
-        endDate: monthInputFromIso(entry.endDate)
-      }))
-    )
-    setLanguages(
-      profile.languages.map((entry) => ({ language: entry.language, proficiency: entry.proficiency ?? undefined }))
-    )
-    if (profile.preferences) {
-      setPreferences({
-        desiredRoles: profile.preferences.desiredRoles,
-        preferredLocations: profile.preferences.preferredLocations,
-        preferredJobTypes: profile.preferences.preferredJobTypes,
-        preferredIndustries: profile.preferences.preferredIndustries,
-        workSetup: profile.preferences.workSetup ?? undefined,
-        minimumSalary: profile.preferences.minimumSalary != null ? String(profile.preferences.minimumSalary) : '',
-        maximumSalary: profile.preferences.maximumSalary != null ? String(profile.preferences.maximumSalary) : '',
-        willingToRelocate: profile.preferences.willingToRelocate,
-        willingToRemote: profile.preferences.willingToRemote
+  async function persist(values: ProfileFormValues): Promise<boolean> {
+    try {
+      await completeOnboarding({ variables: { input: buildCompleteOnboardingInput(values) } })
+    } catch (caught) {
+      toast.error('Could not save your profile', {
+        description: caught instanceof Error ? caught.message : undefined
       })
+      return false
     }
-  }
 
-  const educationHelpers = makeArrayHelpers(setEducation, EMPTY_EDUCATION)
-  const experienceHelpers = makeArrayHelpers(setExperience, EMPTY_EXPERIENCE)
-  const certificationHelpers = makeArrayHelpers(setCertifications, EMPTY_CERTIFICATION)
-  const projectHelpers = makeArrayHelpers(setProjects, EMPTY_PROJECT)
-  const languageHelpers = makeArrayHelpers(setLanguages, EMPTY_LANGUAGE)
-
-  async function submit() {
-    const input = buildCompleteOnboardingInput({
-      headline,
-      about,
-      location,
-      careerLevel,
-      resumeFileName,
-      skills,
-      education,
-      experience,
-      certifications,
-      projects,
-      languages,
-      preferences
-    })
-    await completeOnboarding({ variables: { input } })
     // completeOnboarding only echoes back { id }, so the cache never auto-updates the
-    // profile fields — refetch so the read-only view reflects what was just saved.
-    await refetch()
+    // profile fields — refetch so the read-only view reflects what was just saved. The save
+    // already went through, so a failed refetch just falls back to the values we sent.
+    const refreshed = await refetch().then(
+      (result) => result.data?.me.profile ?? null,
+      () => null
+    )
+    // Reset to the saved values so the form isn't left dirty after a successful save.
+    form.reset(refreshed ? profileFormValuesFromProfile(refreshed) : values)
     // Every one of these reads a hybrid/semantic score or a skill gap computed from the
     // profile that just changed. The server recomputes them fine (see completeOnboarding's
     // Redis cache invalidation), but Apollo's own cache doesn't know they're stale and would
@@ -243,60 +149,55 @@ export function useProfileEditor() {
     apolloClient.cache.evict({ fieldName: 'savedJobs' })
     apolloClient.cache.evict({ fieldName: 'skillGaps' })
     apolloClient.cache.gc()
+    return true
   }
 
-  // Fills in-memory form state from a parsed resume — same as a user typing into every
-  // field by hand. Nothing is persisted until submit() runs via the normal Save/Finish flow.
+  // Validates first. Resolves to whether the profile was saved; onInvalid lets a caller
+  // react to the failing fields (the wizard jumps to the step that holds them).
+  async function save(onInvalid?: (errors: FieldErrors<ProfileFormValues>) => void): Promise<boolean> {
+    let isSaved = false
+    await form.handleSubmit(
+      async (values) => {
+        isSaved = await persist(values)
+      },
+      (errors) => {
+        toast.error('Some fields need attention', { description: 'Fix the highlighted fields, then save again.' })
+        onInvalid?.(errors)
+      }
+    )()
+    return isSaved
+  }
+
+  // Saves whatever's filled in without validating — for "Skip onboarding", which means "stop
+  // here", not "fix this first". Rows left incomplete are dropped by buildCompleteOnboardingInput.
+  function saveDraft(): Promise<boolean> {
+    return persist(form.getValues())
+  }
+
+  // Fills the in-memory form from a parsed resume — same as a user typing into every
+  // field by hand. Nothing is persisted until save() runs via the normal Save/Finish flow.
   // resumeFileName records the actual imported file's name — it's the only place this
-  // field is ever set, since Angkop never stores the uploaded file itself.
+  // field is ever set, since Angkop never stores the uploaded file itself. Keeping the
+  // saved values as the defaults leaves the form dirty, since the import is unsaved.
   function importParsedResume(parsed: ParsedResumeProfile, fileName: string) {
-    const fields = profileEntriesFromParsedResume(parsed)
-    setHeadline(fields.headline)
-    setAbout(fields.about)
-    setCareerLevel(fields.careerLevel)
-    setLocation(fields.location)
-    setSkills(fields.skills)
-    educationHelpers.replaceAll(fields.education)
-    experienceHelpers.replaceAll(fields.experience)
-    certificationHelpers.replaceAll(fields.certifications)
-    projectHelpers.replaceAll(fields.projects)
-    languageHelpers.replaceAll(fields.languages)
-    setResumeFileName(fileName)
+    form.reset(
+      { ...form.getValues(), ...profileEntriesFrom(parsed), resumeFileName: fileName },
+      { keepDefaultValues: true }
+    )
   }
 
   return {
+    form,
     email: data?.me.email ?? '',
     name: data?.me.name ?? null,
     profile: data?.me.profile ?? null,
     loading,
     error,
-    headline,
-    setHeadline,
-    about,
-    setAbout,
-    careerLevel,
-    setCareerLevel,
-    location,
-    setLocation,
-    skills,
-    setSkills,
-    education,
-    educationHelpers,
-    experience,
-    experienceHelpers,
-    certifications,
-    certificationHelpers,
-    projects,
-    projectHelpers,
-    languages,
-    languageHelpers,
-    preferences,
-    setPreferences,
-    resumeFileName,
-    setResumeFileName,
-    isSaving,
+    refetch,
+    isSaving: isMutating || form.formState.isSubmitting,
     saveError,
-    submit,
+    save,
+    saveDraft,
     importParsedResume
   }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import moment from 'moment-timezone'
 import Link from 'next/link'
 import { useQuery } from '@apollo/client/react'
 import {
@@ -22,6 +23,7 @@ import {
   MATCH_INSIGHT_LOADING_STEPS,
   type JobMatchInsightQueryResult
 } from '@/lib/job-match-insight'
+import { DATE_FORMAT, MANILA_TIMEZONE } from '@/constants/date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -101,7 +103,7 @@ export function ApplicationInsightDialog({
   savedJob: SavedJob
 }) {
   const [expanded, setExpanded] = useState(true)
-  const { data, loading, error } = useQuery<JobMatchInsightQueryResult>(JOB_MATCH_INSIGHT_QUERY, {
+  const { data, loading, error, refetch } = useQuery<JobMatchInsightQueryResult>(JOB_MATCH_INSIGHT_QUERY, {
     variables: { jobId: savedJob.job.id },
     skip: !open
   })
@@ -158,7 +160,9 @@ export function ApplicationInsightDialog({
             <span className="flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertTriangle className="size-5" />
             </span>
-            <ErrorMessage>Could not load this match&apos;s insight: {error.message}</ErrorMessage>
+            <ErrorMessage onRetry={refetch} retryLabel="Reload Insight">
+              Could not load this match&apos;s insight: {error.message}
+            </ErrorMessage>
           </div>
         ) : null}
 
@@ -195,14 +199,14 @@ export function ApplicationInsightDialog({
                     <div>
                       <dt className="text-muted-foreground">Saved</dt>
                       <dd className="mt-0.5 font-medium text-foreground">
-                        {new Date(savedJob.createdAt).toLocaleDateString()}
+                        {moment(savedJob.createdAt).tz(MANILA_TIMEZONE).format(DATE_FORMAT)}
                       </dd>
                     </div>
                     {savedJob.interviewDate ? (
                       <div>
                         <dt className="text-muted-foreground">Interview date</dt>
                         <dd className="mt-0.5 font-medium text-foreground">
-                          {new Date(savedJob.interviewDate).toLocaleDateString()}
+                          {moment(savedJob.interviewDate).tz(MANILA_TIMEZONE).format(DATE_FORMAT)}
                         </dd>
                       </div>
                     ) : null}

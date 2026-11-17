@@ -13,11 +13,12 @@ Read `.claude/rules/design.md` (components, tokens, copy, match score colors) an
 
 Standard: **react-hook-form + zod** (`@hookform/resolvers/zod`).
 
-- `react-hook-form`, `zod` and `@hookform/resolvers` are not installed yet. Add them in the first PR that uses them, and call that out in the PR.
+- `react-hook-form`, `zod` and `@hookform/resolvers` are installed. The profile form is the reference: `hooks/use-profile-editor.ts` (`useForm` + `zodResolver`, `values` prefill with `keepDirtyValues`), `lib/profile-schema.ts` (the zod schema) and `components/profile-fields/` (fields read the form through `useFormContext`, `useController` and `useFieldArray`).
 - One `useForm` per form. Types come from `@angkop/shared` first, and the zod schema is typed against them. Never redefine a shared type.
 - Validation lives in the schema, not in `onChange` handlers. Do not mirror form values in `useState`.
-- Existing profile fields (`components/profile-fields/`, `hooks/use-profile-editor.ts`) are controlled through props. Migrate a form to react-hook-form when you touch it for another reason, not as drive-by drift.
-- Field anatomy: `Label` with `htmlFor`, the control, optional help text, inline error. Build one shared field wrapper in `components/` (tracked in the Components Playground) instead of repeating the `space-y-1.5` block per field.
+- Any new or touched form uses react-hook-form. Do not add controlled-through-props fields.
+- Field anatomy: `Label` with `htmlFor`, the control, optional help text, inline error. Use `FormField` (`components/form-field.tsx`) for every field. It wires `aria-invalid` and `aria-describedby` through its render-prop `controlProps`, so do not repeat the `space-y-1.5` block.
+- Pick lists use `OptionSelect` (`components/option-select.tsx`) and chip groups use `ChipListField` before a new control is built.
 - Error messages name the specific problem ("Add a company name", never "Invalid input"). No exclamation points.
 - An invalid field changes its border and shows its message together, and sets `aria-invalid` and `aria-describedby`. The error replaces the help text.
 - Read-only is not disabled. Disabled means "not editable right now". Read-only means "this view does not edit".
@@ -31,6 +32,7 @@ Standard: **react-hook-form + zod** (`@hookform/resolvers/zod`).
 - Every mutation surfaces failure with `toast.error(title, { description })`. A mutation with no error path fails silently. Match the existing pattern in `modules/all-matches-page` and `modules/applications-page`.
 - Success toasts are factual and specific ("Status updated to Applied"), not "Success".
 - After a mutation, refresh everything that shows the changed data: the list, the detail view and any stats query. Use `refetchQueries` or a cache update. Skipping one leaves stale data on screen.
+- Apollo does not know a profile edit makes scores stale. After a mutation that changes the profile, evict `jobMatches`, `jobMatchInsight`, `savedJobs` and `skillGaps` (see `persist` in `hooks/use-profile-editor.ts`) so the next read goes to the network. Do the same for any new query derived from data a mutation changes.
 - The one primary button goes loading and non-interactive the moment it is pressed, so nothing double-submits. For confirmations pass the mutation's `loading` to `ConfirmDialog`'s `isConfirming`.
 - Destructive actions confirm first through `ConfirmDialog` and name what will be affected.
 - Gmail sending is consent-gated: never send an AI draft without the explicit approval step (see CLAUDE.md).
@@ -41,6 +43,7 @@ Standard: **react-hook-form + zod** (`@hookform/resolvers/zod`).
 - Every list is server-side paginated (`page` and `pageSize` args, `{ items, total }`). Never fetch everything and slice on the client.
 - Search inputs are debounced, and the debounced value is what goes into the query variables.
 - Never render or log raw embeddings (`Float[]`). They are internal only.
+- Scores, skill gaps and course recommendations are computed on the server. Render the field as returned and never recompute or rescale it on the client. Read the resolver's derivation before doing math on a server value.
 
 ## Loading and empty states
 
@@ -67,6 +70,7 @@ Standard: **react-hook-form + zod** (`@hookform/resolvers/zod`).
 
 - `Promise.all` for independent async work, no sequential await chains.
 - `Map` or `Set` for lookups inside loops, not `array.find` or `includes`.
+- `for-of` with an early `continue` on large collections, not `filter` then `map` chains.
 - Import from the file, not from barrel re-exports.
 - Lazy-load heavy components with `next/dynamic` or `React.lazy` (for example the three.js sign-in hero, charts, anything over about 50KB).
 - `useCallback` for handlers passed to memoized children, and stable `key` props on lists.

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@apollo/client/react'
 import { Search } from 'lucide-react'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
@@ -12,76 +12,30 @@ import { ALL_FILTER_VALUE } from '@/constants/filters'
 import { getStoredToken } from '@/lib/auth'
 import { SAVED_JOB_IDS_QUERY, type SavedJobIdsQueryResult } from '@/lib/job-matches'
 import { useListingsFilters } from '../hooks/use-listings-filters'
-import { getListings } from '../queries'
 import type { ListingsPageResponse } from '../types'
 import { ListingRow } from './listing-row'
 
 export function ListingsBrowser({
-  initialPage,
+  listings,
   sources,
   skills,
   pageSize
 }: {
-  initialPage: ListingsPageResponse
+  listings: ListingsPageResponse
   sources: string[]
   skills: string[]
   pageSize: number
 }) {
   const filters = useListingsFilters()
-  const [data, setData] = useState(initialPage)
-  const [isLoading, setIsLoading] = useState(false)
 
   // Skipped entirely for anonymous browsing — /listings itself is public, this just adds
   // "which of these are already bookmarked" on top for a signed-in viewer.
   const { data: savedJobIdsData } = useQuery<SavedJobIdsQueryResult>(SAVED_JOB_IDS_QUERY, {
     skip: !getStoredToken()
   })
-  const savedJobIds = new Set(savedJobIdsData?.savedJobIds ?? [])
+  const savedJobIds = useMemo(() => new Set(savedJobIdsData?.savedJobIds ?? []), [savedJobIdsData])
 
-  // The server already fetched this exact page/filter combination for initialPage (see
-  // listings-page.tsx - same searchParams this hook reads on first render) - skip the
-  // redundant client-side refetch on mount when nothing's changed since then. Only guards
-  // the very first run; any later filter/page change still refetches normally.
-  const isFirstRun = useRef(true)
-  const initialFilters = useRef({
-    page: filters.page,
-    query: filters.appliedQuery,
-    source: filters.appliedSource,
-    skill: filters.appliedSkill
-  })
-
-  // Refetch whenever the URL's *applied* filters/page actually change.
-  useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false
-      const initial = initialFilters.current
-      const unchanged =
-        filters.page === initial.page &&
-        filters.appliedQuery === initial.query &&
-        filters.appliedSource === initial.source &&
-        filters.appliedSkill === initial.skill
-      if (unchanged) return
-    }
-
-    let cancelled = false
-    setIsLoading(true)
-    getListings({
-      page: filters.page,
-      pageSize,
-      q: filters.appliedQuery || undefined,
-      source: filters.appliedSource === ALL_FILTER_VALUE ? undefined : filters.appliedSource,
-      skill: filters.appliedSkill === ALL_FILTER_VALUE ? undefined : filters.appliedSkill
-    }).then((result) => {
-      if (cancelled) return
-      setData(result)
-      setIsLoading(false)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [filters.page, pageSize, filters.appliedQuery, filters.appliedSource, filters.appliedSkill])
-
-  const pageCount = Math.max(1, Math.ceil(data.total / pageSize))
+  const pageCount = Math.max(1, Math.ceil(listings.total / pageSize))
 
   return (
     <div className="flex flex-col gap-4">
@@ -130,19 +84,19 @@ export function ListingsBrowser({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          {data.total} job{data.total === 1 ? '' : 's'}
+          {listings.total} job{listings.total === 1 ? '' : 's'}
         </p>
       </div>
 
-      {isLoading ? (
+      {filters.isPending ? (
         <LoadingSkeleton rows={4} heightClassName="h-20" />
-      ) : data.items.length === 0 ? (
+      ) : listings.items.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
           No jobs match these filters. Try a different search, source, or skill.
         </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
-          {data.items.map((listing) => (
+          {listings.items.map((listing) => (
             <ListingRow key={listing.id} listing={listing} initiallySaved={savedJobIds.has(listing.id)} />
           ))}
         </div>

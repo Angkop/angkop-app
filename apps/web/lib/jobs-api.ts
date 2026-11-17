@@ -23,8 +23,6 @@ export type GetListingsParams = {
   skill?: string
 }
 
-const EMPTY_PAGE: ListingsPageResponse = { items: [], total: 0, page: 1, pageSize: 0 }
-
 export async function getListings(params: GetListingsParams = {}): Promise<ListingsPageResponse> {
   const search = new URLSearchParams()
   if (params.page) search.set('page', String(params.page))
@@ -34,7 +32,9 @@ export async function getListings(params: GetListingsParams = {}): Promise<Listi
   if (params.skill) search.set('skill', params.skill)
 
   const response = await fetch(`${API_URL}/api/jobs?${search.toString()}`, { cache: 'no-store' })
-  if (!response.ok) return EMPTY_PAGE
+  // Throw instead of returning an empty page: a server error must not look like "no jobs
+  // match", it should reach the route's error boundary with a way to reload.
+  if (!response.ok) throw new Error(`Listings request failed (${response.status})`)
   return response.json()
 }
 

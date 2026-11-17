@@ -1,21 +1,33 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useMutation, useQuery } from '@apollo/client/react'
+import { useState } from 'react'
+import dynamic from 'next/dynamic'
+import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { ErrorMessage } from '@/components/error-message'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
+import { SAVED_JOB_DERIVED_FIELDS } from '@/constants/job-cache'
+import { invalidateCachedFields } from '@/lib/job-cache'
 import { AllMatchesSkeleton } from './components/all-matches-skeleton'
 import { MatchesBrowser } from './components/matches-browser'
 import { PAGE_SIZE } from './constants'
+import { useListingSkills } from './hooks/use-listing-skills'
 import { useMatchFilters } from './hooks/use-match-filters'
-import { JOB_MATCHES_QUERY, LOG_INTERACTION_MUTATION, SAVE_JOB_MUTATION, getListingSkills } from './queries'
-import type { JobMatchesQueryResult } from './types'
+import { JOB_MATCHES_QUERY, LOG_INTERACTION_MUTATION, SAVE_JOB_MUTATION } from './queries'
+import type { JobMatchesQueryResult, JobMatchSummary } from './types'
+
+// Only needed once the user opens a match's explanation, not on every matches page load.
+const MatchInsightDialog = dynamic(
+  () => import('@/components/match-insight-dialog').then((mod) => mod.MatchInsightDialog),
+  { ssr: false }
+)
 
 export function AllMatchesPage() {
+  const apolloClient = useApolloClient()
   const filters = useMatchFilters()
-  const [skills, setSkills] = useState<string[]>([])
+  const skills = useListingSkills()
+  const [insightTarget, setInsightTarget] = useState<JobMatchSummary['job'] | null>(null)
   // Save/dismiss just hide a job from the current view — the server already excludes
   // saved/dismissed jobs from jobMatches going forward, so there's nothing left to learn
   // from a full requery right now. Refetching here would re-score every job in the feed
@@ -28,11 +40,7 @@ export function AllMatchesPage() {
   const [savingJobIds, setSavingJobIds] = useState<Set<string>>(new Set())
   const [dismissingJobIds, setDismissingJobIds] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    getListingSkills().then(setSkills)
-  }, [])
-
-  const { data, loading, error } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
+  const { data, loading, error, refetch } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
     variables: {
       page: filters.page,
       pageSize: PAGE_SIZE,
@@ -49,6 +57,8 @@ export function AllMatchesPage() {
     try {
       await saveJob({ variables: { jobId } })
       setHiddenJobIds((prev) => new Set(prev).add(jobId))
+      // Saving changes the saved lists, the skill gap report and which jobs the feed excludes.
+      invalidateCachedFields(apolloClient, SAVED_JOB_DERIVED_FIELDS)
       toast.success('Saved to your applications')
     } catch (saveError) {
       toast.error('Could not save this job', {
@@ -68,6 +78,7 @@ export function AllMatchesPage() {
     try {
       await logInteraction({ variables: { jobId, eventType: 'dismiss' } })
       setHiddenJobIds((prev) => new Set(prev).add(jobId))
+      invalidateCachedFields(apolloClient, ['jobMatches'])
       toast.success('Job dismissed')
     } catch (dismissError) {
       toast.error('Could not dismiss this job', {
@@ -88,7 +99,9 @@ export function AllMatchesPage() {
       {loading && !data ? (
         <AllMatchesSkeleton />
       ) : error ? (
-        <ErrorMessage>Could not load job matches: {error.message}</ErrorMessage>
+        <ErrorMessage onRetry={refetch} retryLabel="Reload Matches">
+          Could not load job matches: {error.message}
+        </ErrorMessage>
       ) : (
         <MatchesBrowser
           items={(data?.jobMatches.items ?? []).filter((match) => !hiddenJobIds.has(match.job.id))}
@@ -106,10 +119,23 @@ export function AllMatchesPage() {
           onPageChange={filters.goToPage}
           onSave={handleSave}
           onDismiss={handleDismiss}
+          onViewInsight={setInsightTarget}
           savingJobIds={savingJobIds}
           dismissingJobIds={dismissingJobIds}
         />
       )}
+
+      {insightTarget ? (
+        <MatchInsightDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setInsightTarget(null)
+          }}
+          jobId={insightTarget.id}
+          jobTitle={insightTarget.title}
+          jobCompany={insightTarget.company}
+        />
+      ) : null}
     </div>
   )
 }
