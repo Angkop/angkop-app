@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, Info, MoreHorizontal } from 'lucide-react'
+import { Info, MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
@@ -9,11 +9,8 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogIconBadge,
-  DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
 import {
@@ -63,16 +60,8 @@ export function OverlaysSection() {
           <DialogTrigger asChild>
             <Button variant='outline'>Open Dialog</Button>
           </DialogTrigger>
-          <DialogContent className='max-w-sm'>
-            <DialogHeader>
-              <div className='flex items-start gap-3'>
-                <DialogIconBadge icon={FileText} />
-                <div className='min-w-0 flex-1 space-y-1 pt-0.5'>
-                  <DialogTitle>Import your resume</DialogTitle>
-                  <DialogDescription>Upload a PDF or DOCX and we will fill in your profile.</DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
+          <DialogContent size='xs'>
+            <DialogHeader title='Import your resume' description='Upload a PDF or DOCX and we will fill in your profile.' />
             <p className='text-sm text-muted-foreground'>
               Everything between the header and the footer gets the same 24px side padding.
             </p>

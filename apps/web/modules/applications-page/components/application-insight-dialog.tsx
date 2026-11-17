@@ -13,7 +13,6 @@ import {
   GraduationCap,
   Maximize2,
   Minimize2,
-  Sparkles,
   Target,
   Users
 } from 'lucide-react'
@@ -30,10 +29,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogIconBadge,
-  DialogTitle
+  DialogHeader
 } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { ErrorMessage } from '@/components/error-message'
@@ -112,18 +108,15 @@ export function ApplicationInsightDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(expanded ? 'max-w-5xl max-h-[90vh]' : 'max-w-2xl')}>
-        <DialogHeader>
-          <div className="flex items-start justify-between gap-3 pr-8">
-            <div className="flex items-start gap-3">
-              <DialogIconBadge icon={Sparkles} />
-              <div className="min-w-0 space-y-1 pt-0.5">
-                <DialogTitle>How this job matches you</DialogTitle>
-                <DialogDescription>
-                  {savedJob.job.title} · {savedJob.job.company}
-                </DialogDescription>
-              </div>
-            </div>
+      <DialogContent size="md" className={cn(expanded && 'max-h-[90vh] max-w-5xl')}>
+        <DialogHeader
+          title="How this job matches you"
+          description={
+            <>
+              {savedJob.job.title} · {savedJob.job.company}
+            </>
+          }
+          actions={
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -137,8 +130,8 @@ export function ApplicationInsightDialog({
               </TooltipTrigger>
               <TooltipContent side="left">{expanded ? 'Shrink dialog' : 'Enlarge dialog'}</TooltipContent>
             </Tooltip>
-          </div>
-        </DialogHeader>
+          }
+        />
 
         {loading ? (
           <div className="rounded-lg border border-border p-5">

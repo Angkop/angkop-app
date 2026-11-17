@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { AlertTriangle, BarChart3, CheckCircle2, GraduationCap, Sparkles, Target, Users } from 'lucide-react'
+import { AlertTriangle, BarChart3, CheckCircle2, GraduationCap, Target, Users } from 'lucide-react'
 import type { MatchInsight } from '@angkop/shared'
 import { getMatchLabel } from '@angkop/shared'
 import {
@@ -13,10 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogIconBadge,
-  DialogTitle
+  DialogHeader
 } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { ErrorMessage } from '@/components/error-message'
@@ -175,17 +172,7 @@ export function MatchInsightDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <div className="flex items-start gap-3">
-            <DialogIconBadge icon={Sparkles} />
-            <div className="min-w-0 flex-1 space-y-1 pt-0.5">
-              <DialogTitle>Why this is a match</DialogTitle>
-              <DialogDescription>
-                {jobTitle} · {jobCompany}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+        <DialogHeader title="Why this is a match" description={<>{jobTitle} · {jobCompany}</>} />
 
         {loading ? (
           <div className="rounded-lg border border-border p-5">

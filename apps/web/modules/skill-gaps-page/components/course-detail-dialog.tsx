@@ -7,11 +7,8 @@ import { buttonVariants } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogIconBadge,
-  DialogTitle
+  DialogHeader
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 
@@ -28,18 +25,10 @@ export function CourseDetailDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent>
         {course ? (
           <>
-            <DialogHeader>
-              <div className="flex items-start gap-3">
-                <DialogIconBadge icon={BookOpen} />
-                <div className="min-w-0 flex-1 space-y-1 pt-0.5">
-                  <DialogTitle>{course.title}</DialogTitle>
-                  <DialogDescription>{course.provider}</DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
+            <DialogHeader title={course.title} description={course.provider} />
 
             {skill ? (
               <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-border p-3">

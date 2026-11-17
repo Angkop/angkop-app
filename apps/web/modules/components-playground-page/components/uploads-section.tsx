@@ -7,14 +7,10 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogIconBadge,
-  DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog'
-import { FileText } from 'lucide-react'
 import { PlaygroundSection, Variant } from './playground-section'
 
 const MAX_SIZE_MB = 10
@@ -77,15 +73,7 @@ export function UploadsSection() {
             <Button variant='outline'>Open Upload Dialog</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <div className='flex items-start gap-3'>
-                <DialogIconBadge icon={FileText} />
-                <div className='min-w-0 flex-1 space-y-1 pt-0.5'>
-                  <DialogTitle>Import from resume</DialogTitle>
-                  <DialogDescription>Upload a PDF or DOCX and we will fill in your profile.</DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
+            <DialogHeader title='Import from resume' description='Upload a PDF or DOCX and we will fill in your profile.' />
             {dialogFile ? (
               <FilePreviewList files={[dialogFile]} onRemove={() => setDialogFile(null)} />
             ) : (

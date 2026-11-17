@@ -32,11 +32,8 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogIconBadge,
-  DialogTitle
+  DialogHeader
 } from '@/components/ui/dialog'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { ErrorMessage } from '@/components/error-message'
@@ -238,20 +235,10 @@ export function ResumeImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={stage === 'review' ? 'max-w-xl' : undefined}>
-        <DialogHeader>
-          <div className="flex items-start gap-3">
-            <DialogIconBadge icon={FileText} />
-            <div className="min-w-0 flex-1 space-y-1 pt-0.5">
-              <DialogTitle>Import from resume</DialogTitle>
-              <DialogDescription>
-                Upload a resume (PDF or DOCX) and we&apos;ll read it to fill in your headline, skills, experience,
+      <DialogContent size={stage === 'review' ? 'md' : 'sm'}>
+        <DialogHeader title="Import from resume" description={<>Upload a resume (PDF or DOCX) and we&apos;ll read it to fill in your headline, skills, experience,
                 education, certifications, projects, and languages. You&apos;ll review everything before it&apos;s
-                applied.
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+                applied.</>} />
 
         {stage === 'upload' ? (
           <div className="space-y-3">
