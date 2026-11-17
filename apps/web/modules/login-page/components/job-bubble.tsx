@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { JOBS, SKILLS } from '../constants'
 import type { BubbleView } from './shift-model'
+import { ThinkingDots } from './thinking-dots'
 
 const BAR =
   'h-full origin-left rounded-full animate-[angkop-bar_1.2s_ease-out_both] motion-reduce:animate-none'
@@ -36,34 +37,44 @@ export function JobBubble({
         )}
       >
         {view === 'compare' ? (
-          <div className="w-80 rounded-2xl border border-border bg-background px-4 py-3 shadow-xl">
+          <div className="w-64 rounded-2xl border border-border bg-background px-4 py-3 shadow-xl lg:w-80">
             <p className="text-xs text-muted-foreground">These are my skills</p>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {SKILLS.map((skill) => (
                 <Badge key={skill}>{skill}</Badge>
               ))}
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">Which job is closer?</p>
-            {ranked.map((entry, index) => (
-              <div
-                key={entry.title}
-                className={cn(
-                  'mt-1.5 rounded-xl border px-3 py-2',
-                  index === 0 ? 'border-primary/40 bg-primary/5' : 'border-border'
-                )}
-              >
-                <p className="flex items-center gap-1 text-sm font-semibold text-foreground">
-                  {index === 0 && <Check className="size-3.5 text-primary" />}
-                  {entry.title}
-                </p>
-                <div className="mt-1.5 flex items-center gap-3">
-                  <MatchScoreBadge score={entry.score} />
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div className={cn(BAR, entry.bar, entry.fill)} />
+            {/* Below desktop the bubble has no room for both jobs, so it names the closer one. */}
+            <p className="mt-2.5 flex items-center gap-1 text-xs text-muted-foreground lg:hidden">
+              <Check className="size-3.5 text-primary" />
+              <span>
+                Closer to <span className="font-semibold text-foreground">{ranked[0].title}</span>,{' '}
+                {Math.round(ranked[0].score * 100)}%
+              </span>
+            </p>
+            <div className="hidden lg:block">
+              <p className="mt-3 text-xs text-muted-foreground">Which job is closer?</p>
+              {ranked.map((entry, index) => (
+                <div
+                  key={entry.title}
+                  className={cn(
+                    'mt-1.5 rounded-xl border px-3 py-2',
+                    index === 0 ? 'border-primary/40 bg-primary/5' : 'border-border'
+                  )}
+                >
+                  <p className="flex items-center gap-1 text-sm font-semibold text-foreground">
+                    {index === 0 && <Check className="size-3.5 text-primary" />}
+                    {entry.title}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-3">
+                    <MatchScoreBadge score={entry.score} />
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div className={cn(BAR, entry.bar, entry.fill)} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ) : (
           <div className="w-56 rounded-2xl border border-border bg-background px-4 py-3 shadow-xl">
@@ -84,18 +95,7 @@ export function JobBubble({
                 </p>
               </>
             ) : (
-              <div className="mt-3.5 flex gap-1.5">
-                {[0, 1, 2].map((dot) => (
-                  <span
-                    key={dot}
-                    className={cn(
-                      'size-2 animate-pulse rounded-full bg-muted-foreground/40',
-                      dot === 1 && '[animation-delay:150ms]',
-                      dot === 2 && '[animation-delay:300ms]'
-                    )}
-                  />
-                ))}
-              </div>
+              <ThinkingDots className="mt-3.5" />
             )}
           </div>
         )}

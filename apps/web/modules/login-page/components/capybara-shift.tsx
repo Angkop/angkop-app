@@ -6,6 +6,7 @@ import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeom
 import { cn } from '@/lib/utils'
 import { CapybaraHero } from './capybara-hero'
 import { buildDesks } from './desks'
+import { disposeOf } from './dispose-scene'
 import { buildFoamyCapybara } from './foamy-capybara'
 import { JobBubble } from './job-bubble'
 import { readToken } from './read-token'
@@ -15,16 +16,6 @@ import { SETTLED_SECONDS, STATION_X, poseAt, type BubbleView } from './shift-mod
 const STAND_Z = -0.6
 const HANG = [new THREE.Vector3(-1.4, 0.7, 0.55), new THREE.Vector3(1.4, 0.7, 0.55)]
 const HEAD_TOP = 3.35
-
-const disposeOf = (scene: THREE.Scene) =>
-  scene.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return
-    object.geometry.dispose()
-    for (const material of [object.material].flat()) {
-      if ('map' in material && material.map instanceof THREE.Texture) material.map.dispose()
-      material.dispose()
-    }
-  })
 
 // The sign-in hero: one soft capybara and two desks, digital marketing and construction. It works
 // one desk, tries that job on (the bubble over its head asks how well it fits and answers in
