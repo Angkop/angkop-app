@@ -40,7 +40,7 @@ export function AccordionContent({
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
   return (
-    <AccordionPrimitive.Content className="data-[state=closed]:hidden" {...props}>
+    <AccordionPrimitive.Content className="angkop-accordion-content" {...props}>
       <div className={cn('pb-3', className)}>{children}</div>
     </AccordionPrimitive.Content>
   )

@@ -72,6 +72,8 @@ export type PreferencesEntry = {
   willingToRemote: boolean
 }
 
+export const EMPTY_SKILL: ProfileSkillEntry = { name: '' }
+
 export const EMPTY_EDUCATION: EducationEntry = {
   school: '',
   degree: '',

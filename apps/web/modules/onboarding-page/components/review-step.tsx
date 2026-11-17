@@ -22,8 +22,14 @@ export function ReviewStep({ email, saveError }: { email: string; saveError?: { 
     },
     {
       value: 'skills',
-      label: `Skills (${skills.length})`,
-      summary: skills.length > 0 ? skills.map((skill) => skill.name).join(', ') : 'None added'
+      label: `Skills (${skills.filter((skill) => skill.name.trim()).length})`,
+      summary:
+        skills.some((skill) => skill.name.trim())
+          ? skills
+              .filter((skill) => skill.name.trim())
+              .map((skill) => skill.name)
+              .join(', ')
+          : 'None added'
     },
     {
       value: 'education',

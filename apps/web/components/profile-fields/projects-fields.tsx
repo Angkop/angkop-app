@@ -39,23 +39,25 @@ export function ProjectsFields() {
               <Label className="text-xs font-normal text-muted-foreground">Technologies</Label>
               <ChipListField name={`projects.${index}.technologies`} placeholder="e.g. Next.js" />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <ProfileField
                 fieldType={FIELD_TYPE.TEXT_INPUT}
                 name={`projects.${index}.url`}
                 label="Link"
                 placeholder="https://"
               />
-              <ProfileField
-                fieldType={FIELD_TYPE.MONTH}
-                name={`projects.${index}.startDate`}
-                label="Start date"
-              />
-              <ProfileField
-                fieldType={FIELD_TYPE.MONTH}
-                name={`projects.${index}.endDate`}
-                label="End date"
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <ProfileField
+                  fieldType={FIELD_TYPE.MONTH}
+                  name={`projects.${index}.startDate`}
+                  label="Start date"
+                />
+                <ProfileField
+                  fieldType={FIELD_TYPE.MONTH}
+                  name={`projects.${index}.endDate`}
+                  label="End date"
+                />
+              </div>
             </div>
           </Entry>
         ))}

@@ -34,27 +34,29 @@ export function EducationFields() {
                 placeholder="e.g. Bachelor of Science"
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <ProfileField
                 fieldType={FIELD_TYPE.TEXT_INPUT}
                 name={`education.${index}.fieldOfStudy`}
                 label="Field of study"
                 placeholder="e.g. Computer Science"
               />
-              <ProfileField
-                fieldType={FIELD_TYPE.TEXT_INPUT}
-                name={`education.${index}.startYear`}
-                label="Start year"
-                inputType="number"
-                placeholder="2022"
-              />
-              <ProfileField
-                fieldType={FIELD_TYPE.TEXT_INPUT}
-                name={`education.${index}.endYear`}
-                label="End year"
-                inputType="number"
-                placeholder="2026"
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <ProfileField
+                  fieldType={FIELD_TYPE.TEXT_INPUT}
+                  name={`education.${index}.startYear`}
+                  label="Start year"
+                  inputType="number"
+                  placeholder="2022"
+                />
+                <ProfileField
+                  fieldType={FIELD_TYPE.TEXT_INPUT}
+                  name={`education.${index}.endYear`}
+                  label="End year"
+                  inputType="number"
+                  placeholder="2026"
+                />
+              </div>
             </div>
             <ProfileField
               fieldType={FIELD_TYPE.MULTILINE_TEXT_INPUT}

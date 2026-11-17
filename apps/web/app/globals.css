@@ -284,3 +284,46 @@ body {
     animation: none !important;
   }
 }
+
+/* Accordion (components/ui/accordion.tsx) — content height eases open and closed. Radix
+   publishes the measured height as --radix-accordion-content-height, and keeps the content
+   mounted until the close animation ends. */
+@keyframes angkop-accordion-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes angkop-accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.angkop-accordion-content {
+  overflow: hidden;
+}
+
+.angkop-accordion-content[data-state='open'] {
+  animation: angkop-accordion-down 220ms ease-out;
+}
+
+.angkop-accordion-content[data-state='closed'] {
+  animation: angkop-accordion-up 180ms ease-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .angkop-accordion-content {
+    animation: none !important;
+  }
+}

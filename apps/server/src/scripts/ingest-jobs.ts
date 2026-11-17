@@ -7,6 +7,7 @@ import { detectSkillsFromTaxonomy } from '../lib/skill-detection'
 import { joinSections } from './ingest/description-sections'
 import { detectLanguage } from './ingest/posting-language'
 import { fetchArbeitnow } from './ingest/sources/arbeitnow'
+import { fetchHeadcountLabs } from './ingest/sources/headcountlabs'
 import { fetchRemoteOk } from './ingest/sources/remoteok'
 
 const MAX_REQUIRED_SKILLS = 8
@@ -24,16 +25,35 @@ function withSkillFallback(requiredSkills: string[], fullText: string, skillName
 const prisma = new PrismaClient()
 const WEB_URL = process.env.WEB_URL ?? 'http://localhost:3000'
 
+const SOURCE_NAMES = ['remoteok', 'arbeitnow', 'headcountlabs']
+
+// `--source=headcountlabs` limits a run to one source, so it doesn't re-pull and re-embed the
+// others. No flag means every source, as before.
+const onlySource = process.argv.find((arg) => arg.startsWith('--source='))?.slice('--source='.length)
+const wantsSource = (name: string) => !onlySource || onlySource === name
+
 async function main() {
-  const [remoteOk, arbeitnow] = await Promise.all([fetchRemoteOk(), fetchArbeitnow()])
-  const listings = [...remoteOk, ...arbeitnow]
+  if (onlySource && !SOURCE_NAMES.includes(onlySource)) {
+    logger.error(`Unknown --source "${onlySource}". Use one of: ${SOURCE_NAMES.join(', ')}`)
+    process.exitCode = 1
+    return
+  }
+
+  const [remoteOk, arbeitnow, headcountLabs] = await Promise.all([
+    wantsSource('remoteok') ? fetchRemoteOk() : [],
+    wantsSource('arbeitnow') ? fetchArbeitnow() : [],
+    wantsSource('headcountlabs') ? fetchHeadcountLabs() : []
+  ])
+  const listings = [...remoteOk, ...arbeitnow, ...headcountLabs]
 
   if (listings.length === 0) {
     logger.warn('No listings fetched from any source — nothing to ingest. Check network access.')
     return
   }
 
-  logger.info(`Ingesting ${listings.length} real listings (${remoteOk.length} RemoteOK, ${arbeitnow.length} Arbeitnow)...`)
+  logger.info(
+    `Ingesting ${listings.length} real listings (${remoteOk.length} RemoteOK, ${arbeitnow.length} Arbeitnow, ${headcountLabs.length} Headcount Labs)...`
+  )
 
   // Loaded once per run, not per listing: the canonical skill names job seekers have
   // actually entered on their profiles, spanning whatever industries are on the platform.

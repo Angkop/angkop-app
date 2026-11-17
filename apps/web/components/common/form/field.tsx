@@ -34,6 +34,7 @@ export function Field<T extends FieldValues>({
   hideLabel,
   orientation,
   size = 'default',
+  labelClassName,
   help,
   placeholder,
   disabled,
@@ -188,6 +189,7 @@ export function Field<T extends FieldValues>({
       hideLabel={hideLabel}
       orientation={orientation}
       size={size}
+      labelClassName={labelClassName}
       inlineLabel={INLINE_LABEL_TYPES.includes(fieldType)}
       required={required}
       help={help}

@@ -23,6 +23,7 @@ export type FormFieldProps<T extends FieldValues> = {
   orientation?: 'vertical' | 'horizontal'
   // `sm` is a 36px control (the height of a button) for dense forms like the profile editor.
   size?: 'default' | 'sm'
+  labelClassName?: string
   help?: string
   placeholder?: string
   disabled?: boolean

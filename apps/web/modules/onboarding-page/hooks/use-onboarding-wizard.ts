@@ -40,7 +40,6 @@ export function useOnboardingWizard() {
   }, [router])
 
   const activeStep = STEPS[step]
-  const progress = Math.round(((step + 1) / STEPS.length) * 100)
 
   // Continue only moves on once the step in front of the user passes validation, so a
   // half-filled row can't slip through to a later step.
@@ -85,7 +84,6 @@ export function useOnboardingWizard() {
     step,
     setStep,
     activeStep,
-    progress,
     goNext,
     goBack,
     handleFinish,

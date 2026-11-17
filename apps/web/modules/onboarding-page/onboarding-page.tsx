@@ -29,7 +29,6 @@ export function OnboardingPage() {
     <div className="relative grid h-dvh overflow-hidden bg-background lg:grid-cols-[380px_1fr]">
       <SidebarNav
         step={wizard.step}
-        progress={wizard.progress}
         onStepClick={wizard.setStep}
         disabled={wizard.isSaving}
       />
@@ -81,7 +80,7 @@ export function OnboardingPage() {
         </div>
 
         <div className="shrink-0 border-t border-border">
-          <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-6 py-4 sm:px-10">
+          <div className="flex items-center justify-end gap-2 px-6 py-4 sm:px-10">
             <Button
               type="button"
               variant="ghost"

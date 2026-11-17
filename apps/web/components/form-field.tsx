@@ -22,6 +22,7 @@ export function FormField({
   inlineLabel = false,
   orientation = 'vertical',
   size = 'default',
+  labelClassName,
   required = false,
   help,
   error,
@@ -34,6 +35,8 @@ export function FormField({
   inlineLabel?: boolean
   orientation?: 'vertical' | 'horizontal'
   size?: 'default' | 'sm'
+  // Extra classes for the label, e.g. `sm:sr-only` to show it on phones and hide it above.
+  labelClassName?: string
   required?: boolean
   help?: string
   error?: string
@@ -51,7 +54,8 @@ export function FormField({
         inlineLabel ? 'text-foreground' : 'text-muted-foreground',
         size === 'sm' && !inlineLabel && 'text-xs',
         isHorizontal && (size === 'sm' ? 'sm:min-h-9 sm:leading-snug' : 'sm:min-h-[41px] sm:leading-snug'),
-        hideLabel && 'sr-only'
+        hideLabel && 'sr-only',
+        labelClassName
       )}
     >
       <span>
