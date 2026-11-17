@@ -1,83 +1,44 @@
-import { Plus, X } from 'lucide-react'
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form'
-import { LANGUAGE_PROFICIENCY_LABELS } from '@angkop/shared'
-import { FormField } from '@/components/form-field'
-import { OptionSelect } from '@/components/option-select'
+import { Plus } from 'lucide-react'
+import { useFieldArray, useFormContext } from 'react-hook-form'
+import { FIELD_TYPE } from '@/components/common/form/constants/field-type'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { LANGUAGE_PROFICIENCY_OPTIONS } from '@/constants/profile-form'
 import { EMPTY_LANGUAGE, type ProfileFormValues } from '@/lib/profile-form'
+import { Entry, EntryList } from './entry'
+import { ProfileField } from './profile-field'
 
 export function LanguagesFields() {
-  const {
-    register,
-    control,
-    formState: { errors }
-  } = useFormContext<ProfileFormValues>()
+  const { control } = useFormContext<ProfileFormValues>()
   const { fields, append, remove } = useFieldArray({ control, name: 'languages' })
 
   return (
-    <div className="space-y-3">
-      {fields.map((field, index) => {
-        const rowErrors = errors.languages?.[index]
-
-        return (
-          <div key={field.id} className="flex items-start gap-2 rounded-lg border border-border p-3">
-            <FormField
-              id={`language-${field.id}-name`}
-              label="Language"
-              hideLabel
-              error={rowErrors?.language?.message}
-              className="flex-1"
-            >
-              {(controlProps) => (
-                <Input {...controlProps} {...register(`languages.${index}.language`)} placeholder="e.g. English" />
-              )}
-            </FormField>
-            <FormField
-              id={`language-${field.id}-proficiency`}
-              label="Proficiency"
-              hideLabel
-              error={rowErrors?.proficiency?.message}
-              className="w-40"
-            >
-              {(controlProps) => (
-                <Controller
-                  control={control}
-                  name={`languages.${index}.proficiency`}
-                  render={({ field: proficiencyField }) => (
-                    <OptionSelect
-                      {...controlProps}
-                      ref={proficiencyField.ref}
-                      value={proficiencyField.value}
-                      onValueChange={proficiencyField.onChange}
-                      onBlur={proficiencyField.onBlur}
-                      options={LANGUAGE_PROFICIENCY_LABELS}
-                      placeholder="Proficiency"
-                      className="w-full"
-                    />
-                  )}
-                />
-              )}
-            </FormField>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="mt-1"
-                  aria-label="Remove language"
-                  onClick={() => remove(index)}
-                >
-                  <X className="size-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Remove language</TooltipContent>
-            </Tooltip>
-          </div>
-        )
-      })}
+    <div className="space-y-4">
+      <EntryList>
+        {fields.map((field, index) => (
+          <Entry
+            key={field.id}
+            title={`Language ${index + 1}`}
+            removeLabel="Remove language"
+            onRemove={() => remove(index)}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ProfileField
+                fieldType={FIELD_TYPE.TEXT_INPUT}
+                name={`languages.${index}.language`}
+                label="Language"
+                placeholder="e.g. English"
+              />
+              <ProfileField
+                fieldType={FIELD_TYPE.SELECT}
+                name={`languages.${index}.proficiency`}
+                label="Proficiency"
+                options={LANGUAGE_PROFICIENCY_OPTIONS}
+                placeholder="Select one"
+              />
+            </div>
+          </Entry>
+        ))}
+      </EntryList>
       <Button type="button" variant="outline" size="sm" onClick={() => append(EMPTY_LANGUAGE)}>
         <Plus className="size-3.5" />
         Add language

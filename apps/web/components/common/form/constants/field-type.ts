@@ -1,6 +1,7 @@
 export const FIELD_TYPE = {
   TEXT_INPUT: 'textInput',
   MULTILINE_TEXT_INPUT: 'multilineTextInput',
+  AMOUNT: 'amount',
   SEARCH: 'search',
   SELECT: 'select',
   CHECKBOX: 'checkbox',

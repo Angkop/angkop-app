@@ -21,6 +21,7 @@ Shared components follow Oboda's geometry, with Angkop's own colors (the tokens 
 | Piece | Spec |
 |---|---|
 | Fields (input, select, textarea) | 41px tall, 8px radius, 1px `border-input`, focus is a 2px `primary` border, 14px text, label 14px regular `muted-foreground` |
+| Fields, `size="sm"` | 36px tall (the height of a button) for dense forms. Opt in per field with `Form.Field size="sm"`. The profile editor uses it through `ProfileField` |
 | Buttons | 36px tall, 25px side padding, 8px radius, 14px semibold, hover is 80% opacity, outline variant uses `primary`, focus is a 2px `primary` outline at 2px offset |
 | Menus, selects, popovers | 12px radius, 8px padding, items 8px radius with 4px gaps, hover `accent`, selected `primary/10` |
 | Cards, dialogs, tables | 12px radius, 24px padding, no shadow on cards |

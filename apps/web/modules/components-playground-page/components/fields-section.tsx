@@ -29,6 +29,7 @@ type PlaygroundFormValues = {
   startMonth: string
   interviewAt: string
   query: string
+  salary: string
 }
 
 const DEFAULT_VALUES: PlaygroundFormValues = {
@@ -42,7 +43,8 @@ const DEFAULT_VALUES: PlaygroundFormValues = {
   startDate: '',
   startMonth: '',
   interviewAt: '',
-  query: ''
+  query: '',
+  salary: ''
 }
 
 const WORK_SETUP_OPTIONS = [
@@ -82,6 +84,9 @@ export function FieldsSection() {
             help='The name as it appears on your resume.'
             placeholder='Sample Company'
           />
+        </Variant>
+        <Variant label='Amount with thousands separators' usage={'<Form.Field fieldType="amount" />'}>
+          <PlaygroundField fieldType={FIELD_TYPE.AMOUNT} name='salary' label='Expected salary (₱)' placeholder='25,000' />
         </Variant>
         <Variant label='Multiline text' usage={'<Form.Field fieldType="multilineTextInput" rows={3} />'}>
           <PlaygroundField

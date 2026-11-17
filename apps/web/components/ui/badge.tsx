@@ -7,6 +7,8 @@ const badgeVariants = cva('inline-flex items-center rounded-full px-2.5 py-0.5 t
     variant: {
       default: 'bg-secondary text-secondary-foreground',
       outline: 'border border-border text-foreground',
+      // An editable tag: a tinted rounded chip with room on the right for its remove button.
+      chip: 'gap-1.5 rounded-lg bg-primary/10 py-1 pr-1.5 pl-2.5 font-medium text-foreground',
       secondary: 'gap-1 bg-secondary pr-1 text-secondary-foreground',
       strong:
         'gap-1.5 bg-match-strong/12 text-foreground before:size-1.5 before:shrink-0 before:rounded-full before:bg-match-strong before:content-[""]',

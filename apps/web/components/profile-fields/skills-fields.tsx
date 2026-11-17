@@ -1,10 +1,13 @@
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form'
-import { SKILL_LEVEL_LABELS } from '@angkop/shared'
+import { useFieldArray, useFormContext } from 'react-hook-form'
+import { FIELD_TYPE } from '@/components/common/form/constants/field-type'
 import { FormField } from '@/components/form-field'
-import { OptionSelect } from '@/components/option-select'
 import { ChipList } from '@/components/chip-list'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { SKILL_LEVEL_OPTIONS } from '@/constants/profile-form'
 import type { ProfileFormValues } from '@/lib/profile-form'
+import { Entry, EntryList } from './entry'
+import { ProfileField } from './profile-field'
 
 export function SkillsFields() {
   const {
@@ -16,63 +19,40 @@ export function SkillsFields() {
 
   return (
     <>
-      <div className="rounded-lg border border-border p-4">
-        <ChipList
-          items={fields.map((field) => field.name)}
-          onAdd={(value) => append({ name: value })}
-          onRemove={(value) => remove(fields.findIndex((field) => field.name === value))}
-          placeholder="e.g. React"
-        />
-        {fields.length === 0 ? (
-          <p className="mt-3 text-xs text-muted-foreground">
-            No skills yet. Matches will lean on your resume once you upload it.
-          </p>
-        ) : null}
+      <div className="space-y-1.5">
+        <Label className="text-xs font-normal text-muted-foreground">Skills</Label>
+        <div className="rounded-lg border border-border p-4">
+          <ChipList
+            items={fields.map((field) => field.name)}
+            onAdd={(value) => append({ name: value })}
+            onRemove={(value) => remove(fields.findIndex((field) => field.name === value))}
+            placeholder="e.g. React"
+          />
+          {fields.length === 0 ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              No skills yet. Matches will lean on your resume once you upload it.
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {fields.length > 0 ? (
-        <div className="space-y-2">
-          {fields.map((field, index) => {
-            const rowErrors = errors.skills?.[index]
-
-            return (
-              <div
-                key={field.id}
-                className="flex flex-col gap-2 rounded-lg border border-border p-3 sm:flex-row sm:items-start"
-              >
-                <span className="flex-1 truncate text-sm font-medium text-foreground sm:pt-2">{field.name}</span>
-                <FormField
-                  id={`skill-${field.id}-level`}
-                  label={`${field.name} level`}
-                  hideLabel
-                  error={rowErrors?.level?.message}
-                  className="sm:w-36"
-                >
-                  {(controlProps) => (
-                    <Controller
-                      control={control}
-                      name={`skills.${index}.level`}
-                      render={({ field: levelField }) => (
-                        <OptionSelect
-                          {...controlProps}
-                          ref={levelField.ref}
-                          value={levelField.value}
-                          onValueChange={levelField.onChange}
-                          onBlur={levelField.onBlur}
-                          options={SKILL_LEVEL_LABELS}
-                          placeholder="Level"
-                          className="w-full"
-                        />
-                      )}
-                    />
-                  )}
-                </FormField>
+        <EntryList>
+          {fields.map((field, index) => (
+            <Entry key={field.id} title={field.name}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <ProfileField
+                  fieldType={FIELD_TYPE.SELECT}
+                  name={`skills.${index}.level`}
+                  label="Level"
+                  options={SKILL_LEVEL_OPTIONS}
+                  placeholder="Select one"
+                />
                 <FormField
                   id={`skill-${field.id}-years`}
-                  label={`${field.name} years of experience`}
-                  hideLabel
-                  error={rowErrors?.years?.message}
-                  className="sm:w-20"
+                  label="Years of experience"
+                  size="sm"
+                  error={errors.skills?.[index]?.years?.message}
                 >
                   {(controlProps) => (
                     <Input
@@ -83,14 +63,15 @@ export function SkillsFields() {
                       type="number"
                       min="0"
                       step="0.5"
-                      placeholder="Years"
+                      placeholder="e.g. 2"
+                      className="h-9 px-3 py-2"
                     />
                   )}
                 </FormField>
               </div>
-            )
-          })}
-        </div>
+            </Entry>
+          ))}
+        </EntryList>
       ) : null}
     </>
   )

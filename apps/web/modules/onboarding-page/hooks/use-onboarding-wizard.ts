@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useWatch, type FieldErrors } from 'react-hook-form'
+import type { FieldErrors } from 'react-hook-form'
 import { toast } from 'sonner'
 import { supabaseClient } from '@/lib/supabase-client'
 import { useProfileEditor } from '@/hooks/use-profile-editor'
@@ -9,7 +9,7 @@ import { STEPS, STEP_FIELDS } from '../constants'
 
 export function useOnboardingWizard() {
   const router = useRouter()
-  const profileEditor = useProfileEditor({ requireCareerLevel: true })
+  const profileEditor = useProfileEditor()
   const { form } = profileEditor
   const [isChecking, setIsChecking] = useState(true)
   const [step, setStep] = useState(0)
@@ -39,13 +39,8 @@ export function useOnboardingWizard() {
     }
   }, [router])
 
-  const resumeFileName = useWatch({ control: form.control, name: 'resumeFileName' })
   const activeStep = STEPS[step]
   const progress = Math.round(((step + 1) / STEPS.length) * 100)
-  // A resume import prefills every later step's state up front (see importParsedResume in
-  // use-profile-editor.ts), so once that's happened there's no "unvisited" step left to
-  // protect the user from — let the sidebar jump anywhere instead of forward-only.
-  const navUnlocked = resumeFileName !== ''
 
   // Continue only moves on once the step in front of the user passes validation, so a
   // half-filled row can't slip through to a later step.
@@ -59,7 +54,7 @@ export function useOnboardingWizard() {
     setStep((current) => Math.max(current - 1, 0))
   }
 
-  // The sidebar can jump past steps (see navUnlocked), so a save can fail on a step that
+  // The sidebar can jump to any step, so a save can fail on a step that
   // isn't on screen — take the user to the first one holding an error.
   function goToFirstInvalidStep(errors: FieldErrors<ProfileFormValues>) {
     const index = STEPS.findIndex((candidate) => STEP_FIELDS[candidate.id].some((field) => field in errors))
@@ -91,7 +86,6 @@ export function useOnboardingWizard() {
     setStep,
     activeStep,
     progress,
-    navUnlocked,
     goNext,
     goBack,
     handleFinish,

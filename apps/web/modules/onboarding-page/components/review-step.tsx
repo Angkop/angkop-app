@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form'
 import { CAREER_LEVEL_LABELS } from '@angkop/shared'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 import { ErrorMessage } from '@/components/error-message'
 import type { ProfileFormValues } from '@/lib/profile-form'
 import { StepSection } from './step-section'
@@ -67,24 +68,26 @@ export function ReviewStep({ email, saveError }: { email: string; saveError?: { 
       title="Review"
       description="Here's what we'll use to start matching you. Everything here stays editable from Profile later."
     >
-      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+      <Card className="flex items-center justify-between p-3">
         <div>
           <p className="text-xs font-medium text-muted-foreground">Signed in as</p>
           <p className="mt-1 text-sm text-foreground">{email}</p>
         </div>
         <Badge variant="outline">Connected</Badge>
-      </div>
+      </Card>
 
-      <Accordion type="multiple" defaultValue={sections.map((section) => section.value)} className="rounded-lg border border-border px-4">
-        {sections.map((section) => (
-          <AccordionItem key={section.value} value={section.value}>
-            <AccordionTrigger className="font-medium text-foreground">{section.label}</AccordionTrigger>
-            <AccordionContent>
-              <p className="text-sm text-muted-foreground">{section.summary}</p>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      <Card className="px-4">
+        <Accordion type="multiple" defaultValue={sections.map((section) => section.value)}>
+          {sections.map((section) => (
+            <AccordionItem key={section.value} value={section.value}>
+              <AccordionTrigger className="font-medium text-foreground">{section.label}</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-sm text-muted-foreground">{section.summary}</p>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </Card>
 
       {saveError ? <ErrorMessage>Could not save your profile: {saveError.message}</ErrorMessage> : null}
     </StepSection>

@@ -4,6 +4,7 @@ import { Upload } from 'lucide-react'
 import type { ParsedResumeProfile } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 import { AboutFields } from '@/components/profile-fields/about-fields'
 import { getInitials } from '@/lib/utils'
 import { StepSection } from './step-section'
@@ -28,7 +29,7 @@ export function AboutStep({
 
   return (
     <StepSection title="About you" description="A little context so we can start narrowing down what fits.">
-      <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
+      <Card className="flex items-center gap-3 bg-muted/40 p-3">
         <Avatar className="size-10">
           <AvatarFallback className="bg-primary/10 text-sm font-medium text-primary">
             {email ? getInitials(name, email) : ''}
@@ -38,7 +39,7 @@ export function AboutStep({
           <p className="truncate text-sm font-medium text-foreground">{name ?? email}</p>
           <p className="truncate text-xs text-muted-foreground">{email}</p>
         </div>
-      </div>
+      </Card>
 
       <div className="space-y-1.5">
         <Button

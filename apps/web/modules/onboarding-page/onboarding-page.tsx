@@ -2,6 +2,7 @@
 
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
 import { FormProvider } from 'react-hook-form'
+import { BrandMark } from '@/components/brand-mark'
 import { Button } from '@/components/ui/button'
 import { PageLoader } from '@/components/page-loader'
 import { useOnboardingWizard } from './hooks/use-onboarding-wizard'
@@ -23,11 +24,12 @@ export function OnboardingPage() {
   if (wizard.isChecking) return <PageLoader label="Setting up your account…" />
 
   return (
-    <div className="grid h-screen overflow-hidden bg-background lg:grid-cols-[380px_1fr]">
+    // relative so the absolutely positioned sr-only labels inside the scroller are clipped by this
+    // overflow-hidden root, instead of stretching the document and scrolling the whole page.
+    <div className="relative grid h-dvh overflow-hidden bg-background lg:grid-cols-[380px_1fr]">
       <SidebarNav
         step={wizard.step}
         progress={wizard.progress}
-        navUnlocked={wizard.navUnlocked}
         onStepClick={wizard.setStep}
         disabled={wizard.isSaving}
       />
@@ -35,48 +37,51 @@ export function OnboardingPage() {
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-6 py-4 sm:px-10">
           <div className="flex items-center gap-2 lg:hidden">
-            <span className="flex size-6 items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
-              A
-            </span>
+            <BrandMark className="size-6" />
             <span className="text-sm text-muted-foreground">
               Step {wizard.step + 1} of {STEPS.length}
             </span>
           </div>
           <span className="hidden text-sm font-medium text-foreground lg:inline">{wizard.activeStep.label}</span>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={wizard.handleSkip}
             disabled={wizard.isSaving}
-            className="cursor-pointer text-sm text-muted-foreground underline decoration-dotted underline-offset-4 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {wizard.isSaving ? 'Saving…' : 'Skip onboarding'}
-          </button>
+          </Button>
         </div>
 
-        <div className="mx-auto w-full max-w-2xl flex-1 overflow-y-auto px-6 py-10 sm:px-10">
-          <FormProvider {...wizard.form}>
-            {wizard.activeStep.id === 'about' ? (
-              <AboutStep
-                email={wizard.email}
-                name={wizard.name}
-                onImportParsedResume={wizard.importParsedResume}
-              />
-            ) : null}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-2xl px-6 py-10 sm:px-10">
+            <FormProvider {...wizard.form}>
+              {wizard.activeStep.id === 'about' ? (
+                <AboutStep
+                  email={wizard.email}
+                  name={wizard.name}
+                  onImportParsedResume={wizard.importParsedResume}
+                />
+              ) : null}
 
-            {wizard.activeStep.id === 'skills' ? <SkillsStep /> : null}
-            {wizard.activeStep.id === 'education' ? <EducationStep /> : null}
-            {wizard.activeStep.id === 'experience' ? <ExperienceStep /> : null}
-            {wizard.activeStep.id === 'certifications' ? <CertificationsStep /> : null}
-            {wizard.activeStep.id === 'projects' ? <ProjectsStep /> : null}
-            {wizard.activeStep.id === 'languages' ? <LanguagesStep /> : null}
-            {wizard.activeStep.id === 'preferences' ? <PreferencesStep /> : null}
+              {wizard.activeStep.id === 'skills' ? <SkillsStep /> : null}
+              {wizard.activeStep.id === 'education' ? <EducationStep /> : null}
+              {wizard.activeStep.id === 'experience' ? <ExperienceStep /> : null}
+              {wizard.activeStep.id === 'certifications' ? <CertificationsStep /> : null}
+              {wizard.activeStep.id === 'projects' ? <ProjectsStep /> : null}
+              {wizard.activeStep.id === 'languages' ? <LanguagesStep /> : null}
+              {wizard.activeStep.id === 'preferences' ? <PreferencesStep /> : null}
 
-            {wizard.activeStep.id === 'review' ? (
-              <ReviewStep email={wizard.email} saveError={wizard.saveError} />
-            ) : null}
-          </FormProvider>
+              {wizard.activeStep.id === 'review' ? (
+                <ReviewStep email={wizard.email} saveError={wizard.saveError} />
+              ) : null}
+            </FormProvider>
+          </div>
+        </div>
 
-          <div className="mt-8 flex items-center justify-between border-t border-border pt-4">
+        <div className="shrink-0 border-t border-border">
+          <div className="mx-auto flex w-full max-w-2xl items-center justify-between px-6 py-4 sm:px-10">
             <Button
               type="button"
               variant="ghost"

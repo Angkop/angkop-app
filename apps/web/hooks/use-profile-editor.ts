@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { gql } from '@apollo/client'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client/react'
 import { useForm, type FieldErrors } from 'react-hook-form'
@@ -13,7 +13,7 @@ import {
   type MeProfile,
   type ProfileFormValues
 } from '@/lib/profile-form'
-import { createProfileSchema } from '@/lib/profile-schema'
+import { profileSchema } from '@/lib/profile-schema'
 
 const ME_QUERY = gql`
   query ProfileEditorMe {
@@ -100,7 +100,7 @@ type MeQueryResult = {
   me: { email: string; name: string | null; profile: MeProfile | null }
 }
 
-export function useProfileEditor({ requireCareerLevel = false }: { requireCareerLevel?: boolean } = {}) {
+export function useProfileEditor() {
   const apolloClient = useApolloClient()
   const { data, loading, error, refetch } = useQuery<MeQueryResult>(ME_QUERY)
   const [completeOnboarding, { loading: isMutating, error: saveError }] = useMutation(COMPLETE_ONBOARDING_MUTATION)
@@ -109,16 +109,26 @@ export function useProfileEditor({ requireCareerLevel = false }: { requireCareer
     () => (data?.me.profile ? profileFormValuesFromProfile(data.me.profile) : undefined),
     [data?.me.profile]
   )
-  const schema = useMemo(() => createProfileSchema({ requireCareerLevel }), [requireCareerLevel])
 
   // `values` prefills the form from whatever was saved before. keepDirtyValues stops a later
   // refetch from clobbering what the user has already edited.
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(profileSchema),
     defaultValues: EMPTY_PROFILE_FORM_VALUES,
     values: savedValues,
     resetOptions: { keepDirtyValues: true }
   })
+
+  // react-hook-form only revalidates on change after a real submit, and the wizard's Continue
+  // runs trigger() instead, so a field flagged there would keep its error while the user fixes
+  // it. Revalidate just the fields that currently show an error, so they clear as soon as the
+  // value is valid without flagging fields the user hasn't finished typing in.
+  useEffect(() => {
+    const subscription = form.watch((_values, { name }) => {
+      if (name && form.getFieldState(name).error) void form.trigger(name)
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
 
   async function persist(values: ProfileFormValues): Promise<boolean> {
     try {

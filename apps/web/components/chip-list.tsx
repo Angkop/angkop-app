@@ -44,7 +44,7 @@ export function ChipList({
       {items.map((item) => {
         const isRemoving = removingItem === item
         return (
-          <Badge key={item} variant="secondary">
+          <Badge key={item} variant="chip">
             {item}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -53,9 +53,9 @@ export function ChipList({
                   aria-label={isRemoving ? `Removing ${item}` : `Remove ${item}`}
                   disabled={isRemoving}
                   onClick={() => onRemove(item)}
-                  className="cursor-pointer rounded-full p-0.5 hover:bg-foreground/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex size-4 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isRemoving ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
+                  {isRemoving ? <Loader2 className="size-3 animate-spin" /> : <X className="size-2.5" strokeWidth={3} />}
                 </button>
               </TooltipTrigger>
               <TooltipContent>Remove</TooltipContent>

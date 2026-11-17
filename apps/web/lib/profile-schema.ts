@@ -194,25 +194,17 @@ const preferencesSchema = withIssues(
   salaryIssues
 )
 
-// Onboarding asks for a career level up front, since matching leans on it; the profile page
-// keeps it optional so people who skipped onboarding can still edit anything else.
-export function createProfileSchema({
-  requireCareerLevel
-}: {
-  requireCareerLevel: boolean
-}): z.ZodType<ProfileFormValues, ProfileFormValues> {
-  return z.object({
-    headline: z.string(),
-    about: z.string(),
-    location: z.string(),
-    careerLevel: requireCareerLevel ? careerLevelSchema : z.union([z.literal(''), careerLevelSchema]),
-    resumeFileName: z.string(),
-    skills: z.array(skillSchema),
-    education: z.array(educationSchema),
-    experience: z.array(experienceSchema),
-    certifications: z.array(certificationSchema),
-    projects: z.array(projectSchema),
-    languages: z.array(languageSchema),
-    preferences: preferencesSchema
-  })
-}
+export const profileSchema: z.ZodType<ProfileFormValues, ProfileFormValues> = z.object({
+  headline: z.string(),
+  about: z.string(),
+  location: z.string(),
+  careerLevel: z.union([z.literal(''), careerLevelSchema]),
+  resumeFileName: z.string(),
+  skills: z.array(skillSchema),
+  education: z.array(educationSchema),
+  experience: z.array(experienceSchema),
+  certifications: z.array(certificationSchema),
+  projects: z.array(projectSchema),
+  languages: z.array(languageSchema),
+  preferences: preferencesSchema
+})

@@ -21,6 +21,8 @@ export type FormFieldProps<T extends FieldValues> = {
   hideLabel?: boolean
   // Label above the control (default) or in a column beside it from `sm` up.
   orientation?: 'vertical' | 'horizontal'
+  // `sm` is a 36px control (the height of a button) for dense forms like the profile editor.
+  size?: 'default' | 'sm'
   help?: string
   placeholder?: string
   disabled?: boolean

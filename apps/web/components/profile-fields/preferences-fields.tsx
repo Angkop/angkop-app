@@ -1,40 +1,34 @@
 import { Controller, useFormContext } from 'react-hook-form'
-import { EMPLOYMENT_TYPE_LABELS, WORK_SETUP_LABELS, type EmploymentType } from '@angkop/shared'
-import { FormField } from '@/components/form-field'
-import { OptionSelect } from '@/components/option-select'
-import { Input } from '@/components/ui/input'
+import { EMPLOYMENT_TYPE_LABELS, type EmploymentType } from '@angkop/shared'
+import { FIELD_TYPE } from '@/components/common/form/constants/field-type'
 import { Label } from '@/components/ui/label'
-import { YES_NO_LABELS } from '@/constants/profile-form'
+import { WORK_SETUP_OPTIONS } from '@/constants/profile-form'
 import type { ProfileFormValues } from '@/lib/profile-form'
 import { ChipListField } from './chip-list-field'
+import { ProfileField } from './profile-field'
 import { ToggleChip } from './toggle-chip'
 
 export function PreferencesFields() {
-  const {
-    register,
-    control,
-    formState: { errors }
-  } = useFormContext<ProfileFormValues>()
-  const preferenceErrors = errors.preferences
+  const { control } = useFormContext<ProfileFormValues>()
 
   return (
     <>
       <div className="space-y-1.5">
-        <Label>Desired roles</Label>
+        <Label className="text-xs font-normal text-muted-foreground">Desired roles</Label>
         <div className="rounded-lg border border-border p-4">
           <ChipListField name="preferences.desiredRoles" placeholder="e.g. Frontend Developer" />
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label>Preferred locations</Label>
+        <Label className="text-xs font-normal text-muted-foreground">Preferred locations</Label>
         <div className="rounded-lg border border-border p-4">
           <ChipListField name="preferences.preferredLocations" placeholder="e.g. Metro Manila" />
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label>Job types</Label>
+        <Label className="text-xs font-normal text-muted-foreground">Job types</Label>
         <Controller
           control={control}
           name="preferences.preferredJobTypes"
@@ -60,109 +54,41 @@ export function PreferencesFields() {
       </div>
 
       <div className="space-y-1.5">
-        <Label>Preferred industries</Label>
+        <Label className="text-xs font-normal text-muted-foreground">Preferred industries</Label>
         <div className="rounded-lg border border-border p-4">
           <ChipListField name="preferences.preferredIndustries" placeholder="e.g. Fintech" />
         </div>
       </div>
 
       <div className="space-y-4">
-        <FormField
-          id="work-setup"
-          orientation="horizontal"
+        <ProfileField
+          fieldType={FIELD_TYPE.SELECT}
+          name="preferences.workSetup"
           label="Work setup"
-          error={preferenceErrors?.workSetup?.message}
-        >
-          {(controlProps) => (
-            <Controller
-              control={control}
-              name="preferences.workSetup"
-              render={({ field }) => (
-                <OptionSelect
-                  {...controlProps}
-                  ref={field.ref}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  onBlur={field.onBlur}
-                  options={WORK_SETUP_LABELS}
-                  placeholder="Select one"
-                  className="w-full"
-                />
-              )}
-            />
-          )}
-        </FormField>
-
-        <FormField
-          id="min-salary"
           orientation="horizontal"
+          options={WORK_SETUP_OPTIONS}
+          placeholder="Select one"
+        />
+        <ProfileField
+          fieldType={FIELD_TYPE.AMOUNT}
+          name="preferences.minimumSalary"
           label="Min. salary (₱)"
-          error={preferenceErrors?.minimumSalary?.message}
-        >
-          {(controlProps) => (
-            <Input
-              {...controlProps}
-              {...register('preferences.minimumSalary')}
-              type="number"
-              min="0"
-              placeholder="25000"
-            />
-          )}
-        </FormField>
-        <FormField
-          id="max-salary"
           orientation="horizontal"
+          placeholder="25,000"
+        />
+        <ProfileField
+          fieldType={FIELD_TYPE.AMOUNT}
+          name="preferences.maximumSalary"
           label="Max. salary (₱)"
-          error={preferenceErrors?.maximumSalary?.message}
-        >
-          {(controlProps) => (
-            <Input
-              {...controlProps}
-              {...register('preferences.maximumSalary')}
-              type="number"
-              min="0"
-              placeholder="45000"
-            />
-          )}
-        </FormField>
-        <FormField id="willing-to-relocate" orientation="horizontal" label="Willing to relocate?">
-          {(controlProps) => (
-            <Controller
-              control={control}
-              name="preferences.willingToRelocate"
-              render={({ field }) => (
-                <OptionSelect
-                  {...controlProps}
-                  ref={field.ref}
-                  value={field.value ? 'yes' : 'no'}
-                  onValueChange={(value) => field.onChange(value === 'yes')}
-                  onBlur={field.onBlur}
-                  options={YES_NO_LABELS}
-                  className="w-full"
-                />
-              )}
-            />
-          )}
-        </FormField>
-        <FormField id="willing-to-remote" orientation="horizontal" label="Open to remote?">
-          {(controlProps) => (
-            <Controller
-              control={control}
-              name="preferences.willingToRemote"
-              render={({ field }) => (
-                <OptionSelect
-                  {...controlProps}
-                  ref={field.ref}
-                  value={field.value ? 'yes' : 'no'}
-                  onValueChange={(value) => field.onChange(value === 'yes')}
-                  onBlur={field.onBlur}
-                  options={YES_NO_LABELS}
-                  className="w-full"
-                />
-              )}
-            />
-          )}
-        </FormField>
+          orientation="horizontal"
+          placeholder="45,000"
+        />
+        <ProfileField
+          fieldType={FIELD_TYPE.SWITCH}
+          name="preferences.willingToRelocate"
+          label="Willing to relocate"
+        />
+        <ProfileField fieldType={FIELD_TYPE.SWITCH} name="preferences.willingToRemote" label="Open to remote" />
       </div>
     </>
   )

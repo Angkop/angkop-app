@@ -21,6 +21,7 @@ export function FormField({
   hideLabel = false,
   inlineLabel = false,
   orientation = 'vertical',
+  size = 'default',
   required = false,
   help,
   error,
@@ -32,6 +33,7 @@ export function FormField({
   hideLabel?: boolean
   inlineLabel?: boolean
   orientation?: 'vertical' | 'horizontal'
+  size?: 'default' | 'sm'
   required?: boolean
   help?: string
   error?: string
@@ -47,16 +49,19 @@ export function FormField({
       className={cn(
         'font-normal',
         inlineLabel ? 'text-foreground' : 'text-muted-foreground',
-        isHorizontal && 'sm:min-h-[41px] sm:leading-snug',
+        size === 'sm' && !inlineLabel && 'text-xs',
+        isHorizontal && (size === 'sm' ? 'sm:min-h-9 sm:leading-snug' : 'sm:min-h-[41px] sm:leading-snug'),
         hideLabel && 'sr-only'
       )}
     >
-      {label}
-      {required ? (
-        <span aria-hidden="true" className="text-destructive">
-          *
-        </span>
-      ) : null}
+      <span>
+        {label}
+        {required ? (
+          <span aria-hidden="true" className="ml-1 text-destructive">
+            *
+          </span>
+        ) : null}
+      </span>
     </Label>
   )
 

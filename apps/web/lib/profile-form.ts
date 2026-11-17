@@ -146,7 +146,7 @@ export const EMPTY_PROFILE_FORM_VALUES: ProfileFormValues = {
   careerLevel: '',
   resumeFileName: '',
   skills: [],
-  education: [EMPTY_EDUCATION],
+  education: [],
   experience: [],
   certifications: [],
   projects: [],
@@ -186,19 +186,16 @@ export function profileEntriesFrom(source: ProfileEntriesSource) {
         years: skill.years ?? undefined
       })
     ),
-    education:
-      source.education.length > 0
-        ? source.education.map(
-            (entry): EducationEntry => ({
-              school: entry.school,
-              degree: entry.degree ?? '',
-              fieldOfStudy: entry.fieldOfStudy ?? '',
-              startYear: entry.startYear ? String(entry.startYear) : '',
-              endYear: entry.endYear ? String(entry.endYear) : '',
-              description: entry.description ?? ''
-            })
-          )
-        : [EMPTY_EDUCATION],
+    education: source.education.map(
+      (entry): EducationEntry => ({
+        school: entry.school,
+        degree: entry.degree ?? '',
+        fieldOfStudy: entry.fieldOfStudy ?? '',
+        startYear: entry.startYear ? String(entry.startYear) : '',
+        endYear: entry.endYear ? String(entry.endYear) : '',
+        description: entry.description ?? ''
+      })
+    ),
     experience: source.experience.map(
       (entry): ExperienceEntry => ({
         title: entry.title,

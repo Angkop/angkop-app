@@ -6,7 +6,9 @@ import { FormField, type FormControlProps } from '@/components/form-field'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input, Textarea } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 import { FIELD_TYPE } from './constants/field-type'
+import { AmountInput } from './amount-input'
 import { DateInput } from './date-input'
 import { RadioInput } from './radio-input'
 import { SearchInput } from './search-input'
@@ -15,6 +17,8 @@ import type { FieldValue, FormFieldProps } from './types'
 
 const INLINE_LABEL_TYPES: string[] = [FIELD_TYPE.CHECKBOX, FIELD_TYPE.SWITCH]
 const TEXTAREA_DEFAULT_ROWS = 4
+const SMALL_CONTROL_CLASS_NAME = 'h-9 px-3 py-2'
+const SMALL_TEXTAREA_CLASS_NAME = 'min-h-0 px-3 py-2'
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value : ''
@@ -29,6 +33,7 @@ export function Field<T extends FieldValues>({
   label,
   hideLabel,
   orientation,
+  size = 'default',
   help,
   placeholder,
   disabled,
@@ -42,6 +47,7 @@ export function Field<T extends FieldValues>({
   const id = useId()
   const { control } = useFormContext<T>()
   const { field, fieldState } = useController({ control, name })
+  const isSmall = size === 'sm'
 
   function handleChange(next: FieldValue) {
     field.onChange(next)
@@ -60,6 +66,7 @@ export function Field<T extends FieldValues>({
             value={asString(field.value)}
             placeholder={placeholder}
             disabled={disabled}
+            className={isSmall ? SMALL_CONTROL_CLASS_NAME : undefined}
             onBlur={field.onBlur}
             onChange={(event) => handleChange(event.target.value)}
           />
@@ -74,8 +81,23 @@ export function Field<T extends FieldValues>({
             value={asString(field.value)}
             placeholder={placeholder}
             disabled={disabled}
+            className={isSmall ? SMALL_TEXTAREA_CLASS_NAME : undefined}
             onBlur={field.onBlur}
             onChange={(event) => handleChange(event.target.value)}
+          />
+        )
+      case FIELD_TYPE.AMOUNT:
+        return (
+          <AmountInput
+            {...controlProps}
+            ref={field.ref}
+            name={field.name}
+            value={asString(field.value)}
+            placeholder={placeholder}
+            disabled={disabled}
+            className={isSmall ? SMALL_CONTROL_CLASS_NAME : undefined}
+            onBlur={field.onBlur}
+            onValueChange={handleChange}
           />
         )
       case FIELD_TYPE.SEARCH:
@@ -96,7 +118,7 @@ export function Field<T extends FieldValues>({
           <SelectInput
             {...controlProps}
             ref={field.ref}
-            className='w-full'
+            className={cn('w-full', isSmall && SMALL_CONTROL_CLASS_NAME)}
             value={asString(field.value)}
             options={options}
             placeholder={placeholder}
@@ -151,6 +173,7 @@ export function Field<T extends FieldValues>({
             mode={fieldType}
             value={asString(field.value)}
             disabled={disabled}
+            className={isSmall ? SMALL_CONTROL_CLASS_NAME : undefined}
             onBlur={field.onBlur}
             onChange={(event) => handleChange(event.target.value)}
           />
@@ -164,6 +187,7 @@ export function Field<T extends FieldValues>({
       label={label}
       hideLabel={hideLabel}
       orientation={orientation}
+      size={size}
       inlineLabel={INLINE_LABEL_TYPES.includes(fieldType)}
       required={required}
       help={help}
