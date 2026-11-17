@@ -213,6 +213,7 @@ Future expansion is limited to adding more vetted public, no-authentication APIs
 
 - **Any work** → read `.claude/rules/coding-style.md`
 - **Frontend / UI** → read `.claude/rules/design.md` first
+- **Frontend forms, mutations, filters, performance** → use the `frontend-practices` skill (`.claude/skills/frontend-practices/`)
 - **Data operations** → read `.claude/rules/data-safety.md`
 - **Commits / PRs** → follow `.claude/rules/git-workflow.md`
 - **Reviewing AI output** → read `.claude/rules/ai-collaboration.md`
