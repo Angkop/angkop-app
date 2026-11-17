@@ -9,6 +9,7 @@ import {
   Target,
   User
 } from 'lucide-react'
+import type { ProfileFormValues } from '@/lib/profile-form'
 
 export const STEPS = [
   { id: 'about', label: 'About you', icon: User },
@@ -21,3 +22,17 @@ export const STEPS = [
   { id: 'preferences', label: 'Preferences', icon: Target },
   { id: 'review', label: 'Review', icon: Sparkles }
 ] as const
+
+// Which form fields each step edits, so Continue can validate just that step and a failed
+// save can jump to the step that holds the error.
+export const STEP_FIELDS: Record<(typeof STEPS)[number]['id'], (keyof ProfileFormValues)[]> = {
+  about: ['headline', 'careerLevel', 'location', 'about'],
+  skills: ['skills'],
+  education: ['education'],
+  experience: ['experience'],
+  certifications: ['certifications'],
+  projects: ['projects'],
+  languages: ['languages'],
+  preferences: ['preferences'],
+  review: []
+}

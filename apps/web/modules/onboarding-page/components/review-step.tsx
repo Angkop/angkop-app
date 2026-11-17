@@ -1,44 +1,16 @@
-import { CAREER_LEVEL_LABELS, type CareerLevel } from '@angkop/shared'
+import { useFormContext } from 'react-hook-form'
+import { CAREER_LEVEL_LABELS } from '@angkop/shared'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { ErrorMessage } from '@/components/error-message'
-import type {
-  CertificationEntry,
-  EducationEntry,
-  ExperienceEntry,
-  PreferencesEntry,
-  ProfileSkillEntry,
-  ProjectEntry
-} from '@/lib/profile-form'
+import type { ProfileFormValues } from '@/lib/profile-form'
 import { StepSection } from './step-section'
 
-export function ReviewStep({
-  email,
-  headline,
-  careerLevel,
-  location,
-  skills,
-  education,
-  experience,
-  certifications,
-  projects,
-  preferences,
-  resumeFileName,
-  saveError
-}: {
-  email: string
-  headline: string
-  careerLevel: CareerLevel | ''
-  location: string
-  skills: ProfileSkillEntry[]
-  education: EducationEntry[]
-  experience: ExperienceEntry[]
-  certifications: CertificationEntry[]
-  projects: ProjectEntry[]
-  preferences: PreferencesEntry
-  resumeFileName: string
-  saveError?: { message: string }
-}) {
+export function ReviewStep({ email, saveError }: { email: string; saveError?: { message: string } }) {
+  const { watch } = useFormContext<ProfileFormValues>()
+  const { headline, careerLevel, location, skills, education, experience, certifications, projects, preferences, resumeFileName } =
+    watch()
+
   const sections = [
     {
       value: 'headline',

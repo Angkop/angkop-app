@@ -1,12 +1,14 @@
-import type { Dispatch, SetStateAction } from 'react'
 import type {
   CareerLevel,
   EmploymentType,
   LanguageProficiency,
   ParsedResumeProfile,
   SkillLevel,
+  UserProfile as SharedUserProfile,
   WorkSetup
 } from '@angkop/shared'
+
+export type MeProfile = Omit<SharedUserProfile, 'id' | 'userId' | 'skillsText'>
 
 export type ProfileSkillEntry = {
   name: string
@@ -122,100 +124,7 @@ export const EMPTY_PREFERENCES: PreferencesEntry = {
   willingToRemote: true
 }
 
-// Same shape-mapping useProfileEditor does when loading a saved profile into form state
-// (ISO dates -> month inputs, null -> empty string) — a resume import lands in exactly the
-// same editable, unsaved form state, not a direct profile write.
-export function profileEntriesFromParsedResume(parsed: ParsedResumeProfile) {
-  return {
-    headline: parsed.headline ?? '',
-    about: parsed.about ?? '',
-    careerLevel: parsed.careerLevel ?? ('' as const),
-    location: parsed.location ?? '',
-    skills: parsed.skills.map(
-      (skill): ProfileSkillEntry => ({
-        name: skill.name,
-        category: skill.category ?? undefined,
-        level: skill.level ?? undefined,
-        years: skill.years ?? undefined
-      })
-    ),
-    education:
-      parsed.education.length > 0
-        ? parsed.education.map(
-            (entry): EducationEntry => ({
-              school: entry.school,
-              degree: entry.degree ?? '',
-              fieldOfStudy: entry.fieldOfStudy ?? '',
-              startYear: entry.startYear ? String(entry.startYear) : '',
-              endYear: entry.endYear ? String(entry.endYear) : '',
-              description: entry.description ?? ''
-            })
-          )
-        : [EMPTY_EDUCATION],
-    experience: parsed.experience.map(
-      (entry): ExperienceEntry => ({
-        title: entry.title,
-        company: entry.company,
-        location: entry.location ?? '',
-        employmentType: entry.employmentType ?? undefined,
-        description: entry.description ?? '',
-        startDate: monthInputFromIso(entry.startDate),
-        endDate: monthInputFromIso(entry.endDate),
-        current: entry.current
-      })
-    ),
-    certifications: parsed.certifications.map(
-      (entry): CertificationEntry => ({
-        name: entry.name,
-        issuer: entry.issuer,
-        issueDate: monthInputFromIso(entry.issueDate),
-        expirationDate: monthInputFromIso(entry.expirationDate),
-        credentialId: entry.credentialId ?? '',
-        credentialUrl: entry.credentialUrl ?? ''
-      })
-    ),
-    projects: parsed.projects.map(
-      (entry): ProjectEntry => ({
-        name: entry.name,
-        description: entry.description,
-        technologies: entry.technologies,
-        url: entry.url ?? '',
-        startDate: monthInputFromIso(entry.startDate),
-        endDate: monthInputFromIso(entry.endDate)
-      })
-    ),
-    languages: parsed.languages.map(
-      (entry): LanguageEntry => ({
-        language: entry.language,
-        proficiency: entry.proficiency ?? undefined
-      })
-    )
-  }
-}
-
-export function monthInputFromIso(iso: string | null): string {
-  return iso ? iso.slice(0, 7) : ''
-}
-
-export function isoFromMonthInput(month: string): string | null {
-  return month ? `${month}-01` : null
-}
-
-export function makeArrayHelpers<T>(setState: Dispatch<SetStateAction<T[]>>, empty: T) {
-  return {
-    update: <K extends keyof T>(index: number, field: K, value: T[K]) =>
-      setState((prev) => prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))),
-    add: () => setState((prev) => [...prev, empty]),
-    remove: (index: number) => setState((prev) => prev.filter((_, i) => i !== index)),
-    // Bulk-replace the whole list in one shot — used by the resume import flow, which has
-    // no per-row context to merge into and should just overwrite with what was extracted.
-    replaceAll: (items: T[]) => setState(items)
-  }
-}
-
-export type ArrayHelpers<T> = ReturnType<typeof makeArrayHelpers<T>>
-
-export type ProfileFormState = {
+export type ProfileFormValues = {
   headline: string
   about: string
   location: string
@@ -230,7 +139,138 @@ export type ProfileFormState = {
   preferences: PreferencesEntry
 }
 
-export function buildCompleteOnboardingInput(state: ProfileFormState) {
+export const EMPTY_PROFILE_FORM_VALUES: ProfileFormValues = {
+  headline: '',
+  about: '',
+  location: '',
+  careerLevel: '',
+  resumeFileName: '',
+  skills: [],
+  education: [EMPTY_EDUCATION],
+  experience: [],
+  certifications: [],
+  projects: [],
+  languages: [],
+  preferences: EMPTY_PREFERENCES
+}
+
+// A saved profile and a parsed resume carry the same entry shapes (a parsed resume just
+// allows a null experience startDate), so one mapper (ISO dates -> month inputs, null ->
+// empty string) fills the form from either. A resume import lands in exactly the same
+// editable, unsaved form state as a saved profile — it's not a direct profile write.
+type ProfileEntriesSource = Pick<
+  ParsedResumeProfile,
+  | 'headline'
+  | 'about'
+  | 'careerLevel'
+  | 'location'
+  | 'skills'
+  | 'education'
+  | 'experience'
+  | 'certifications'
+  | 'projects'
+  | 'languages'
+>
+
+export function profileEntriesFrom(source: ProfileEntriesSource) {
+  return {
+    headline: source.headline ?? '',
+    about: source.about ?? '',
+    careerLevel: source.careerLevel ?? ('' as const),
+    location: source.location ?? '',
+    skills: source.skills.map(
+      (skill): ProfileSkillEntry => ({
+        name: skill.name,
+        category: skill.category ?? undefined,
+        level: skill.level ?? undefined,
+        years: skill.years ?? undefined
+      })
+    ),
+    education:
+      source.education.length > 0
+        ? source.education.map(
+            (entry): EducationEntry => ({
+              school: entry.school,
+              degree: entry.degree ?? '',
+              fieldOfStudy: entry.fieldOfStudy ?? '',
+              startYear: entry.startYear ? String(entry.startYear) : '',
+              endYear: entry.endYear ? String(entry.endYear) : '',
+              description: entry.description ?? ''
+            })
+          )
+        : [EMPTY_EDUCATION],
+    experience: source.experience.map(
+      (entry): ExperienceEntry => ({
+        title: entry.title,
+        company: entry.company,
+        location: entry.location ?? '',
+        employmentType: entry.employmentType ?? undefined,
+        description: entry.description ?? '',
+        startDate: monthInputFromIso(entry.startDate),
+        endDate: monthInputFromIso(entry.endDate),
+        current: entry.current
+      })
+    ),
+    certifications: source.certifications.map(
+      (entry): CertificationEntry => ({
+        name: entry.name,
+        issuer: entry.issuer,
+        issueDate: monthInputFromIso(entry.issueDate),
+        expirationDate: monthInputFromIso(entry.expirationDate),
+        credentialId: entry.credentialId ?? '',
+        credentialUrl: entry.credentialUrl ?? ''
+      })
+    ),
+    projects: source.projects.map(
+      (entry): ProjectEntry => ({
+        name: entry.name,
+        description: entry.description,
+        technologies: entry.technologies,
+        url: entry.url ?? '',
+        startDate: monthInputFromIso(entry.startDate),
+        endDate: monthInputFromIso(entry.endDate)
+      })
+    ),
+    languages: source.languages.map(
+      (entry): LanguageEntry => ({
+        language: entry.language,
+        proficiency: entry.proficiency ?? undefined
+      })
+    )
+  }
+}
+
+export function profileFormValuesFromProfile(profile: MeProfile): ProfileFormValues {
+  const { preferences } = profile
+
+  return {
+    ...profileEntriesFrom(profile),
+    resumeFileName: profile.resumeFileName ?? '',
+    preferences: preferences
+      ? {
+          desiredRoles: preferences.desiredRoles,
+          preferredLocations: preferences.preferredLocations,
+          preferredJobTypes: preferences.preferredJobTypes,
+          preferredIndustries: preferences.preferredIndustries,
+          workSetup: preferences.workSetup ?? undefined,
+          minimumSalary: preferences.minimumSalary != null ? String(preferences.minimumSalary) : '',
+          maximumSalary: preferences.maximumSalary != null ? String(preferences.maximumSalary) : '',
+          willingToRelocate: preferences.willingToRelocate,
+          willingToRemote: preferences.willingToRemote
+        }
+      : EMPTY_PREFERENCES
+  }
+}
+
+export function monthInputFromIso(iso: string | null): string {
+  return iso ? iso.slice(0, 7) : ''
+}
+
+export function isoFromMonthInput(month: string): string | null {
+  return month ? `${month}-01` : null
+}
+
+export function buildCompleteOnboardingInput(state: ProfileFormValues) {
   const { headline, about, location, careerLevel, resumeFileName, skills, education, experience, certifications, projects, languages, preferences } =
     state
 

@@ -1,75 +1,62 @@
-import { CAREER_LEVEL_LABELS, type CareerLevel } from '@angkop/shared'
+import { Controller, useFormContext } from 'react-hook-form'
+import { CAREER_LEVEL_LABELS } from '@angkop/shared'
+import { FormField } from '@/components/form-field'
+import { OptionSelect } from '@/components/option-select'
 import { Input, Textarea } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import type { ProfileFormValues } from '@/lib/profile-form'
 
-export function AboutFields({
-  headline,
-  onHeadlineChange,
-  careerLevel,
-  onCareerLevelChange,
-  location,
-  onLocationChange,
-  about,
-  onAboutChange
-}: {
-  headline: string
-  onHeadlineChange: (value: string) => void
-  careerLevel: CareerLevel | ''
-  onCareerLevelChange: (value: CareerLevel) => void
-  location: string
-  onLocationChange: (value: string) => void
-  about: string
-  onAboutChange: (value: string) => void
-}) {
+export function AboutFields() {
+  const {
+    register,
+    control,
+    formState: { errors }
+  } = useFormContext<ProfileFormValues>()
+
   return (
     <>
-      <div className="space-y-1.5">
-        <Label htmlFor="headline">Headline</Label>
-        <Input
-          id="headline"
-          value={headline}
-          onChange={(event) => onHeadlineChange(event.target.value)}
-          placeholder="e.g. Front-End Developer"
-        />
-      </div>
+      <FormField id="headline" label="Headline" error={errors.headline?.message}>
+        {(controlProps) => (
+          <Input {...controlProps} {...register('headline')} placeholder="e.g. Front-End Developer" />
+        )}
+      </FormField>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="career-level">Where are you in your career?</Label>
-        <Select value={careerLevel} onValueChange={(value) => onCareerLevelChange(value as CareerLevel)}>
-          <SelectTrigger id="career-level" className="w-full">
-            <SelectValue placeholder="Select one" />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.entries(CAREER_LEVEL_LABELS) as [CareerLevel, string][]).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <FormField id="career-level" label="Where are you in your career?" error={errors.careerLevel?.message}>
+        {(controlProps) => (
+          <Controller
+            control={control}
+            name="careerLevel"
+            render={({ field }) => (
+              <OptionSelect
+                {...controlProps}
+                ref={field.ref}
+                value={field.value}
+                onValueChange={field.onChange}
+                onBlur={field.onBlur}
+                options={CAREER_LEVEL_LABELS}
+                placeholder="Select one"
+                className="w-full"
+              />
+            )}
+          />
+        )}
+      </FormField>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="location">Where are you based?</Label>
-        <Input
-          id="location"
-          value={location}
-          onChange={(event) => onLocationChange(event.target.value)}
-          placeholder="e.g. Muntinlupa City, Metro Manila"
-        />
-      </div>
+      <FormField id="location" label="Where are you based?" error={errors.location?.message}>
+        {(controlProps) => (
+          <Input {...controlProps} {...register('location')} placeholder="e.g. Muntinlupa City, Metro Manila" />
+        )}
+      </FormField>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="about">About</Label>
-        <Textarea
-          id="about"
-          value={about}
-          onChange={(event) => onAboutChange(event.target.value)}
-          rows={4}
-          placeholder="A short introduction: what you do and what you're looking for."
-        />
-      </div>
+      <FormField id="about" label="About" error={errors.about?.message}>
+        {(controlProps) => (
+          <Textarea
+            {...controlProps}
+            {...register('about')}
+            rows={4}
+            placeholder="A short introduction: what you do and what you're looking for."
+          />
+        )}
+      </FormField>
     </>
   )
 }

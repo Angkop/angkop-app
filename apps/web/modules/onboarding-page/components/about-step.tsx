@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Upload } from 'lucide-react'
-import type { CareerLevel, ParsedResumeProfile } from '@angkop/shared'
+import type { ParsedResumeProfile } from '@angkop/shared'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { AboutFields } from '@/components/profile-fields/about-fields'
@@ -18,26 +18,10 @@ const ResumeImportDialog = dynamic(
 export function AboutStep({
   email,
   name,
-  headline,
-  onHeadlineChange,
-  careerLevel,
-  onCareerLevelChange,
-  location,
-  onLocationChange,
-  about,
-  onAboutChange,
   onImportParsedResume
 }: {
   email: string
   name: string | null
-  headline: string
-  onHeadlineChange: (value: string) => void
-  careerLevel: CareerLevel | ''
-  onCareerLevelChange: (value: CareerLevel) => void
-  location: string
-  onLocationChange: (value: string) => void
-  about: string
-  onAboutChange: (value: string) => void
   onImportParsedResume: (parsed: ParsedResumeProfile, fileName: string) => void
 }) {
   const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false)
@@ -77,16 +61,7 @@ export function AboutStep({
         onImport={onImportParsedResume}
       />
 
-      <AboutFields
-        headline={headline}
-        onHeadlineChange={onHeadlineChange}
-        careerLevel={careerLevel}
-        onCareerLevelChange={onCareerLevelChange}
-        location={location}
-        onLocationChange={onLocationChange}
-        about={about}
-        onAboutChange={onAboutChange}
-      />
+      <AboutFields />
     </StepSection>
   )
 }

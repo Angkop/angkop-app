@@ -4,6 +4,7 @@ export function ToggleChip({ label, selected, onToggle }: { label: string; selec
   return (
     <button
       type="button"
+      aria-pressed={selected}
       onClick={onToggle}
       className={cn(
         'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
