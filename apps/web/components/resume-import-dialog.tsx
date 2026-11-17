@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import moment from 'moment-timezone'
 import {
   AlertTriangle,
   Award,
@@ -25,6 +26,7 @@ import {
   type ParsedResumeProfile
 } from '@angkop/shared'
 import { API_URL } from '@/constants/api'
+import { MANILA_TIMEZONE, MONTH_YEAR_FORMAT } from '@/constants/date'
 import { getStoredToken } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -85,16 +87,12 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-// Reads year/month directly out of the ISO string instead of going through Date +
-// toLocaleDateString — "2022-01-01" parses as UTC midnight, which a browser west of UTC
-// (e.g. US Pacific) would otherwise display as "Dec 2021".
+// moment.tz(value, zone) reads a date-only string like "2022-01-01" as Manila midnight, not
+// the browser's, so a browser on either side of UTC+8 still shows "Jan 2022".
 function formatMonthYear(iso: string | null): string {
-  const match = iso?.match(/^(\d{4})-(\d{2})/)
-  if (!match) return ''
-  const monthName = MONTH_NAMES[Number(match[2]) - 1]
-  return monthName ? `${monthName} ${match[1]}` : ''
+  if (!iso) return ''
+  const parsed = moment.tz(iso, MANILA_TIMEZONE)
+  return parsed.isValid() ? parsed.format(MONTH_YEAR_FORMAT) : ''
 }
 
 function dateRange(start: string | null, end: string | null, current?: boolean): string {

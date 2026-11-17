@@ -1,5 +1,8 @@
+import moment from 'moment-timezone'
+import { MANILA_TIMEZONE, MONTH_YEAR_FORMAT } from '@/constants/date'
+
 export function formatMonthYear(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  return moment(iso).tz(MANILA_TIMEZONE).format(MONTH_YEAR_FORMAT)
 }
 
 export function formatExperiencePeriod(startDate: string, endDate: string | null, current: boolean): string {
