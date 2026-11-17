@@ -24,6 +24,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.92.0",
+    "rough-notation": "^0.5.1",
     "rxjs": "^7.8.2",
     "sonner": "^2.0.8",
     "tailwind-merge": "^2.6.0",

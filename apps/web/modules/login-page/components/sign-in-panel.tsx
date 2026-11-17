@@ -1,6 +1,7 @@
 import { BrandMark } from '@/components/brand-mark'
 import { ErrorMessage } from '@/components/error-message'
 import { Button } from '@/components/ui/button'
+import { Highlighter } from '@/components/ui/highlighter'
 import { cn } from '@/lib/utils'
 import { CapybaraStage } from './capybara-stage'
 import { GoogleIcon } from './google-icon'
@@ -28,10 +29,15 @@ export function SignInPanel({
           <h1
             className={cn(
               RISE,
-              'max-w-md text-4xl leading-[1.15] font-semibold tracking-tight sm:text-[2.75rem] xl:max-w-none'
+              'text-[clamp(1.375rem,4.4vw,2.75rem)] leading-[1.15] font-semibold tracking-tight'
             )}
           >
-            Matches that actually fit, <br className="hidden xl:block" />
+            <span className="whitespace-nowrap">
+              Matches that{' '}
+              <Highlighter>actually fit</Highlighter>
+              ,
+            </span>
+            <br />
             not just keywords that match.
           </h1>
           <p className={cn(RISE, 'mt-6 max-w-md text-lg text-muted-foreground [animation-delay:80ms]')}>
