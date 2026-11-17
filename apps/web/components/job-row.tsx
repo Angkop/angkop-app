@@ -3,25 +3,32 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Archive, Bookmark, Loader2, Target } from 'lucide-react'
-import type { Job } from '@angkop/shared'
+import type { JobMatchSummary } from '@/lib/job-matches'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { MatchScoreBadge } from '@/components/match-score-badge'
-import { MatchInsightDialog } from '@/components/match-insight-dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 type JobRowProps = {
-  job: Job
+  job: JobMatchSummary['job']
   score: number
   onSave?: (jobId: string) => void
   onDismiss?: (jobId: string) => Promise<void>
+  onViewInsight: (job: JobMatchSummary['job']) => void
   isSaving?: boolean
   isDismissing?: boolean
 }
 
-export function JobRow({ job, score, onSave, onDismiss, isSaving = false, isDismissing = false }: JobRowProps) {
-  const [insightOpen, setInsightOpen] = useState(false)
+export function JobRow({
+  job,
+  score,
+  onSave,
+  onDismiss,
+  onViewInsight,
+  isSaving = false,
+  isDismissing = false
+}: JobRowProps) {
   const [confirmDismissOpen, setConfirmDismissOpen] = useState(false)
 
   return (
@@ -46,7 +53,7 @@ export function JobRow({ job, score, onSave, onDismiss, isSaving = false, isDism
               variant="ghost"
               size="icon-sm"
               aria-label="Why this is a match"
-              onClick={() => setInsightOpen(true)}
+              onClick={() => onViewInsight(job)}
             >
               <Target className="size-4" />
             </Button>
@@ -86,14 +93,6 @@ export function JobRow({ job, score, onSave, onDismiss, isSaving = false, isDism
           </Tooltip>
         ) : null}
       </div>
-
-      <MatchInsightDialog
-        open={insightOpen}
-        onOpenChange={setInsightOpen}
-        jobId={job.id}
-        jobTitle={job.title}
-        jobCompany={job.company}
-      />
 
       {onDismiss ? (
         <ConfirmDialog

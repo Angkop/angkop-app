@@ -47,7 +47,13 @@ export function ProfilePage() {
   const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false)
 
   if (editor.loading) return <LoadingSkeleton heightClassName="h-48" />
-  if (editor.error) return <ErrorMessage>Could not load profile: {editor.error.message}</ErrorMessage>
+  if (editor.error) {
+    return (
+      <ErrorMessage onRetry={editor.refetch} retryLabel="Reload Profile">
+        Could not load profile: {editor.error.message}
+      </ErrorMessage>
+    )
+  }
 
   const profile = editor.profile
   const jobsAppliedCount = appliedJobCountData?.appliedJobCount ?? 0

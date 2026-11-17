@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { BrandMark } from '@/components/brand-mark'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { NAV_LINKS } from '@/constants/nav'
@@ -77,9 +78,10 @@ export function AppShell({
     setIsChecking(false)
   }, [router, requireAuth])
 
-  // Only protected pages (requireAuth) blank out while we check — /listings (requireAuth
-  // false) renders immediately so the extension's scraper never waits on client JS.
-  if (requireAuth && isChecking) return null
+  // Only protected pages (requireAuth) hold their content back while we check — /listings
+  // (requireAuth false) renders immediately so the extension's scraper never waits on client
+  // JS. The header still renders, so the page shows its chrome and a skeleton, not a blank.
+  const isHoldingContent = requireAuth && isChecking
 
   const email = data?.me.email ?? ''
   const name = data?.me.name ?? null
@@ -124,7 +126,9 @@ export function AppShell({
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            {isAuthenticated ? (
+            {isChecking ? (
+              <div className="size-9 animate-pulse rounded-full bg-muted" aria-hidden />
+            ) : isAuthenticated ? (
               <button
                 type="button"
                 onClick={() => setIsProfileOpen(true)}
@@ -221,7 +225,7 @@ export function AppShell({
         ) : null}
       </header>
 
-      <main className={cn('mx-auto w-full flex-1 px-4 py-10', mainClassName ?? 'max-w-2xl')}>{children}</main>
+      <main className={cn('mx-auto w-full flex-1 px-4 py-10', mainClassName ?? 'max-w-2xl')}>{isHoldingContent ? <LoadingSkeleton rows={3} /> : children}</main>
     </div>
   )
 }

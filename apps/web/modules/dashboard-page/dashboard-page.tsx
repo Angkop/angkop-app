@@ -11,7 +11,7 @@ import { JOB_MATCHES_QUERY } from './queries'
 import type { JobMatchesQueryResult } from './types'
 
 export function DashboardPage() {
-  const { data, loading, error } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
+  const { data, loading, error, refetch } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
     variables: { page: 1, pageSize: TOP_MATCHES_COUNT }
   })
 
@@ -26,7 +26,9 @@ export function DashboardPage() {
       {loading ? (
         <DashboardSkeleton />
       ) : error ? (
-        <ErrorMessage>Could not load job matches: {error.message}</ErrorMessage>
+        <ErrorMessage onRetry={refetch} retryLabel="Reload Matches">
+          Could not load job matches: {error.message}
+        </ErrorMessage>
       ) : (
         <>
           <MatchStatsRow totalCount={totalCount} strongMatchCount={strongMatchCount} />

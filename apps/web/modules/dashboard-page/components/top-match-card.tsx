@@ -1,17 +1,21 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronRight, Target } from 'lucide-react'
-import type { JobMatch } from '@angkop/shared'
+import type { JobMatchSummary } from '@/lib/job-matches'
 import { MatchScoreBadge } from '@/components/match-score-badge'
-import { MatchInsightDialog } from '@/components/match-insight-dialog'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
-export function TopMatchCard({ match, rank }: { match: JobMatch; rank: number }) {
-  const [insightOpen, setInsightOpen] = useState(false)
-
+export function TopMatchCard({
+  match,
+  rank,
+  onViewInsight
+}: {
+  match: JobMatchSummary
+  rank: number
+  onViewInsight: (job: JobMatchSummary['job']) => void
+}) {
   return (
     <div className="flex items-center gap-2 rounded-lg border border-border p-4 transition-colors hover:border-foreground/20 hover:shadow-sm">
       <Link href={`/listings/${match.job.id}`} className="flex min-w-0 flex-1 items-center gap-4">
@@ -31,20 +35,12 @@ export function TopMatchCard({ match, rank }: { match: JobMatch; rank: number })
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Why this is a match" onClick={() => setInsightOpen(true)}>
+          <Button variant="ghost" size="icon-sm" aria-label="Why this is a match" onClick={() => onViewInsight(match.job)}>
             <Target className="size-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Why this is a match</TooltipContent>
       </Tooltip>
-
-      <MatchInsightDialog
-        open={insightOpen}
-        onOpenChange={setInsightOpen}
-        jobId={match.job.id}
-        jobTitle={match.job.title}
-        jobCompany={match.job.company}
-      />
     </div>
   )
 }

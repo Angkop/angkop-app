@@ -193,6 +193,7 @@ export function useProfileEditor({ requireCareerLevel = false }: { requireCareer
     profile: data?.me.profile ?? null,
     loading,
     error,
+    refetch,
     isSaving: isMutating || form.formState.isSubmitting,
     saveError,
     save,

@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useMutation } from '@apollo/client/react'
+import { useApolloClient, useMutation } from '@apollo/client/react'
 import { Bookmark, BookmarkCheck, Building2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { SAVED_JOB_DERIVED_FIELDS } from '@/constants/job-cache'
+import { invalidateCachedFields } from '@/lib/job-cache'
 import { SAVE_JOB_MUTATION } from '@/lib/job-matches'
 import { getStoredToken } from '@/lib/auth'
 import type { ListingSummary } from '../types'
@@ -27,6 +29,7 @@ export function ListingRow({
   // after mount, so a plain useState(initiallySaved) would miss that update.
   const [justSaved, setJustSaved] = useState(false)
   const isSaved = initiallySaved || justSaved
+  const apolloClient = useApolloClient()
   const [saveJob, { loading: isSaving }] = useMutation(SAVE_JOB_MUTATION)
 
   async function handleSave() {
@@ -37,6 +40,8 @@ export function ListingRow({
     try {
       await saveJob({ variables: { jobId: listing.id } })
       setJustSaved(true)
+      // Saved ids, the saved lists, the skill gap report and the matches feed all depend on this.
+      invalidateCachedFields(apolloClient, SAVED_JOB_DERIVED_FIELDS)
       toast.success('Saved to your applications')
     } catch (error) {
       toast.error('Could not save this job', {

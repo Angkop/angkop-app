@@ -1,20 +1,16 @@
 import { gql } from '@apollo/client'
-import type { JobMatch } from '@angkop/shared'
+import type { Job } from '@angkop/shared'
 
 export const JOB_MATCHES_QUERY = gql`
   query JobMatches($page: Int, $pageSize: Int, $search: String, $skill: String) {
     jobMatches(page: $page, pageSize: $pageSize, search: $search, skill: $skill) {
       items {
         hybridScore
-        semanticScore
-        collaborativeScore
         job {
           id
           title
           company
-          platform
           requiredSkills
-          url
           sourceName
         }
       }
@@ -48,8 +44,15 @@ export type SavedJobIdsQueryResult = {
   savedJobIds: string[]
 }
 
+// What the list views read from jobMatches: the score and enough of the job to render a row.
+// The component scores and the job's description, url and platform are fetched on demand.
+export type JobMatchSummary = {
+  hybridScore: number
+  job: Pick<Job, 'id' | 'title' | 'company' | 'requiredSkills' | 'sourceName'>
+}
+
 export type JobMatchesPage = {
-  items: JobMatch[]
+  items: JobMatchSummary[]
   total: number
   strongMatchCount: number
 }

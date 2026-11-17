@@ -35,7 +35,7 @@ export function SkillGapsPage() {
   const [page, setPage] = useState(1)
   const [isRecomputing, setIsRecomputing] = useState(false)
 
-  const { data, loading, error } = useQuery<SkillGapsQueryResult>(SKILL_GAPS_QUERY, {
+  const { data, loading, error, refetch } = useQuery<SkillGapsQueryResult>(SKILL_GAPS_QUERY, {
     variables: { page, pageSize: PAGE_SIZE },
     notifyOnNetworkStatusChange: true
   })
@@ -81,7 +81,9 @@ export function SkillGapsPage() {
           <SkillGapsSkeleton />
         )
       ) : error ? (
-        <ErrorMessage>Could not load skill gaps: {error.message}</ErrorMessage>
+        <ErrorMessage onRetry={refetch} retryLabel="Reload Skill Gaps">
+          Could not load skill gaps: {error.message}
+        </ErrorMessage>
       ) : savedJobCount === 0 ? (
         <p className="text-sm text-muted-foreground">
           No saved jobs yet. Save a job from your matches to get a skill gap report based on what it actually
