@@ -23,6 +23,9 @@ type HighlighterProps = {
   color?: string
   strokeWidth?: number
   animationDuration?: number
+  // Redraws the annotation from scratch every this many milliseconds, so it loops. Off by default,
+  // and ignored for reduced-motion users, who just get the finished drawing.
+  repeatInterval?: number
   iterations?: number
   padding?: number
   multiline?: boolean
@@ -34,6 +37,7 @@ export function Highlighter({
   color = 'var(--primary)',
   strokeWidth = 3,
   animationDuration = 800,
+  repeatInterval,
   iterations = 2,
   padding = 2,
   multiline = true
@@ -44,6 +48,7 @@ export function Highlighter({
     const element = elementRef.current
     if (!element) return
 
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const annotation = annotate(element, {
       type: action,
       color,
@@ -52,9 +57,17 @@ export function Highlighter({
       iterations,
       padding,
       multiline,
-      animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      animate: !prefersReducedMotion
     })
     annotation.show()
+
+    const repeatTimer =
+      repeatInterval && !prefersReducedMotion
+        ? window.setInterval(() => {
+            annotation.hide()
+            annotation.show()
+          }, repeatInterval)
+        : undefined
 
     // The drawing is sized to the text, so redraw it when the text moves or reflows.
     const resizeObserver = new ResizeObserver(() => {
@@ -65,10 +78,11 @@ export function Highlighter({
     resizeObserver.observe(document.body)
 
     return () => {
+      window.clearInterval(repeatTimer)
       annotation.remove()
       resizeObserver.disconnect()
     }
-  }, [action, color, strokeWidth, animationDuration, iterations, padding, multiline])
+  }, [action, color, strokeWidth, animationDuration, repeatInterval, iterations, padding, multiline])
 
   return (
     <span ref={elementRef} className="relative inline-block bg-transparent">

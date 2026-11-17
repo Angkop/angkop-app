@@ -34,7 +34,9 @@ export function SignInPanel({
           >
             <span className="whitespace-nowrap">
               Matches that{' '}
-              <Highlighter>actually fit</Highlighter>
+              <Highlighter animationDuration={1800} repeatInterval={5000}>
+                actually fit
+              </Highlighter>
               ,
             </span>
             <br />
