@@ -1,19 +1,9 @@
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 
 export function ToggleChip({ label, selected, onToggle }: { label: string; selected: boolean; onToggle: () => void }) {
   return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onToggle}
-      className={cn(
-        'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-        selected
-          ? 'border-primary bg-primary text-primary-foreground'
-          : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
-      )}
-    >
+    <Button type="button" variant="chip" size="chip" aria-pressed={selected} onClick={onToggle}>
       {label}
-    </button>
+    </Button>
   )
 }

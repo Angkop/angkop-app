@@ -11,12 +11,15 @@ export const buttonVariants = cva(
         outline: 'border border-primary bg-transparent text-primary hover:bg-accent',
         secondary: 'bg-secondary text-secondary-foreground hover:opacity-80',
         ghost: 'text-foreground hover:bg-muted',
-        destructive: 'bg-destructive text-white hover:opacity-80'
+        destructive: 'bg-destructive text-white hover:opacity-80',
+        // A pill that toggles: pass aria-pressed to mark it selected.
+        chip: 'rounded-full border border-border bg-transparent font-medium text-muted-foreground hover:border-foreground/30 hover:text-foreground aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:text-primary-foreground'
       },
       size: {
         default: 'h-9 px-[25px] py-2',
         sm: 'h-8 px-4 text-xs',
         lg: 'h-[42px] px-[25px] text-[15px]',
+        chip: 'h-7 px-2.5 py-1 text-xs',
         icon: 'h-9 w-9',
         'icon-sm': 'h-7 w-7'
       }
