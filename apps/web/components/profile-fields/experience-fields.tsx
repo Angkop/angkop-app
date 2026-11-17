@@ -1,6 +1,8 @@
 import { Plus, X } from 'lucide-react'
 import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form'
 import { EMPLOYMENT_TYPE_LABELS } from '@angkop/shared'
+import { FIELD_TYPE } from '@/components/common/form/constants/field-type'
+import { Form } from '@/components/common/form/form'
 import { FormField } from '@/components/form-field'
 import { OptionSelect } from '@/components/option-select'
 import { Button } from '@/components/ui/button'
@@ -37,11 +39,7 @@ function ExperienceRow({ rowId, index, onRemove }: { rowId: string; index: numbe
       <div className="grid gap-2 sm:grid-cols-2">
         <FormField id={fieldId('location')} label="Location" hideLabel error={rowErrors?.location?.message}>
           {(controlProps) => (
-            <Input
-              {...controlProps}
-              {...register(`experience.${index}.location`)}
-              placeholder="Location (optional)"
-            />
+            <Input {...controlProps} {...register(`experience.${index}.location`)} placeholder="Location (optional)" />
           )}
         </FormField>
         <FormField
@@ -71,34 +69,29 @@ function ExperienceRow({ rowId, index, onRemove }: { rowId: string; index: numbe
         </FormField>
       </div>
       <div className="grid items-start gap-2 sm:grid-cols-3">
-        <FormField id={fieldId('start-date')} label="Start date" hideLabel error={rowErrors?.startDate?.message}>
-          {(controlProps) => <Input {...controlProps} {...register(`experience.${index}.startDate`)} type="month" />}
-        </FormField>
-        <FormField id={fieldId('end-date')} label="End date" hideLabel error={rowErrors?.endDate?.message}>
-          {(controlProps) => (
-            <Input
-              {...controlProps}
-              {...register(`experience.${index}.endDate`)}
-              type="month"
-              disabled={isCurrent}
-              placeholder="End date"
-            />
-          )}
-        </FormField>
+        <Form.Field<ProfileFormValues>
+          fieldType={FIELD_TYPE.MONTH}
+          name={`experience.${index}.startDate`}
+          label="Start date"
+          hideLabel
+        />
+        <Form.Field<ProfileFormValues>
+          fieldType={FIELD_TYPE.MONTH}
+          name={`experience.${index}.endDate`}
+          label="End date"
+          hideLabel
+          disabled={isCurrent}
+        />
         <div className="flex items-center justify-between gap-2 sm:h-9">
-          <label className="flex items-center gap-2 text-sm text-foreground">
-            <input
-              type="checkbox"
-              {...register(`experience.${index}.current`, {
-                // A current role has no end date — clear it so a stale one doesn't linger.
-                onChange: (event) => {
-                  if (event.target.checked) setValue(`experience.${index}.endDate`, '')
-                }
-              })}
-              className="size-4 rounded border-input accent-primary"
-            />
-            Current
-          </label>
+          <Form.Field<ProfileFormValues>
+            fieldType={FIELD_TYPE.CHECKBOX}
+            name={`experience.${index}.current`}
+            label="Current"
+            // A current role has no end date — clear it so a stale one doesn't linger.
+            onValueChange={(checked) => {
+              if (checked === true) setValue(`experience.${index}.endDate`, '')
+            }}
+          />
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

@@ -22,7 +22,7 @@ export function DropdownMenuContent({
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          'z-50 min-w-32 overflow-hidden rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md',
+          'z-50 min-w-32 overflow-hidden rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-lg',
           className
         )}
         {...props}
@@ -38,7 +38,7 @@ export function DropdownMenuItem({
   return (
     <DropdownMenuPrimitive.Item
       className={cn(
-        'relative flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50',
+        'relative mb-1 flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm outline-none select-none last:mb-0 focus:bg-accent data-disabled:pointer-events-none data-disabled:opacity-50',
         className
       )}
       {...props}
@@ -50,5 +50,5 @@ export function DropdownMenuSeparator({
   className,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
-  return <DropdownMenuPrimitive.Separator className={cn('-mx-1 my-1 h-px bg-border', className)} {...props} />
+  return <DropdownMenuPrimitive.Separator className={cn('-mx-2 my-1 h-px bg-border', className)} {...props} />
 }

@@ -1,11 +1,12 @@
 'use client'
 
 import type { ComponentProps } from 'react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SelectInput } from '@/components/common/form/select-input'
 
-// A select over a { value: label } record, like the label maps in @angkop/shared. Trigger
-// props (id, aria-*, className, ref) pass straight through so it works inside FormField and
-// react-hook-form's Controller.
+// A select over a { value: label } record, like the label maps in @angkop/shared. A thin
+// adapter over SelectInput, which takes a FieldOption list. Trigger props (id, aria-*,
+// className, ref) pass straight through so it works inside FormField and react-hook-form's
+// Controller.
 export function OptionSelect<T extends string>({
   value,
   onValueChange,
@@ -17,19 +18,17 @@ export function OptionSelect<T extends string>({
   onValueChange: (value: T) => void
   options: Record<T, string>
   placeholder?: string
-} & Omit<ComponentProps<typeof SelectTrigger>, 'children' | 'value' | 'onChange'>) {
+} & Omit<ComponentProps<typeof SelectInput>, 'value' | 'onValueChange' | 'options' | 'placeholder'>) {
   return (
-    <Select value={value ?? ''} onValueChange={(next) => onValueChange(next as T)}>
-      <SelectTrigger {...triggerProps}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {(Object.entries(options) as [T, string][]).map(([optionValue, label]) => (
-          <SelectItem key={optionValue} value={optionValue}>
-            {label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <SelectInput
+      {...triggerProps}
+      value={value}
+      onValueChange={(next) => onValueChange(next as T)}
+      placeholder={placeholder}
+      options={(Object.entries(options) as [T, string][]).map(([optionValue, label]) => ({
+        value: optionValue,
+        label
+      }))}
+    />
   )
 }

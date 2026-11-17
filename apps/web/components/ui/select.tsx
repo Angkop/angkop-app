@@ -21,7 +21,7 @@ export function SelectTrigger({
   return (
     <SelectPrimitive.Trigger
       className={cn(
-        'flex h-9 w-fit cursor-pointer items-center justify-between gap-1.5 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive/30 [&>span]:line-clamp-1',
+        'flex h-[41px] w-fit cursor-pointer items-center justify-between gap-1.5 rounded-md border border-input bg-transparent px-3.5 py-2.5 text-sm data-[placeholder]:text-muted-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive [&>span]:line-clamp-1',
         className
       )}
       {...props}
@@ -44,7 +44,7 @@ export function SelectContent({
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         className={cn(
-          'relative z-50 max-h-96 min-w-32 overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-md',
+          'relative z-50 max-h-96 min-w-32 overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-lg',
           position === 'popper' && 'data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1',
           className
         )}
@@ -55,7 +55,7 @@ export function SelectContent({
           <ChevronUpIcon className="size-4" />
         </SelectPrimitive.ScrollUpButton>
         <SelectPrimitive.Viewport
-          className={cn('p-1', position === 'popper' && 'w-full min-w-[var(--radix-select-trigger-width)]')}
+          className={cn('p-2', position === 'popper' && 'w-full min-w-[var(--radix-select-trigger-width)]')}
         >
           {children}
         </SelectPrimitive.Viewport>
@@ -71,7 +71,7 @@ export function SelectItem({ className, children, ...props }: React.ComponentPro
   return (
     <SelectPrimitive.Item
       className={cn(
-        'relative flex w-full cursor-pointer items-center gap-1.5 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-none select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50',
+        'relative mb-1 flex w-full cursor-pointer items-center gap-1.5 rounded-md py-2 pr-8 pl-3 text-sm outline-none select-none last:mb-0 hover:bg-accent focus:bg-accent data-[state=checked]:bg-primary/10 data-[state=checked]:hover:bg-primary/15 data-disabled:pointer-events-none data-disabled:opacity-50',
         className
       )}
       {...props}

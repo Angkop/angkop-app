@@ -2,12 +2,11 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@apollo/client/react'
-import { Search } from 'lucide-react'
+import { FilterSelect } from '@/components/common/filter-select'
+import { SearchInput } from '@/components/common/form/search-input'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { PaginationControls } from '@/components/pagination-controls'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
 import { getStoredToken } from '@/lib/auth'
 import { SAVED_JOB_IDS_QUERY, type SavedJobIdsQueryResult } from '@/lib/job-matches'
@@ -35,50 +34,39 @@ export function ListingsBrowser({
   })
   const savedJobIds = useMemo(() => new Set(savedJobIdsData?.savedJobIds ?? []), [savedJobIdsData])
 
+  const sourceOptions = useMemo(() => sources.map((name) => ({ value: name, label: name })), [sources])
+  const skillOptions = useMemo(() => skills.map((name) => ({ value: name, label: name })), [skills])
+
   const pageCount = Math.max(1, Math.ceil(listings.total / pageSize))
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:w-64">
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={filters.draftQuery}
-              onChange={(event) => filters.setDraftQuery(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') filters.applyFilters()
-              }}
-              placeholder="Search by title or company"
-              className="pl-8"
-            />
-          </div>
-          <Select value={filters.draftSource} onValueChange={filters.setDraftSource}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Source" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_FILTER_VALUE}>All sources</SelectItem>
-              {sources.map((sourceName) => (
-                <SelectItem key={sourceName} value={sourceName}>
-                  {sourceName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filters.draftSkill} onValueChange={filters.setDraftSkill}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Skill" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_FILTER_VALUE}>All skills</SelectItem>
-              {skills.map((skillName) => (
-                <SelectItem key={skillName} value={skillName}>
-                  {skillName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchInput
+            value={filters.draftQuery}
+            onValueChange={filters.setDraftQuery}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') filters.applyFilters()
+            }}
+            placeholder="Search by title or company"
+            aria-label="Search by title or company"
+            className="w-full sm:w-64"
+          />
+          <FilterSelect
+            label="Source"
+            multiple={false}
+            options={sourceOptions}
+            value={filters.draftSource === ALL_FILTER_VALUE ? [] : [filters.draftSource]}
+            onValueChange={(next) => filters.setDraftSource(next[0] ?? ALL_FILTER_VALUE)}
+          />
+          <FilterSelect
+            label="Skill"
+            multiple={false}
+            options={skillOptions}
+            value={filters.draftSkill === ALL_FILTER_VALUE ? [] : [filters.draftSkill]}
+            onValueChange={(next) => filters.setDraftSkill(next[0] ?? ALL_FILTER_VALUE)}
+          />
           <Button size="sm" onClick={filters.applyFilters} disabled={!filters.hasPendingChanges}>
             Apply Filters
           </Button>

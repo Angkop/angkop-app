@@ -5,7 +5,7 @@ import { APPLICATION_STATUS_LABELS, type ApplicationStatus, type SavedJob } from
 import { Button } from '@/components/ui/button'
 import { ChipList } from '@/components/chip-list'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/common/form/date-input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MatchScoreBadge } from '@/components/match-score-badge'
@@ -102,17 +102,13 @@ export function ApplicationCard({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label
-            htmlFor={`interview-date-${savedJob.id}`}
-            className="text-[11px] font-medium text-muted-foreground"
-          >
+          <label htmlFor={`interview-date-${savedJob.id}`} className="text-[11px] font-medium text-muted-foreground">
             Interview Date
           </label>
           <div className="inline-flex items-center gap-1.5">
             <Calendar className="size-3.5 shrink-0 text-muted-foreground" />
-            <Input
+            <DateInput
               id={`interview-date-${savedJob.id}`}
-              type="date"
               value={savedJob.interviewDate ? savedJob.interviewDate.slice(0, 10) : ''}
               disabled={isInterviewDatePending}
               onChange={(event) => onInterviewDateChange(savedJob.job.id, event.target.value)}

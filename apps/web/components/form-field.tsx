@@ -11,11 +11,14 @@ export type FormControlProps = {
 // Label, control, optional help text and inline error in one place. The control comes in as
 // a render function so it can take the id and aria props that tie it to its label and
 // message. An error replaces the help text, and hideLabel keeps the label for screen
-// readers on rows that show only a placeholder.
+// readers on rows that show only a placeholder. inlineLabel puts the label after the control
+// instead of above it, which is how a checkbox or switch reads.
 export function FormField({
   id,
   label,
   hideLabel = false,
+  inlineLabel = false,
+  required = false,
   help,
   error,
   className,
@@ -24,19 +27,42 @@ export function FormField({
   id: string
   label: string
   hideLabel?: boolean
+  inlineLabel?: boolean
+  required?: boolean
   help?: string
   error?: string
   className?: string
   children: (controlProps: FormControlProps) => ReactNode
 }) {
   const messageId = error ? `${id}-error` : help ? `${id}-help` : undefined
+  const control = children({ id, 'aria-invalid': error ? true : undefined, 'aria-describedby': messageId })
+  const labelNode = (
+    <Label
+      htmlFor={id}
+      className={cn("font-normal", inlineLabel ? "text-foreground" : "text-muted-foreground", hideLabel && "sr-only")}
+    >
+      {label}
+      {required ? (
+        <span aria-hidden="true" className="text-destructive">
+          *
+        </span>
+      ) : null}
+    </Label>
+  )
 
   return (
     <div className={cn('space-y-1.5', className)}>
-      <Label htmlFor={id} className={hideLabel ? 'sr-only' : undefined}>
-        {label}
-      </Label>
-      {children({ id, 'aria-invalid': error ? true : undefined, 'aria-describedby': messageId })}
+      {inlineLabel ? (
+        <div className="flex items-center gap-2">
+          {control}
+          {labelNode}
+        </div>
+      ) : (
+        <>
+          {labelNode}
+          {control}
+        </>
+      )}
       {error ? (
         <p id={messageId} className="text-xs text-destructive">
           {error}

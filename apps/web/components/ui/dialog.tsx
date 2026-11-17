@@ -57,9 +57,14 @@ export function DialogContent({
       />
       <DialogPrimitive.Content
         className={cn(
-          'angkop-dialog-content fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2',
-          'rounded-lg border border-border bg-card p-6 shadow-2xl',
-          'max-h-[calc(100vh-2rem)] overflow-y-auto',
+          'angkop-dialog-content fixed top-1/2 left-1/2 z-50 w-[calc(100%-2rem)] max-w-[456px] -translate-x-1/2 -translate-y-1/2',
+          'rounded-xl border border-border bg-card p-0 shadow-2xl',
+          'max-h-[calc(100vh-60px)] overflow-y-auto',
+          // Everything between the header and footer gets the 24px side padding, so a dialog's
+          // body does not have to know it is inside one.
+          '[&>*:not([data-slot=dialog-header]):not([data-slot=dialog-footer]):not(button)]:px-6',
+          // On a phone the dialog becomes a bottom sheet.
+          'max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:w-full max-sm:max-w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-h-[90dvh] max-sm:rounded-t-3xl max-sm:rounded-b-none',
           'data-[state=open]:[animation:angkop-dialog-in_240ms_cubic-bezier(0.16,1,0.3,1)]',
           'data-[state=closed]:[animation:angkop-dialog-out_150ms_ease-in]',
           className
@@ -70,7 +75,7 @@ export function DialogContent({
         {showCloseButton ? (
           <DialogPrimitive.Close
             aria-label="Close"
-            className="absolute top-4 right-4 cursor-pointer rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="absolute top-6 right-6 cursor-pointer rounded-full bg-background p-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <X className="size-4" />
           </DialogPrimitive.Close>
@@ -81,13 +86,19 @@ export function DialogContent({
 }
 
 export function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
-  return <div className={cn('mb-5 space-y-1.5', className)} {...props} />
+  return (
+    <div
+      data-slot="dialog-header"
+      className={cn('mb-6 space-y-1.5 bg-accent py-6 pr-16 pl-6', className)}
+      {...props}
+    />
+  )
 }
 
 export function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
   return (
     <DialogPrimitive.Title
-      className={cn('font-display text-xl font-semibold tracking-tight text-foreground', className)}
+      className={cn('font-display text-xl font-bold tracking-tight text-foreground', className)}
       {...props}
     />
   )
@@ -103,10 +114,8 @@ export function DialogDescription({
 export function DialogFooter({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
-      className={cn(
-        '-mx-6 -mb-6 mt-6 flex flex-wrap items-center justify-end gap-3 rounded-b-lg border-t border-border bg-muted/30 px-6 py-4',
-        className
-      )}
+      data-slot="dialog-footer"
+      className={cn('mt-6 flex items-center gap-3 p-6 [&>*]:h-[42px] [&>*]:flex-1 [&>*]:text-[15px]', className)}
       {...props}
     />
   )
