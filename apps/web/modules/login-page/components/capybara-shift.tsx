@@ -31,12 +31,13 @@ const disposeOf = (scene: THREE.Scene) =>
 // a percentage and the skill it lacks), then walks to the middle, takes its outfit off and shows
 // its skills against both jobs, then puts the next outfit on and goes to the other desk. The
 // same person scores very differently for each job, which is what Angkop measures.
-// It never mounts for reduced-motion users beyond one still frame, and without WebGL the flat
-// CapybaraHero under it stays.
+// It never mounts for reduced-motion users beyond one still frame. The stage stays empty until the
+// first frame is drawn, then fades in; without WebGL the flat CapybaraHero takes its place.
 export function CapybaraShift({ className }: { className?: string }) {
   const container = useRef<HTMLDivElement>(null)
   const bubble = useRef<HTMLDivElement>(null)
   const [isReady, setIsReady] = useState(false)
+  const [hasFailed, setHasFailed] = useState(false)
   const [shown, setShown] = useState<{ job: number; view: BubbleView; isVisible: boolean }>({
     job: 0,
     view: 'thinking',
@@ -51,6 +52,7 @@ export function CapybaraShift({ className }: { className?: string }) {
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
     } catch {
+      setHasFailed(true)
       return
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -227,8 +229,15 @@ export function CapybaraShift({ className }: { className?: string }) {
 
   return (
     <div className={cn('relative aspect-[3/2] w-full', className)}>
-      <CapybaraHero className={cn('mx-auto h-full w-auto', isReady && 'invisible')} />
-      <div ref={container} aria-hidden="true" className="absolute inset-0" />
+      {hasFailed && <CapybaraHero className="mx-auto h-full w-auto" />}
+      <div
+        ref={container}
+        aria-hidden="true"
+        className={cn(
+          'absolute inset-0 opacity-0 transition-opacity duration-500 motion-reduce:transition-none',
+          isReady && 'opacity-100'
+        )}
+      />
       <JobBubble ref={bubble} job={shown.job} view={shown.view} isVisible={shown.isVisible} />
     </div>
   )
