@@ -2,12 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { EMPLOYMENT_TYPE_LABELS, type EmploymentType } from '@angkop/shared'
+import { Bookmark, CheckCircle2, Send, XCircle } from 'lucide-react'
+import { ChipDropdown } from '@/components/common/chip-dropdown'
 import { FilterSelect } from '@/components/common/filter-select'
 import type { FieldOption } from '@/components/common/form/types'
 import { ChipList } from '@/components/chip-list'
 import { OptionSelect } from '@/components/option-select'
+import { SelectInput } from '@/components/common/form/select-input'
 import { ToggleChip } from '@/components/profile-fields/toggle-chip'
-import { SAMPLE_SKILL_OPTIONS } from '../constants/sample-data'
+import { SAMPLE_DESCRIBED_OPTIONS, SAMPLE_SKILL_OPTIONS } from '../constants/sample-data'
 import { PlaygroundSection, Variant } from './playground-section'
 
 const SERVER_SEARCH_DELAY_MS = 600
@@ -23,6 +26,7 @@ export function SelectsFiltersSection() {
   const [isServerLoading, setIsServerLoading] = useState(false)
   const [chips, setChips] = useState(['Remote', 'Junior'])
   const [selectedChip, setSelectedChip] = useState(true)
+  const [describedValue, setDescribedValue] = useState('')
   const serverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => () => clearTimeout(serverTimer.current), [])
@@ -111,6 +115,38 @@ export function SelectsFiltersSection() {
           value={[]}
           onValueChange={() => undefined}
           disabled
+        />
+      </Variant>
+      <Variant label='Chip dropdown' usage={'<ChipDropdown label variant><ChipDropdown.Action icon onClick /></ChipDropdown>'}>
+        <div className='flex flex-wrap items-center gap-2'>
+          <ChipDropdown label='Applied' variant='info'>
+            <ChipDropdown.ActionsGroup>
+              <ChipDropdown.Action icon={<Send />}>Applied</ChipDropdown.Action>
+              <ChipDropdown.Action icon={<CheckCircle2 />}>Successful</ChipDropdown.Action>
+              <ChipDropdown.Action icon={<XCircle />}>Unsuccessful</ChipDropdown.Action>
+            </ChipDropdown.ActionsGroup>
+          </ChipDropdown>
+          <ChipDropdown label='Successful' variant='success'>
+            <ChipDropdown.Action icon={<Bookmark />}>Save Job</ChipDropdown.Action>
+          </ChipDropdown>
+          <ChipDropdown label='Awaiting interview' variant='warning'>
+            <ChipDropdown.Action>Mark as interviewed</ChipDropdown.Action>
+          </ChipDropdown>
+          <ChipDropdown label='Unsuccessful' variant='attention'>
+            <ChipDropdown.Action>Reopen</ChipDropdown.Action>
+          </ChipDropdown>
+          <ChipDropdown label='Pending' readOnly>
+            <ChipDropdown.Action>Not shown</ChipDropdown.Action>
+          </ChipDropdown>
+        </div>
+      </Variant>
+      <Variant label='Select, with option descriptions' usage={'options={[{ label, value, description }]}'}>
+        <SelectInput
+          value={describedValue}
+          onValueChange={setDescribedValue}
+          options={SAMPLE_DESCRIBED_OPTIONS}
+          placeholder='Select a job type'
+          className='w-64'
         />
       </Variant>
       <Variant label='Toggle chip' usage={'<ToggleChip label selected onToggle />'}>

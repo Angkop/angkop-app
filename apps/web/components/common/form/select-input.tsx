@@ -27,7 +27,12 @@ export function SelectInput({
       </SelectTrigger>
       <SelectContent>
         {options.map((option) => (
-          <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
+          <SelectItem
+            key={option.value}
+            value={option.value}
+            description={option.description}
+            disabled={option.disabled}
+          >
             {option.label}
           </SelectItem>
         ))}

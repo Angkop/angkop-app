@@ -56,3 +56,9 @@ export const SAMPLE_APPLICATION_ROWS: { id: string; title: string; company: stri
   { id: 'row-2', title: 'Data Analyst', company: 'Example Corp', status: 'AWAITING_INTERVIEW' },
   { id: 'row-3', title: 'QA Engineer', company: 'Demo Labs', status: 'UNSUCCESSFUL' }
 ]
+
+export const SAMPLE_DESCRIBED_OPTIONS: FieldOption[] = [
+  { value: 'full-time', label: 'Full-time', description: 'A regular schedule with benefits' },
+  { value: 'part-time', label: 'Part-time', description: 'Fewer hours, often flexible' },
+  { value: 'contract', label: 'Contract', description: 'A fixed term for a specific project' }
+]

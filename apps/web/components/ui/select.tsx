@@ -67,7 +67,14 @@ export function SelectContent({
   )
 }
 
-export function SelectItem({ className, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Item>) {
+// `description` is a second, muted line in the open list. The trigger shows only the label,
+// because Radix copies just the ItemText into the value.
+export function SelectItem({
+  className,
+  children,
+  description,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Item> & { description?: string }) {
   return (
     <SelectPrimitive.Item
       className={cn(
@@ -81,7 +88,10 @@ export function SelectItem({ className, children, ...props }: React.ComponentPro
           <CheckIcon className="size-4" />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <span className="flex min-w-0 flex-col">
+        <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+        {description ? <span className="text-xs whitespace-normal text-muted-foreground">{description}</span> : null}
+      </span>
     </SelectPrimitive.Item>
   )
 }
