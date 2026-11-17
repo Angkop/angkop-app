@@ -20,14 +20,19 @@ export function useOnboardingWizard() {
     // Right after the Google redirect lands here, Supabase is still parsing the auth
     // tokens out of the URL — getSession() awaits that before resolving, so this won't
     // bounce the user back to "/" while the session is still being established.
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return
-      if (!session) {
-        router.replace('/')
-        return
-      }
-      setIsChecking(false)
-    })
+    supabaseClient.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!isMounted) return
+        if (!session) {
+          router.replace('/')
+          return
+        }
+        setIsChecking(false)
+      })
+      .catch(() => {
+        if (isMounted) router.replace('/')
+      })
 
     return () => {
       isMounted = false
