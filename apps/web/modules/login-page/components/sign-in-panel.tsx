@@ -48,7 +48,7 @@ export function SignInPanel({
           <div className={cn(RISE, 'mt-10 flex max-w-sm flex-col gap-2 [animation-delay:160ms]')}>
             <Button
               variant="outline"
-              className="h-12 w-full border-foreground/15 bg-background shadow-sm hover:bg-accent/60"
+              className="h-12 w-full border-foreground/15 bg-background text-foreground shadow-sm hover:bg-accent/60"
               onClick={onSignIn}
               disabled={isLoading}
             >
