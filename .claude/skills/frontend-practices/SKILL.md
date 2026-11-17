@@ -19,6 +19,7 @@ Standard: **react-hook-form + zod** (`@hookform/resolvers/zod`).
 - Any new or touched form uses react-hook-form. Do not add controlled-through-props fields.
 - Field anatomy: `Label` with `htmlFor`, the control, optional help text, inline error. Use `FormField` (`components/form-field.tsx`) for every field. It wires `aria-invalid` and `aria-describedby` through its render-prop `controlProps`, so do not repeat the `space-y-1.5` block.
 - Pick lists use `OptionSelect` (`components/option-select.tsx`) and chip groups use `ChipListField` before a new control is built.
+- For shared field types (text, textarea, search, select, checkbox, switch, radio, date), use `Form.Field` from `components/common/form/form.tsx` inside a `FormProvider`. See `components/README.md` and `/components-playground`.
 - Error messages name the specific problem ("Add a company name", never "Invalid input"). No exclamation points.
 - An invalid field changes its border and shows its message together, and sets `aria-invalid` and `aria-describedby`. The error replaces the help text.
 - Read-only is not disabled. Disabled means "not editable right now". Read-only means "this view does not edit".
@@ -55,7 +56,7 @@ Standard: **react-hook-form + zod** (`@hookform/resolvers/zod`).
 ## Filters and lists
 
 - A filter pill starts inactive (label and arrow only) and becomes active only once a value is applied, then shows a count badge. A state change is background and text color together.
-- Show a limited number of options by default and let the user search for the rest. Active filters stay visible and easy to remove.
+- Show a limited number of options by default and let the user search for the rest. Active filters stay visible and easy to remove. Use `FilterSelect` (`components/common/filter-select.tsx`), which takes `onSearch` and `isLoading` for server-side search.
 - Sorting happens through column headers, not the filter row.
 - Filtering, searching and sorting run on the server.
 
