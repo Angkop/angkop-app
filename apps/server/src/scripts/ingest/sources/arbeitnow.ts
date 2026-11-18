@@ -1,8 +1,9 @@
 import type { EmploymentType, WorkSetup } from '@prisma/client'
 import { logger } from '../../../lib/logger'
 import { EMPLOYMENT_TYPE_MAP, JOBS_PER_SOURCE, MAX_ARBEITNOW_PAGES, USER_AGENT } from '../constants'
-import { flattenSections, parseDescriptionSections } from '../description-sections'
-import type { NormalizedListing } from '../types'
+import { buildDescriptionSections, flattenSections } from '../description-sections'
+import { fetchWithTimeout } from '../http'
+import type { SourceFetchResult } from '../types'
 
 function mapEmploymentType(jobTypes: unknown): EmploymentType | null {
   if (!Array.isArray(jobTypes)) return null
@@ -20,32 +21,45 @@ type ArbeitnowPage = {
 }
 
 async function fetchArbeitnowPage(url: string): Promise<ArbeitnowPage | null> {
-  const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
-  if (!response.ok) {
+  try {
+    const response = await fetchWithTimeout(url, { headers: { 'User-Agent': USER_AGENT } })
+    if (response.ok) return (await response.json()) as ArbeitnowPage
     logger.warn({ status: response.status, url }, 'Arbeitnow page fetch failed, stopping pagination')
-    return null
+  } catch (error) {
+    logger.warn({ error, url }, 'Arbeitnow page fetch errored, stopping pagination')
   }
-  return (await response.json()) as ArbeitnowPage
+  return null
 }
 
-export async function fetchArbeitnow(): Promise<NormalizedListing[]> {
+export async function fetchArbeitnow(): Promise<SourceFetchResult> {
   const rawJobs: Record<string, unknown>[] = []
   let nextUrl: string | null = 'https://arbeitnow.com/api/job-board-api'
 
-  for (let page = 0; page < MAX_ARBEITNOW_PAGES && nextUrl && rawJobs.length < JOBS_PER_SOURCE; page++) {
+  // The first page failing means nothing was read, which is a failed source. A later page
+  // failing just means the feed was only partly read, which `complete` reports.
+  const firstPage = await fetchArbeitnowPage(nextUrl)
+  if (!firstPage) throw new Error('Arbeitnow first page could not be fetched')
+  rawJobs.push(...(firstPage.data ?? []))
+  nextUrl = firstPage.links?.next ?? null
+
+  for (let page = 1; page < MAX_ARBEITNOW_PAGES && nextUrl && rawJobs.length < JOBS_PER_SOURCE; page++) {
     const body: ArbeitnowPage | null = await fetchArbeitnowPage(nextUrl)
     if (!body) break
     rawJobs.push(...(body.data ?? []))
     nextUrl = body.links?.next ?? null
   }
 
-  return rawJobs
+  // Complete only if the API ran out of pages by itself, not because a cap or a failure
+  // stopped the walk — otherwise a job missing from `rawJobs` may just be on a page we never read.
+  const complete = nextUrl === null && rawJobs.length <= JOBS_PER_SOURCE
+
+  const listings = rawJobs
     .filter((entry): entry is Record<string, unknown> & { slug: string; title: string } =>
       typeof entry.slug === 'string' && typeof entry.title === 'string'
     )
     .slice(0, JOBS_PER_SOURCE)
     .map((job) => {
-      const descriptionSections = parseDescriptionSections(typeof job.description === 'string' ? job.description : '')
+      const descriptionSections = buildDescriptionSections(typeof job.description === 'string' ? job.description : '')
       return {
         id: `angkop-arbeitnow-${job.slug}`,
         title: job.title,
@@ -59,8 +73,12 @@ export async function fetchArbeitnow(): Promise<NormalizedListing[]> {
         // Arbeitnow's API has no salary field at all.
         salaryMin: null,
         salaryMax: null,
+        salaryCurrency: null,
+        salaryPeriod: null,
         workSetup: typeof job.remote === 'boolean' ? (job.remote ? ('REMOTE' as WorkSetup) : ('ONSITE' as WorkSetup)) : null,
         employmentType: mapEmploymentType(job.job_types)
       }
     })
+
+  return { listings, complete }
 }

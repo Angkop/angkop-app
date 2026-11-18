@@ -1,6 +1,39 @@
 import type { EmploymentType, WorkSetup } from '@prisma/client'
 
 export const JOBS_PER_SOURCE = 2000
+
+// Nightly run (see ingest-jobs-service.ts): how many NEW listings each bucket brings in.
+// International is RemoteOK + Arbeitnow, split between them; PH is Headcount Labs. Listings
+// already in the database never count toward these.
+export const DAILY_NEW_JOBS_INTERNATIONAL = 25
+export const DAILY_NEW_JOBS_PH = 25
+
+// Every request to a source gets this long before it counts as that source failing.
+export const FETCH_TIMEOUT_MS = 30_000
+
+// Overlap guard: a Redis key held for the length of a run. The TTL only matters if a run
+// dies without releasing it, so it is set well past how long a real run takes.
+export const INGEST_LOCK_KEY = 'ingest:jobs:lock'
+export const INGEST_LOCK_TTL_SECONDS = 60 * 60 * 2
+
+// A source whose feed comes back with fewer listings than this looks broken (an outage page,
+// a changed response shape) rather than genuinely empty, so it is never used to decide
+// which stored jobs have disappeared.
+export const STALE_MIN_FEED_SIZE = 20
+
+// Stop a bucket after this many embedding/write failures in a row — the ML service is almost
+// certainly down, and walking every remaining candidate would just fail each one slowly.
+export const MAX_CONSECUTIVE_FAILURES = 5
+
+// Headcount Labs ids are stored as `${HEADCOUNTLABS_ID_PREFIX}<their job_id>`.
+export const HEADCOUNTLABS_ID_PREFIX = 'angkop-headcountlabs-'
+
+// Stale check for Headcount Labs: one request per stored posting (1 per second), so each run
+// only checks this many, oldest-checked first, and the rest rotate in on later nights. A live
+// posting costs one record of the 100,000/month allowance; an expired one costs none.
+export const HEADCOUNTLABS_STALE_CHECKS_PER_RUN = 300
+// Redis sorted set of posting id -> when it was last checked, used to pick who goes next.
+export const HEADCOUNTLABS_LAST_CHECKED_KEY = 'ingest:headcountlabs:last-checked'
 export const MAX_DESCRIPTION_LENGTH = 1500
 
 // Arbeitnow's first two pages run ~325 jobs each, then it settles to ~100/page; RemoteOK

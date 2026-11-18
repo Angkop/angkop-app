@@ -1,13 +1,15 @@
 import { logger } from '../../../lib/logger'
 import {
+  HEADCOUNTLABS_ID_PREFIX,
   HEADCOUNTLABS_MAX_JOBS,
   HEADCOUNTLABS_PAGE_SIZE,
   HEADCOUNTLABS_REQUEST_INTERVAL_MS,
   HEADCOUNTLABS_WORK_SETUP_MAP,
   USER_AGENT
 } from '../constants'
-import { flattenSections, parseDescriptionSections } from '../description-sections'
-import type { NormalizedListing } from '../types'
+import { buildDescriptionSections, flattenSections, plainTextToHtml } from '../description-sections'
+import { fetchWithTimeout } from '../http'
+import type { NormalizedListing, SourceFetchResult } from '../types'
 
 const API_URL = 'https://api.headcountlabs.com/v1/jobs'
 
@@ -57,26 +59,13 @@ function findPostingUrl(postings: unknown): string | null {
   return null
 }
 
-// Descriptions arrive as plain text with newlines, but parseDescriptionSections reads HTML.
-function textToHtml(text: string): string {
-  return text
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`)
-    .join('')
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-export async function fetchHeadcountLabs(): Promise<NormalizedListing[]> {
+export async function fetchHeadcountLabs(): Promise<SourceFetchResult> {
   const apiKey = process.env.HEADCOUNTLABS_API_KEY
-  if (!apiKey) {
-    logger.warn('HEADCOUNTLABS_API_KEY is not set, skipping Headcount Labs')
-    return []
-  }
+  if (!apiKey) throw new Error('HEADCOUNTLABS_API_KEY is not set')
 
   const rawJobs: Record<string, unknown>[] = []
   let cursor: string | null = null
@@ -85,14 +74,14 @@ export async function fetchHeadcountLabs(): Promise<NormalizedListing[]> {
     const params = new URLSearchParams({ country: 'PH', limit: String(HEADCOUNTLABS_PAGE_SIZE) })
     if (cursor) params.set('cursor', cursor)
 
-    const response = await fetch(`${API_URL}?${params}`, {
+    const response = await fetchWithTimeout(`${API_URL}?${params}`, {
       headers: { Authorization: `Bearer ${apiKey}`, 'User-Agent': USER_AGENT }
     })
     if (!response.ok) {
-      logger.warn(
-        { status: response.status, retryAfter: response.headers.get('retry-after') },
-        'Headcount Labs fetch failed, stopping pagination'
-      )
+      const failure = { status: response.status, retryAfter: response.headers.get('retry-after') }
+      // Nothing read yet means the source failed; a later page failing keeps what we have.
+      if (rawJobs.length === 0) throw new Error(`Headcount Labs responded with ${JSON.stringify(failure)}`)
+      logger.warn(failure, 'Headcount Labs fetch failed, stopping pagination')
       break
     }
     logger.info(
@@ -114,10 +103,10 @@ export async function fetchHeadcountLabs(): Promise<NormalizedListing[]> {
     const sourceUrl = findPostingUrl(job.postings)
     if (typeof job.job_id !== 'string' || !title || !description || !sourceUrl) continue
 
-    const descriptionSections = parseDescriptionSections(textToHtml(description))
+    const descriptionSections = buildDescriptionSections(plainTextToHtml(description))
     const workArrangement = unwrapString(job.work_arrangement)
     listings.push({
-      id: `angkop-headcountlabs-${job.job_id}`,
+      id: `${HEADCOUNTLABS_ID_PREFIX}${job.job_id}`,
       title,
       company: unwrapString(job.employer_name) ?? 'Unknown Company',
       description: flattenSections(descriptionSections),
@@ -131,10 +120,67 @@ export async function fetchHeadcountLabs(): Promise<NormalizedListing[]> {
       // shape hasn't been seen yet, so salary stays null rather than guessing at it.
       salaryMin: null,
       salaryMax: null,
+      salaryCurrency: null,
+      salaryPeriod: null,
       workSetup: workArrangement ? (HEADCOUNTLABS_WORK_SETUP_MAP[workArrangement] ?? null) : null,
       // The API has no employment-type field.
       employmentType: null
     })
   }
-  return listings
+  // Never "complete": Headcount Labs has tens of thousands of PH postings and we only read
+  // the newest few hundred, so absence from this page says nothing. Whether a stored posting
+  // is still live comes from checkHeadcountLabsJobs instead.
+  return { listings, complete: false }
+}
+
+export type HeadcountLabsCheck = {
+  // Ids that were actually looked up, so the caller can note when each was last checked.
+  checked: string[]
+  // Ids Headcount Labs says are gone.
+  withdrawn: string[]
+}
+
+// Asks Headcount Labs whether each stored posting (our `angkop-headcountlabs-<id>` ids) is
+// still available. GET /v1/jobs/{id} answers 410 job_withdrawn for a posting that has
+// expired — and charges nothing for it — and 200 for a live one (one record, kept as small
+// as possible by asking for the id alone). Their changes feed has no country filter, so it
+// would mean reading every country's expiries; this reads only the postings we hold.
+//
+// Anything but a clear 200 or 410 leaves the posting alone: a 429 or a server error stops
+// the pass (the rest are retried on a later night), and an unexpected status skips just that
+// one. A flaky API can therefore never turn into a mass soft-delete.
+export async function checkHeadcountLabsJobs(ids: string[]): Promise<HeadcountLabsCheck> {
+  const apiKey = process.env.HEADCOUNTLABS_API_KEY
+  if (!apiKey) throw new Error('HEADCOUNTLABS_API_KEY is not set')
+
+  const checked: string[] = []
+  const withdrawn: string[] = []
+
+  for (const [index, id] of ids.entries()) {
+    if (index > 0) await sleep(HEADCOUNTLABS_REQUEST_INTERVAL_MS)
+    const sourceId = id.slice(HEADCOUNTLABS_ID_PREFIX.length)
+    const response = await fetchWithTimeout(`${API_URL}/${encodeURIComponent(sourceId)}?fields=job_id`, {
+      headers: { Authorization: `Bearer ${apiKey}`, 'User-Agent': USER_AGENT }
+    })
+
+    if (response.status === 410) {
+      checked.push(id)
+      withdrawn.push(id)
+    } else if (response.ok) {
+      checked.push(id)
+    } else if (response.status === 429 || response.status >= 500) {
+      logger.warn(
+        { status: response.status, retryAfter: response.headers.get('retry-after') },
+        'Headcount Labs job check stopped early'
+      )
+      break
+    } else {
+      logger.warn({ status: response.status, id }, 'Headcount Labs job check returned an unexpected status, skipping it')
+    }
+  }
+  logger.info(
+    { requested: ids.length, checked: checked.length, withdrawn: withdrawn.length },
+    'Headcount Labs job check done'
+  )
+  return { checked, withdrawn }
 }

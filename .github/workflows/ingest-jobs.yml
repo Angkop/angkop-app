@@ -1,0 +1,44 @@
+name: Ingest jobs
+
+# 11:30pm PHT (Asia/Manila, UTC+8) is 15:30 UTC. GitHub schedules in UTC only, and can start a
+# run a few minutes late when its runners are busy.
+on:
+  schedule:
+    - cron: '30 15 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Fetch and report only, write nothing'
+        type: boolean
+        default: false
+
+# A second run can't start while one is going. The Redis lock in the ingest itself covers
+# runs started from anywhere else.
+concurrency:
+  group: ingest-jobs
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    # Set the repository variable INGEST_ENABLED to "false" to pause the nightly run.
+    if: vars.INGEST_ENABLED != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Ingest jobs
+        working-directory: apps/server
+        run: pnpm ingest:jobs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          ML_SERVICE_URL: ${{ secrets.ML_SERVICE_URL }}
+          HEADCOUNTLABS_API_KEY: ${{ secrets.HEADCOUNTLABS_API_KEY }}
+          WEB_URL: ${{ secrets.WEB_URL }}
+          INGEST_DRY_RUN: ${{ inputs.dry_run && 'true' || vars.INGEST_DRY_RUN }}
