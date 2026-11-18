@@ -1,18 +1,11 @@
-import { Target } from 'lucide-react'
 import { NavLink } from '@/components/nav-link'
-import { Button, buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import type { DashboardMatch } from '../types'
 import { ScoreRing } from './score-ring'
 
 // The one match to act on, set apart in its own panel: big title, the score as a ring, and the
-// single primary action on the page. Everything else about the job lives behind those buttons.
-export function NextBestMove({
-  match,
-  onViewInsight
-}: {
-  match: DashboardMatch
-  onViewInsight: (job: DashboardMatch['job']) => void
-}) {
+// single primary action on the page. Everything else about the job lives on its match page.
+export function NextBestMove({ match }: { match: DashboardMatch }) {
   return (
     <section
       aria-labelledby="next-best-move-heading"
@@ -42,16 +35,12 @@ export function NextBestMove({
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <NavLink
-            href={`/listings/${match.job.id}`}
-            pendingLabel="Opening listing…"
+            href={`/matches/${match.job.id}`}
+            pendingLabel="Opening match…"
             className={buttonVariants({ size: 'lg', className: 'w-full sm:w-auto' })}
           >
             View Match
           </NavLink>
-          <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => onViewInsight(match.job)}>
-            <Target className="size-4" />
-            See Why It Matches
-          </Button>
         </div>
       </div>
     </section>

@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-import dynamic from 'next/dynamic'
 import { SearchX } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 import { EmptyState } from '@/components/common/empty-state'
@@ -15,12 +13,6 @@ import { MatchesSkeleton } from './dashboard-skeleton'
 import { MatchLanes } from './match-lanes'
 import { NextBestMove } from './next-best-move'
 
-// Only needed once the user opens a match's explanation, not on every dashboard load.
-const MatchInsightDialog = dynamic(
-  () => import('@/components/match-insight-dialog').then((mod) => mod.MatchInsightDialog),
-  { ssr: false }
-)
-
 const NO_MATCHES: DashboardMatch[] = []
 
 // Owns the one jobMatches query that feeds the hero and both lanes, so neither waits on the other
@@ -29,7 +21,6 @@ export function MatchesRegion() {
   const { data, loading, error, refetch } = useQuery<DashboardMatchesQueryResult>(DASHBOARD_MATCHES_QUERY, {
     variables: { pageSize: DASHBOARD_MATCHES_COUNT }
   })
-  const [insightTarget, setInsightTarget] = useState<DashboardMatch['job'] | null>(null)
 
   if (loading && !data) return <MatchesSkeleton />
   if (error && !data) {
@@ -65,27 +56,14 @@ export function MatchesRegion() {
 
   return (
     <div className="space-y-12">
-      <NextBestMove match={matches[0]} onViewInsight={setInsightTarget} />
+      <NextBestMove match={matches[0]} />
 
       {/* The hero already shows the best match, so the lanes start after it. */}
       <MatchLanes
         matches={matches.slice(1)}
         totalCount={totalCount}
         strongMatchCount={strongMatchCount}
-        onViewInsight={setInsightTarget}
       />
-
-      {insightTarget ? (
-        <MatchInsightDialog
-          open
-          onOpenChange={(open) => {
-            if (!open) setInsightTarget(null)
-          }}
-          jobId={insightTarget.id}
-          jobTitle={insightTarget.title}
-          jobCompany={insightTarget.company}
-        />
-      ) : null}
     </div>
   )
 }

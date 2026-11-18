@@ -1,8 +1,6 @@
-import { ArrowRight, ChevronRight, Target } from 'lucide-react'
+import { ArrowRight, ChevronRight } from 'lucide-react'
 import { variantForScore } from '@/components/match-score-badge'
 import { NavLink } from '@/components/nav-link'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { LANE_MATCHES_COUNT } from '@/constants/dashboard'
 import { MATCH_LANES } from '@/constants/match-lanes'
 import { cn } from '@/lib/utils'
@@ -15,19 +13,13 @@ function skillsToAddText(missingSkillCount: number) {
   return `${missingSkillCount} ${missingSkillCount === 1 ? 'skill' : 'skills'} to add`
 }
 
-function MatchRow({
-  match,
-  onViewInsight
-}: {
-  match: DashboardMatch
-  onViewInsight: (job: DashboardMatch['job']) => void
-}) {
+function MatchRow({ match }: { match: DashboardMatch }) {
   return (
-    <li className="flex items-center gap-1 py-3">
+    <li>
       <NavLink
-        href={`/listings/${match.job.id}`}
-        pendingLabel="Opening listing…"
-        className="group flex min-w-0 flex-1 items-center gap-3"
+        href={`/matches/${match.job.id}`}
+        pendingLabel="Opening match…"
+        className="group flex min-w-0 items-center gap-3 py-3"
       >
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground group-hover:underline">{match.job.title}</p>
@@ -43,15 +35,6 @@ function MatchRow({
         </p>
         <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
       </NavLink>
-
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Why this is a match" onClick={() => onViewInsight(match.job)}>
-            <Target className="size-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Why this is a match</TooltipContent>
-      </Tooltip>
     </li>
   )
 }
@@ -59,13 +42,11 @@ function MatchRow({
 function Lane({
   laneKey,
   matches,
-  emptyContent,
-  onViewInsight
+  emptyContent
 }: {
   laneKey: LaneKey
   matches: DashboardMatch[]
   emptyContent: React.ReactNode
-  onViewInsight: (job: DashboardMatch['job']) => void
 }) {
   const lane = MATCH_LANES[laneKey]
   const headingId = `lane-${laneKey}-heading`
@@ -85,7 +66,7 @@ function Lane({
       ) : (
         <ul className="mt-1 divide-y divide-border">
           {matches.map((match) => (
-            <MatchRow key={match.job.id} match={match} onViewInsight={onViewInsight} />
+            <MatchRow key={match.job.id} match={match} />
           ))}
         </ul>
       )}
@@ -98,13 +79,11 @@ function Lane({
 export function MatchLanes({
   matches,
   totalCount,
-  strongMatchCount,
-  onViewInsight
+  strongMatchCount
 }: {
   matches: DashboardMatch[]
   totalCount: number
   strongMatchCount: number
-  onViewInsight: (job: DashboardMatch['job']) => void
 }) {
   const strong: DashboardMatch[] = []
   const partial: DashboardMatch[] = []
@@ -123,7 +102,6 @@ export function MatchLanes({
         <Lane
           laneKey="strong"
           matches={strong}
-          onViewInsight={onViewInsight}
           emptyContent={
             // The lanes start after the hero, so a lone strong match is the hero, not missing.
             strongMatchCount > 0
@@ -134,7 +112,6 @@ export function MatchLanes({
         <Lane
           laneKey="partial"
           matches={partial}
-          onViewInsight={onViewInsight}
           emptyContent={
             unseenPartialCount > 0 ? (
               <>
