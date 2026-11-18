@@ -1,6 +1,6 @@
-import Link from 'next/link'
 import { ArrowRight, ChevronRight, Target } from 'lucide-react'
 import { variantForScore } from '@/components/match-score-badge'
+import { NavLink } from '@/components/nav-link'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { LANE_MATCHES_COUNT } from '@/constants/dashboard'
@@ -24,7 +24,11 @@ function MatchRow({
 }) {
   return (
     <li className="flex items-center gap-1 py-3">
-      <Link href={`/listings/${match.job.id}`} className="group flex min-w-0 flex-1 items-center gap-3">
+      <NavLink
+        href={`/listings/${match.job.id}`}
+        pendingLabel="Opening listing…"
+        className="group flex min-w-0 flex-1 items-center gap-3"
+      >
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-foreground group-hover:underline">{match.job.title}</p>
           <p className="truncate text-xs text-muted-foreground">
@@ -38,7 +42,7 @@ function MatchRow({
           <span className="block text-[11px] text-muted-foreground">match</span>
         </p>
         <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-      </Link>
+      </NavLink>
 
       <Tooltip>
         <TooltipTrigger asChild>
@@ -135,9 +139,13 @@ export function MatchLanes({
             unseenPartialCount > 0 ? (
               <>
                 {unseenPartialCount} more in{' '}
-                <Link href="/matches" className="font-medium text-primary hover:underline">
+                <NavLink
+                  href="/matches"
+                  pendingLabel="Loading matches…"
+                  className="font-medium text-primary hover:underline"
+                >
                   All Matches
-                </Link>
+                </NavLink>
               </>
             ) : (
               'No partial matches right now.'
@@ -147,10 +155,14 @@ export function MatchLanes({
       </div>
 
       {totalCount > strong.length + partial.length + 1 ? (
-        <Link href="/matches" className="flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+        <NavLink
+          href="/matches"
+          pendingLabel="Loading matches…"
+          className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
           View all {totalCount} matches
           <ArrowRight className="size-3.5" />
-        </Link>
+        </NavLink>
       ) : null}
     </div>
   )

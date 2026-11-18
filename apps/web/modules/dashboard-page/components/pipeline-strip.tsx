@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { ArrowRight, ClipboardList } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 import { EmptyState } from '@/components/common/empty-state'
 import { ErrorMessage } from '@/components/error-message'
+import { NavLink } from '@/components/nav-link'
 import { buttonVariants } from '@/components/ui/button'
 import { DASHBOARD_PIPELINE_QUERY } from '../queries'
 import type { DashboardPipelineQueryResult } from '../types'
@@ -38,10 +38,14 @@ export function PipelineStrip() {
           Application Pipeline
         </h2>
         {total > 0 ? (
-          <Link href="/applications" className="flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+          <NavLink
+            href="/applications"
+            pendingLabel="Loading applications…"
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
             View Applications
             <ArrowRight className="size-3.5" />
-          </Link>
+          </NavLink>
         ) : null}
       </div>
 
@@ -51,9 +55,13 @@ export function PipelineStrip() {
           title="No applications tracked yet"
           description="Save a job from your matches and it will appear here, ready to move through each stage."
           action={
-            <Link href="/matches" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+            <NavLink
+              href="/matches"
+              pendingLabel="Loading matches…"
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
               View Matches
-            </Link>
+            </NavLink>
           }
         />
       ) : (

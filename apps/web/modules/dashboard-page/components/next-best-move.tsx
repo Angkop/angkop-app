@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { Target } from 'lucide-react'
+import { NavLink } from '@/components/nav-link'
 import { Button, buttonVariants } from '@/components/ui/button'
 import type { DashboardMatch } from '../types'
 import { ScoreRing } from './score-ring'
@@ -41,9 +41,13 @@ export function NextBestMove({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Link href={`/listings/${match.job.id}`} className={buttonVariants({ size: 'lg', className: 'w-full sm:w-auto' })}>
+          <NavLink
+            href={`/listings/${match.job.id}`}
+            pendingLabel="Opening listing…"
+            className={buttonVariants({ size: 'lg', className: 'w-full sm:w-auto' })}
+          >
             View Match
-          </Link>
+          </NavLink>
           <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => onViewInsight(match.job)}>
             <Target className="size-4" />
             See Why It Matches

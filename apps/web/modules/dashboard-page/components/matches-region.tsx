@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { SearchX } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 import { EmptyState } from '@/components/common/empty-state'
 import { ErrorMessage } from '@/components/error-message'
+import { NavLink } from '@/components/nav-link'
 import { buttonVariants } from '@/components/ui/button'
 import { DASHBOARD_MATCHES_COUNT } from '@/constants/dashboard'
 import { DASHBOARD_MATCHES_QUERY } from '../queries'
@@ -51,9 +51,13 @@ export function MatchesRegion() {
         title="No job matches yet"
         description="New postings are added regularly. Browse the listings now, or add skills to your profile so more jobs can be matched."
         action={
-          <Link href="/listings" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+          <NavLink
+            href="/listings"
+            pendingLabel="Loading listings…"
+            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+          >
             Browse Listings
-          </Link>
+          </NavLink>
         }
       />
     )

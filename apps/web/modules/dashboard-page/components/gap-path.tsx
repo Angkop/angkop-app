@@ -1,10 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { ArrowRight, GraduationCap } from 'lucide-react'
 import { useQuery } from '@apollo/client/react'
 import { EmptyState } from '@/components/common/empty-state'
 import { ErrorMessage } from '@/components/error-message'
+import { NavLink } from '@/components/nav-link'
 import { GAP_PATH_COUNT } from '@/constants/dashboard'
 import { DASHBOARD_GAPS_QUERY } from '../queries'
 import type { DashboardGapsQueryResult } from '../types'
@@ -38,10 +38,14 @@ export function GapPath() {
           Your Skill Path
         </h2>
         {totalGaps > gaps.length ? (
-          <Link href="/skill-gaps" className="flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+          <NavLink
+            href="/skill-gaps"
+            pendingLabel="Loading skill gaps…"
+            className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+          >
             View all {totalGaps} skills
             <ArrowRight className="size-3.5" />
-          </Link>
+          </NavLink>
         ) : null}
       </div>
 
