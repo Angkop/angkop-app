@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@apollo/client/react'
-import { AlertTriangle, BarChart3, CheckCircle2, GraduationCap, Target, Users } from 'lucide-react'
+import { AlertTriangle, BarChart3, Target, Users } from 'lucide-react'
 import type { MatchInsight } from '@angkop/shared'
 import { getMatchLabel } from '@angkop/shared'
 import {
@@ -20,6 +20,7 @@ import { ErrorMessage } from '@/components/error-message'
 import { BrandLoader } from '@/components/brand-loader'
 import { StepProgress } from '@/components/step-progress'
 import { variantForScore } from '@/components/match-score-badge'
+import { SkillsComparison } from '@/components/skills-comparison'
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
@@ -68,22 +69,10 @@ function ReasonAccordionItem({
   )
 }
 
-function SkillChips({ skills, tone }: { skills: string[]; tone: 'match' | 'growth' }) {
-  if (skills.length === 0) return <p className="text-xs text-muted-foreground">None found.</p>
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {skills.map((skill) => (
-        <Badge key={skill} variant={tone === 'match' ? 'strong' : 'outline'}>
-          {skill}
-        </Badge>
-      ))}
-    </div>
-  )
-}
-
 function InsightBody({ insight }: { insight: MatchInsight }) {
   return (
-    <div className="space-y-5">
+    // mb-6: this dialog has no footer, which is what normally gives the body room at the bottom
+    <div className="mb-6 space-y-5">
       <div className="flex items-center gap-3 border-b border-border pb-4">
         <Target className="size-5 shrink-0 text-primary" />
         <div className="min-w-0 flex-1">
@@ -131,22 +120,7 @@ function InsightBody({ insight }: { insight: MatchInsight }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <CheckCircle2 className="size-3.5" />
-            Matching skills
-          </p>
-          <SkillChips skills={insight.matchingSkills} tone="match" />
-        </div>
-        <div>
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-            <GraduationCap className="size-3.5" />
-            Skills to grow
-          </p>
-          <SkillChips skills={insight.missingSkills} tone="growth" />
-        </div>
-      </div>
+      <SkillsComparison matching={insight.matchingSkills} growing={insight.missingSkills} />
     </div>
   )
 }
@@ -175,7 +149,7 @@ export function MatchInsightDialog({
         <DialogHeader title="Why this is a match" description={<>{jobTitle} · {jobCompany}</>} />
 
         {loading ? (
-          <div className="rounded-lg border border-border p-5">
+          <div className="mb-6 rounded-lg border border-border p-5">
             <div className="flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{jobTitle}</p>
@@ -190,7 +164,7 @@ export function MatchInsightDialog({
         ) : null}
 
         {error ? (
-          <div className="flex flex-col items-center gap-3 rounded-lg border border-border p-8 text-center">
+          <div className="mb-6 flex flex-col items-center gap-3 rounded-lg border border-border p-8 text-center">
             <span className="flex size-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertTriangle className="size-5" />
             </span>
