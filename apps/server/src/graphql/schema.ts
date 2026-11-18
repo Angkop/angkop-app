@@ -16,6 +16,8 @@ export const typeDefs = `#graphql
     semanticScore: Float!
     collaborativeScore: Float!
     hybridScore: Float!
+    # Required skills not listed on the user's profile (exact name match, case-insensitive).
+    missingSkillCount: Int!
   }
 
   type JobMatchPage {
@@ -88,11 +90,18 @@ export const typeDefs = `#graphql
 
   # Aggregate counts across every saved job, independent of the current page/status
   # filter — what the Applications page's stats row shows.
+  type SavedJobStatusCount {
+    status: ApplicationStatus!
+    count: Int!
+  }
+
   type SavedJobStats {
     total: Int!
     inProgress: Int!
     upcomingInterviews: Int!
     successful: Int!
+    # One entry per status in pipeline order, zero-filled — the dashboard's pipeline strip.
+    statusCounts: [SavedJobStatusCount!]!
   }
 
   type SavedCourse {

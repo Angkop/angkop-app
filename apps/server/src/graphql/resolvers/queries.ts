@@ -1,4 +1,4 @@
-import { MATCH_SCORE_THRESHOLDS, type Course } from '@angkop/shared'
+import { APPLICATION_STATUS_ORDER, MATCH_SCORE_THRESHOLDS, type Course } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
 import { skillGap as skillGapRequest } from '../../lib/ml-client'
 import { getOrSetSkillGaps } from '../../lib/redis'
@@ -82,7 +82,7 @@ export const queryResolvers = {
     const start = (page - 1) * pageSize
 
     return {
-      items: await hydrateJobMatches(filtered.slice(start, start + pageSize)),
+      items: await hydrateJobMatches(context.userId, filtered.slice(start, start + pageSize)),
       total: filtered.length,
       strongMatchCount
     }
@@ -218,13 +218,19 @@ export const queryResolvers = {
   // that's what the stats row is for.
   savedJobStats: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
     const baseWhere = { userId: context.userId, deleted: false, job: { deleted: false } }
-    const [total, inProgress, upcomingInterviews, successful] = await Promise.all([
+    const [total, inProgress, upcomingInterviews, successful, statusGroups] = await Promise.all([
       prisma.savedJob.count({ where: baseWhere }),
       prisma.savedJob.count({ where: { ...baseWhere, status: { in: IN_PROGRESS_SAVED_JOB_STATUSES } } }),
       prisma.savedJob.count({ where: { ...baseWhere, interviewDate: { not: null } } }),
-      prisma.savedJob.count({ where: { ...baseWhere, status: 'SUCCESSFUL' } })
+      prisma.savedJob.count({ where: { ...baseWhere, status: 'SUCCESSFUL' } }),
+      prisma.savedJob.groupBy({ by: ['status'], where: baseWhere, _count: { _all: true } })
     ])
-    return { total, inProgress, upcomingInterviews, successful }
+    const countsByStatus = new Map<string, number>(statusGroups.map((group) => [group.status, group._count._all]))
+    const statusCounts = APPLICATION_STATUS_ORDER.map((status) => ({
+      status,
+      count: countsByStatus.get(status) ?? 0
+    }))
+    return { total, inProgress, upcomingInterviews, successful, statusCounts }
   },
 
   // "Jobs applied" on the profile page — any saved job that's moved past PENDING.

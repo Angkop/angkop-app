@@ -240,34 +240,46 @@ export async function computeScoredJobs(userId: string): Promise<ScoredJob[]> {
 
 // Loads the full job rows for just the page being returned, in the page's own order -
 // the one place jobMatches reads descriptions and URLs, for ~15 jobs instead of the catalog.
-export async function hydrateJobMatches(scoredJobs: ScoredJob[]): Promise<JobMatch[]> {
+export async function hydrateJobMatches(userId: string, scoredJobs: ScoredJob[]): Promise<JobMatch[]> {
   if (scoredJobs.length === 0) return []
 
-  const jobs = await prisma.job.findMany({
-    where: { id: { in: scoredJobs.map((scoredJob) => scoredJob.id) }, deleted: false },
-    select: {
-      id: true,
-      platformJobId: true,
-      platform: true,
-      title: true,
-      company: true,
-      description: true,
-      requiredSkills: true,
-      url: true,
-      sourceName: true
-    }
-  })
+  const [jobs, userSkills] = await Promise.all([
+    prisma.job.findMany({
+      where: { id: { in: scoredJobs.map((scoredJob) => scoredJob.id) }, deleted: false },
+      select: {
+        id: true,
+        platformJobId: true,
+        platform: true,
+        title: true,
+        company: true,
+        description: true,
+        requiredSkills: true,
+        url: true,
+        sourceName: true
+      }
+    }),
+    prisma.userSkill.findMany({
+      where: { userId, deleted: false, skill: { deleted: false } },
+      select: { skill: { select: { name: true } } }
+    })
+  ])
   const jobsById = new Map(jobs.map((job) => [job.id, job]))
+  const userSkillNames = new Set(userSkills.map((userSkill) => userSkill.skill.name.toLowerCase()))
 
   const matches: JobMatch[] = []
   for (const scoredJob of scoredJobs) {
     const job = jobsById.get(scoredJob.id)
     if (!job) continue
+    let missingSkillCount = 0
+    for (const requiredSkill of job.requiredSkills) {
+      if (!userSkillNames.has(requiredSkill.toLowerCase())) missingSkillCount++
+    }
     matches.push({
       job,
       semanticScore: scoredJob.semanticScore,
       collaborativeScore: scoredJob.collaborativeScore,
-      hybridScore: scoredJob.hybridScore
+      hybridScore: scoredJob.hybridScore,
+      missingSkillCount
     } as JobMatch)
   }
   return matches

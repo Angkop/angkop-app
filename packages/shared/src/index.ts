@@ -170,6 +170,8 @@ export type JobMatch = {
   semanticScore: number
   collaborativeScore: number
   hybridScore: number
+  // How many of the job's required skills aren't listed on the user's profile
+  missingSkillCount: number
 }
 
 export type SkillGap = {
@@ -194,6 +196,16 @@ export type ApplicationStatus =
   | 'INTERVIEWED'
   | 'SUCCESSFUL'
   | 'UNSUCCESSFUL'
+
+export const APPLICATION_STATUS_ORDER: ApplicationStatus[] = [
+  'PENDING',
+  'APPLIED',
+  'AWAITING_INTERVIEW',
+  'ONGOING_INTERVIEW',
+  'INTERVIEWED',
+  'SUCCESSFUL',
+  'UNSUCCESSFUL'
+]
 
 export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
   PENDING: 'Pending',
