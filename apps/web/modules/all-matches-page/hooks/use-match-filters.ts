@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
 import { withSearchParams } from '@/lib/utils'
+import { SEARCH_DEBOUNCE_MS } from '../constants'
 
 export function useMatchFilters() {
   const router = useRouter()
@@ -10,30 +11,35 @@ export function useMatchFilters() {
 
   const page = Number(searchParams.get('page')) || 1
   const appliedQuery = searchParams.get('q') ?? ''
-  const appliedSkill = searchParams.get('skill') ?? ALL_FILTER_VALUE
+  const skill = searchParams.get('skill') ?? ALL_FILTER_VALUE
 
-  // Staged filter values — only take effect once "Apply Filters" is clicked.
+  // What's typed in the search box. It reaches the URL (and so the query) after a pause in
+  // typing, so every keystroke isn't a request. The skill pills apply as soon as they're picked.
   const [draftQuery, setDraftQuery] = useState(appliedQuery)
-  const [draftSkill, setDraftSkill] = useState(appliedSkill)
 
-  const hasPendingChanges = draftQuery !== appliedQuery || draftSkill !== appliedSkill
+  const updateParams = useCallback(
+    (patch: Record<string, string | number | undefined>) => {
+      const next = withSearchParams(searchParams, patch)
+      router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false })
+    },
+    [router, pathname, searchParams]
+  )
 
+  // Follows back/forward navigation, which changes the URL without touching the search box.
   useEffect(() => {
     setDraftQuery(appliedQuery)
-    setDraftSkill(appliedSkill)
-  }, [appliedQuery, appliedSkill])
+  }, [appliedQuery])
 
-  function updateParams(patch: Record<string, string | number | undefined>) {
-    const next = withSearchParams(searchParams, patch)
-    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false })
-  }
+  useEffect(() => {
+    if (draftQuery === appliedQuery) return
+    const timer = setTimeout(() => {
+      updateParams({ q: draftQuery || undefined, page: undefined })
+    }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [draftQuery, appliedQuery, updateParams])
 
-  function applyFilters() {
-    updateParams({
-      q: draftQuery || undefined,
-      skill: draftSkill === ALL_FILTER_VALUE ? undefined : draftSkill,
-      page: undefined
-    })
+  function selectSkill(nextSkill: string) {
+    updateParams({ skill: nextSkill === ALL_FILTER_VALUE ? undefined : nextSkill, page: undefined })
   }
 
   function goToPage(nextPage: number) {
@@ -43,13 +49,10 @@ export function useMatchFilters() {
   return {
     page,
     appliedQuery,
-    appliedSkill,
+    skill,
     draftQuery,
     setDraftQuery,
-    draftSkill,
-    setDraftSkill,
-    hasPendingChanges,
-    applyFilters,
+    selectSkill,
     goToPage
   }
 }

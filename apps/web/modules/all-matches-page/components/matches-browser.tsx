@@ -1,15 +1,17 @@
 'use client'
 
-import Link from 'next/link'
-import { Search } from 'lucide-react'
-import { JobRow } from '@/components/job-row'
-import { LoadingSkeleton } from '@/components/loading-skeleton'
+import { Search, SearchX } from 'lucide-react'
+import { EmptyState } from '@/components/common/empty-state'
+import { MatchCard } from '@/components/match-card'
+import { MatchGrid } from '@/components/match-grid'
+import { NavLink } from '@/components/nav-link'
 import { PaginationControls } from '@/components/pagination-controls'
-import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
 import type { JobMatchSummary } from '../types'
+import { MatchCardSkeleton, MatchesGridSkeleton } from './all-matches-skeleton'
+import { SkillFilter } from './skill-filter'
 
 export function MatchesBrowser({
   items,
@@ -19,15 +21,13 @@ export function MatchesBrowser({
   query,
   skill,
   skills,
-  hasPendingChanges,
   isLoading,
+  pendingSlots,
   onQueryChange,
   onSkillChange,
-  onApply,
   onPageChange,
   onSave,
   onDismiss,
-  onViewInsight,
   savingJobIds,
   dismissingJobIds
 }: {
@@ -38,90 +38,82 @@ export function MatchesBrowser({
   query: string
   skill: string
   skills: string[]
-  hasPendingChanges: boolean
   isLoading: boolean
+  // Jobs just saved or dismissed whose replacements are still loading, one empty cell each.
+  pendingSlots: number
   onQueryChange: (value: string) => void
   onSkillChange: (value: string) => void
-  onApply: () => void
   onPageChange: (page: number) => void
   onSave: (jobId: string) => void
-  onDismiss: (jobId: string) => Promise<void>
-  onViewInsight: (job: JobMatchSummary['job']) => void
+  onDismiss: (jobId: string) => Promise<boolean>
   savingJobIds: Set<string>
   dismissingJobIds: Set<string>
 }) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
+  const hasFilters = Boolean(query) || skill !== ALL_FILTER_VALUE
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:max-w-xs">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-sm">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') onApply()
-              }}
               placeholder="Search by title, company, or skill"
+              aria-label="Search matches"
               className="pl-8"
             />
           </div>
-          <Select value={skill} onValueChange={onSkillChange}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Skill" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL_FILTER_VALUE}>All skills</SelectItem>
-              {skills.map((skillName) => (
-                <SelectItem key={skillName} value={skillName}>
-                  {skillName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button size="sm" onClick={onApply} disabled={!hasPendingChanges}>
-            Apply Filters
-          </Button>
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            {total} match{total === 1 ? '' : 'es'}
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {total} match{total === 1 ? '' : 'es'}
-        </p>
+        <SkillFilter skills={skills} selected={skill} onSelect={onSkillChange} />
       </div>
 
       {isLoading ? (
-        <LoadingSkeleton rows={4} heightClassName="h-16" />
-      ) : items.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          {query || skill !== ALL_FILTER_VALUE ? (
-            'No matches found for these filters. Try a different search or skill.'
-          ) : (
-            <>
-              No job matches yet.{' '}
-              <Link href="/listings" className="font-medium text-primary hover:underline">
-                Browse listings
-              </Link>{' '}
-              to see what&apos;s available now. New postings are added regularly, so check back soon.
-            </>
-          )}
-        </p>
+        <MatchesGridSkeleton />
+      ) : items.length === 0 && pendingSlots === 0 ? (
+        <EmptyState
+          icon={SearchX}
+          title={hasFilters ? 'No matches for these filters' : 'No job matches yet'}
+          description={
+            hasFilters
+              ? 'Try a different search, or pick another skill or All to see every match.'
+              : 'New postings are added regularly. Browse the listings now, or add skills to your profile so more jobs can be matched.'
+          }
+          action={
+            hasFilters ? undefined : (
+              <NavLink
+                href="/listings"
+                pendingLabel="Loading listings…"
+                className={buttonVariants({ variant: 'outline', size: 'sm' })}
+              >
+                Browse Listings
+              </NavLink>
+            )
+          }
+        />
       ) : (
         <>
-          <div className="flex flex-col gap-2">
+          <MatchGrid>
             {items.map((match) => (
-              <JobRow
+              <MatchCard
                 key={match.job.id}
                 job={match.job}
                 score={match.hybridScore}
                 onSave={onSave}
                 onDismiss={onDismiss}
-                onViewInsight={onViewInsight}
                 isSaving={savingJobIds.has(match.job.id)}
                 isDismissing={dismissingJobIds.has(match.job.id)}
               />
             ))}
-          </div>
+            {Array.from({ length: pendingSlots }, (_, index) => (
+              <MatchCardSkeleton key={`pending-${index}`} />
+            ))}
+          </MatchGrid>
 
           <PaginationControls page={page} pageCount={pageCount} onChange={onPageChange} />
         </>
