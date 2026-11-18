@@ -17,7 +17,7 @@ export function ListingFacts({ listing }: { listing: ListingDetail }) {
       label: 'Experience Level',
       value: listing.experienceLevel ? CAREER_LEVEL_LABELS[listing.experienceLevel] : null
     },
-    { icon: Banknote, label: 'Salary', value: formatSalaryRange(listing.salaryMin, listing.salaryMax) }
+    { icon: Banknote, label: 'Salary', value: formatSalaryRange(listing) }
   ]
 
   return (

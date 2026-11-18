@@ -1,11 +1,25 @@
+import { DESCRIPTION_CATEGORIES, SALARY_PERIOD_SUFFIXES, findDescriptionCategoryByHeading } from '@angkop/shared'
+import type { DescriptionCategory, SalaryPeriod } from '@angkop/shared'
 import type { ListingDetail } from './types'
 
-export function formatSalaryRange(salaryMin: number | null, salaryMax: number | null): string | null {
+// Rows ingested before salaryCurrency/salaryPeriod existed carry neither, and every one of
+// them came from RemoteOK, which quotes USD per year — so null falls back to that.
+const LEGACY_SALARY_CURRENCY = 'USD'
+const LEGACY_SALARY_PERIOD: SalaryPeriod = 'YEARLY'
+
+export function formatSalaryRange(
+  listing: Pick<ListingDetail, 'salaryMin' | 'salaryMax' | 'salaryCurrency' | 'salaryPeriod'>
+): string | null {
+  const { salaryMin, salaryMax } = listing
   if (salaryMin === null && salaryMax === null) return null
+  const isLegacyRow = listing.salaryCurrency === null && listing.salaryPeriod === null
+  const currency = listing.salaryCurrency ?? LEGACY_SALARY_CURRENCY
+  const period = isLegacyRow ? LEGACY_SALARY_PERIOD : listing.salaryPeriod
   const format = (value: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
-  if (salaryMin !== null && salaryMax !== null) return `${format(salaryMin)} - ${format(salaryMax)}/yr`
-  return `${format(salaryMin ?? salaryMax ?? 0)}/yr`
+    new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(value)
+  const suffix = period ? SALARY_PERIOD_SUFFIXES[period] : ''
+  if (salaryMin !== null && salaryMax !== null) return `${format(salaryMin)} - ${format(salaryMax)}${suffix}`
+  return `${format(salaryMin ?? salaryMax ?? 0)}${suffix}`
 }
 
 export type GroupedDescriptionSection = {
@@ -15,57 +29,17 @@ export type GroupedDescriptionSection = {
 }
 
 // Sources write their own heading wording ("What You'll Bring", "The Gig", "Perks & Stuff"),
-// so two listings never land on the same labels — which makes a per-job accordion feel
-// arbitrary rather than scannable. This sorts every raw heading into one fixed taxonomy
-// (same order, same labels, on every listing) so a reader can learn the shape once and
-// then skim any posting the same way. Every category always renders, even with nothing in
-// it — a category that's unexpectedly missing (parsing failed, or this source just never
-// mentions it) should look different from one a reader never thought to look for, not be
-// silently absent.
-const CATEGORIES: { value: string; label: string; keywords: string[] }[] = [
-  {
-    value: 'overview',
-    label: 'Overview',
-    keywords: ['overview', 'about the role', 'about the company', 'about us', 'who we are', 'the role', 'summary']
-  },
-  {
-    value: 'responsibilities',
-    label: 'Responsibilities',
-    keywords: ['responsibilit', "what you'll do", 'what you will do', 'duties', 'day-to-day', 'day to day', 'key tasks']
-  },
-  {
-    value: 'requirements',
-    label: 'Requirements',
-    keywords: [
-      'requirement',
-      'qualification',
-      'must have',
-      'must-have',
-      "what you'll bring",
-      'what you bring',
-      'what we need',
-      'looking for',
-      'skills'
-    ]
-  },
-  {
-    value: 'nice-to-have',
-    label: 'Nice to have',
-    keywords: ['nice to have', 'nice-to-have', 'preferred', 'bonus', 'good to have', 'a plus', 'desirable']
-  },
-  {
-    value: 'benefits',
-    label: 'Benefits',
-    keywords: ['benefit', 'perk', 'what we offer', 'compensation', 'why join', "what's in it"]
-  }
-]
-const OTHER_CATEGORY = { value: 'other', label: 'Additional details' }
+// so two listings never land on the same labels. Ingestion already files each section under
+// one of the fixed categories in @angkop/shared (same order, same labels, on every listing),
+// and this re-sorts by the same keywords so older rows that were stored with their raw
+// headings group the same way. Every category always renders, even with nothing in it — a
+// category that's unexpectedly missing (parsing failed, or this source just never mentions
+// it) should look different from one a reader never thought to look for, not be silently
+// absent.
+const OTHER_CATEGORY = DESCRIPTION_CATEGORIES[DESCRIPTION_CATEGORIES.length - 1]
 
-function categoryForHeading(heading: string | null): { value: string; label: string } {
-  if (heading === null) return CATEGORIES[0]
-  const normalized = heading.toLowerCase()
-  const match = CATEGORIES.find((category) => category.keywords.some((keyword) => normalized.includes(keyword)))
-  return match ?? OTHER_CATEGORY
+function categoryForHeading(heading: string | null): DescriptionCategory {
+  return findDescriptionCategoryByHeading(heading) ?? OTHER_CATEGORY
 }
 
 export function groupDescriptionSections(sections: ListingDetail['descriptionSections']): GroupedDescriptionSection[] {
@@ -81,6 +55,7 @@ export function groupDescriptionSections(sections: ListingDetail['descriptionSec
     }
   }
 
-  const order = [...CATEGORIES, OTHER_CATEGORY]
-  return order.map((category) => itemsByCategory.get(category.value) ?? { ...category, items: [] })
+  return DESCRIPTION_CATEGORIES.map(
+    (category) => itemsByCategory.get(category.value) ?? { value: category.value, label: category.label, items: [] }
+  )
 }

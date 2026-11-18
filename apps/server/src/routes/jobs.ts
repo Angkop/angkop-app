@@ -119,6 +119,8 @@ jobsRouter.get('/:id', async (req, res) => {
     location: job.location,
     salaryMin: job.salaryMin,
     salaryMax: job.salaryMax,
+    salaryCurrency: job.salaryCurrency,
+    salaryPeriod: job.salaryPeriod,
     workSetup: job.workSetup,
     employmentType: job.employmentType,
     detectedLanguage: job.detectedLanguage,

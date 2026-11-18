@@ -55,6 +55,15 @@ export const EMPLOYMENT_TYPE_LABELS: Record<EmploymentType, string> = {
   FREELANCE: 'Freelance'
 }
 
+export type SalaryPeriod = 'HOURLY' | 'DAILY' | 'MONTHLY' | 'YEARLY'
+
+export const SALARY_PERIOD_SUFFIXES: Record<SalaryPeriod, string> = {
+  HOURLY: '/hr',
+  DAILY: '/day',
+  MONTHLY: '/mo',
+  YEARLY: '/yr'
+}
+
 export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
 
 export const SKILL_LEVEL_LABELS: Record<SkillLevel, string> = {
@@ -400,3 +409,5 @@ export type DescriptionSection = {
   heading: string | null
   items: string[]
 }
+
+export * from './constants/description-categories'

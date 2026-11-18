@@ -28,6 +28,16 @@ enum WorkSetup {
   ONSITE
 }
 
+// How often a Job's salaryMin/salaryMax is paid. Listings quote pay in whatever unit their
+// market uses (PH postings are usually per month, RemoteOK per year), so the number alone
+// can't be shown correctly without it.
+enum SalaryPeriod {
+  HOURLY
+  DAILY
+  MONTHLY
+  YEARLY
+}
+
 enum EmploymentType {
   FULL_TIME
   PART_TIME
@@ -218,6 +228,10 @@ model Job {
   location       String?
   salaryMin      Float?
   salaryMax      Float?
+  // ISO 4217 code (USD, PHP, ...). Null on rows ingested before this column existed, which
+  // were all RemoteOK's USD-per-year figures.
+  salaryCurrency String?
+  salaryPeriod   SalaryPeriod?
   workSetup      WorkSetup?
   employmentType EmploymentType?
   experienceLevel     CareerLevel?
