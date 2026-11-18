@@ -154,6 +154,14 @@ body {
   }
 }
 
+/* Dashboard score ring (modules/dashboard-page/components/score-ring.tsx) — sweeps from empty
+   to the element's own dash length, so it fills to whatever percentage the ring is drawn at. */
+@keyframes angkop-ring {
+  from {
+    stroke-dasharray: 0 327;
+  }
+}
+
 @keyframes angkop-peek {
   from {
     opacity: 0;

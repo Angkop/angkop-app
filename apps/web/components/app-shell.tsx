@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { NAV_LINKS } from '@/constants/nav'
+import { NAV_LINKS, WIDE_PAGE_PATHS } from '@/constants/nav'
 import { clearStoredToken, getStoredToken } from '@/lib/auth'
 import { supabaseClient } from '@/lib/supabase-client'
 import { cn, getInitials } from '@/lib/utils'
@@ -82,6 +82,7 @@ export function AppShell({
   // (requireAuth false) renders immediately so the extension's scraper never waits on client
   // JS. The header still renders, so the page shows its chrome and a skeleton, not a blank.
   const isHoldingContent = requireAuth && isChecking
+  const defaultMainClassName = WIDE_PAGE_PATHS.some((path) => isActive(pathname, path)) ? 'max-w-5xl' : 'max-w-2xl'
 
   const email = data?.me.email ?? ''
   const name = data?.me.name ?? null
@@ -225,7 +226,7 @@ export function AppShell({
         ) : null}
       </header>
 
-      <main className={cn('mx-auto w-full flex-1 px-4 py-10', mainClassName ?? 'max-w-2xl')}>{isHoldingContent ? <LoadingSkeleton rows={3} /> : children}</main>
+      <main className={cn('mx-auto w-full flex-1 px-4 py-10', mainClassName ?? defaultMainClassName)}>{isHoldingContent ? <LoadingSkeleton rows={3} /> : children}</main>
     </div>
   )
 }

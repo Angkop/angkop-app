@@ -4,7 +4,7 @@ import { DashboardSkeleton } from '@/modules/dashboard-page/components/dashboard
 export default function Loading() {
   return (
     <div>
-      <PageHeader title="Your matches" description="Jobs ranked by how well they fit your profile." />
+      <PageHeader title="Your matches" />
       <DashboardSkeleton />
     </div>
   )

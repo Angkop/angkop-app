@@ -1,5 +1,8 @@
 import { Briefcase, ClipboardList, LayoutDashboard, ListChecks, Target } from 'lucide-react'
 
+// Pages that need more than the default reading width (the dashboard's fit map is a chart).
+export const WIDE_PAGE_PATHS = ['/dashboard']
+
 // Profile isn't a nav link — it's reached from the account menu in AppShell's header
 // (DropdownMenuTrigger -> "Profile settings"), not the top-level nav.
 export const NAV_LINKS = [

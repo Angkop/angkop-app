@@ -1,40 +1,21 @@
 'use client'
 
-import { useQuery } from '@apollo/client/react'
 import { PageHeader } from '@/components/page-header'
-import { ErrorMessage } from '@/components/error-message'
-import { TOP_MATCHES_COUNT } from '@/constants/dashboard'
-import { DashboardSkeleton } from './components/dashboard-skeleton'
-import { MatchStatsRow } from './components/match-stats-row'
-import { TopMatchesList } from './components/top-matches-list'
-import { JOB_MATCHES_QUERY } from './queries'
-import type { JobMatchesQueryResult } from './types'
+import { GapPath } from './components/gap-path'
+import { MatchesRegion } from './components/matches-region'
+import { PipelineStrip } from './components/pipeline-strip'
 
+// Each region fetches and renders on its own, so the matches show up as soon as they are
+// ready instead of waiting on the slowest query (skill gaps can call the ML service).
 export function DashboardPage() {
-  const { data, loading, error, refetch } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
-    variables: { page: 1, pageSize: TOP_MATCHES_COUNT }
-  })
-
-  const topMatches = data?.jobMatches.items ?? []
-  const totalCount = data?.jobMatches.total ?? 0
-  const strongMatchCount = data?.jobMatches.strongMatchCount ?? 0
-
   return (
-    <div>
-      <PageHeader title="Your matches" description="Jobs ranked by how well they fit your profile." />
-
-      {loading ? (
-        <DashboardSkeleton />
-      ) : error ? (
-        <ErrorMessage onRetry={refetch} retryLabel="Reload Matches">
-          Could not load job matches: {error.message}
-        </ErrorMessage>
-      ) : (
-        <>
-          <MatchStatsRow totalCount={totalCount} strongMatchCount={strongMatchCount} />
-          <TopMatchesList matches={topMatches} totalCount={totalCount} />
-        </>
-      )}
+    <div className="space-y-12">
+      <PageHeader title="Your matches" />
+      <MatchesRegion />
+      <div className="grid gap-12 lg:grid-cols-2 lg:gap-8">
+        <PipelineStrip />
+        <GapPath />
+      </div>
     </div>
   )
 }
