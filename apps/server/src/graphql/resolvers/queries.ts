@@ -23,6 +23,8 @@ import {
 } from './helpers'
 import type { GraphQLContext } from './types'
 
+const IN_PROGRESS_STATUS_SET = new Set<ApplicationStatus>(IN_PROGRESS_SAVED_JOB_STATUSES)
+
 type JobMatchesArgs = {
   page?: number | null
   pageSize?: number | null
@@ -218,18 +220,27 @@ export const queryResolvers = {
   // that's what the stats row is for.
   savedJobStats: async (_parent: unknown, _args: unknown, context: GraphQLContext) => {
     const baseWhere = { userId: context.userId, deleted: false, job: { deleted: false } }
-    const [total, inProgress, upcomingInterviews, successful, statusGroups] = await Promise.all([
-      prisma.savedJob.count({ where: baseWhere }),
-      prisma.savedJob.count({ where: { ...baseWhere, status: { in: IN_PROGRESS_SAVED_JOB_STATUSES } } }),
-      prisma.savedJob.count({ where: { ...baseWhere, interviewDate: { not: null } } }),
-      prisma.savedJob.count({ where: { ...baseWhere, status: 'SUCCESSFUL' } }),
-      prisma.savedJob.groupBy({ by: ['status'], where: baseWhere, _count: { _all: true } })
+    // Two queries, not one count per figure: each Promise.all branch holds a connection from a
+    // small pool (connection_limit in DATABASE_URL), and the dashboard loads this alongside
+    // other queries. total, inProgress and successful are all sums of the per-status counts.
+    const [statusGroups, upcomingInterviews] = await Promise.all([
+      prisma.savedJob.groupBy({ by: ['status'], where: baseWhere, _count: { _all: true } }),
+      prisma.savedJob.count({ where: { ...baseWhere, interviewDate: { not: null } } })
     ])
     const countsByStatus = new Map<string, number>(statusGroups.map((group) => [group.status, group._count._all]))
     const statusCounts = APPLICATION_STATUS_ORDER.map((status) => ({
       status,
       count: countsByStatus.get(status) ?? 0
     }))
+
+    let total = 0
+    let inProgress = 0
+    for (const { status, count } of statusCounts) {
+      total += count
+      if (IN_PROGRESS_STATUS_SET.has(status)) inProgress += count
+    }
+    const successful = countsByStatus.get('SUCCESSFUL') ?? 0
+
     return { total, inProgress, upcomingInterviews, successful, statusCounts }
   },
 
