@@ -9,7 +9,8 @@
     "start": "node dist/src/index.js",
     "type-check": "tsc --noEmit",
     "seed": "tsx prisma/seed.ts",
-    "ingest:jobs": "tsx src/scripts/ingest-jobs.ts"
+    "ingest:jobs": "tsx src/scripts/ingest-jobs.ts",
+    "test": "tsx --test src/scripts/ingest/ingest.test.ts"
   },
   "dependencies": {
     "@angkop/shared": "workspace:*",
