@@ -1,7 +1,0 @@
-/.venv
-/.env
-/.dev-server.log
-__pycache__
-*.pyc
-/weights
-/scripts

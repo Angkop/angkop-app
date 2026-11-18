@@ -81,80 +81,11 @@ Landed on: run it locally, expose it with an ngrok tunnel so the Render-hosted
 - [x] Verified `https://refining-domestic-cough.ngrok-free.dev/health` responds `{"status":"ok"}`
 - [ ] The unused `angkop-ml` Render service — suspend or delete, your call
 
-**Known limitation (superseded by Phase 4b below)**: this only works while your laptop, `uvicorn`,
+**Known limitation, not a blocker right now**: this only works while your laptop, `uvicorn`,
 and `ngrok` are all running simultaneously. Fine for dev/demo use. Revisit before the
 40-respondent evaluation phase — local+tunnel won't survive that unattended (options then:
 pay for Render/HF, or a Google Cloud Run free-tier attempt, which looked genuinely viable
 from research but wasn't pursued here).
-
-### Phase 4b — Move the ML service to Google Cloud Run (free tier)
-
-Replaces the laptop + ngrok setup above. Cloud Run scales to zero, so it costs nothing while idle
-and the monthly free tier (180,000 vCPU-seconds, 360,000 GiB-seconds, 2M requests, in
-`us-central1`) covers a thesis-sized load. It needs a billing account (a card) on file, but
-nothing is charged inside the free tier. The nightly job ingest does not use this service: its
-workflow starts its own copy of the ML service on the GitHub runner.
-
-Use a **personal** Google account and a **new** project for this. `gcloud` on a work machine may
-already be signed in to a company account and project; check with `gcloud auth list` and
-`gcloud config get-value project` before running anything below.
-
-1. Sign in and create the project (replace `angkop-ml-123` with something unique):
-   ```
-   gcloud auth login
-   gcloud projects create angkop-ml-123
-   gcloud config set project angkop-ml-123
-   gcloud billing accounts list
-   gcloud billing projects link angkop-ml-123 --billing-account=<ACCOUNT_ID>
-   gcloud services enable run.googleapis.com cloudbuild.googleapis.com \
-     artifactregistry.googleapis.com secretmanager.googleapis.com billingbudgets.googleapis.com
-   ```
-2. Set a budget alert first, so a mistake can't turn into a surprise bill:
-   ```
-   gcloud billing budgets create --billing-account=<ACCOUNT_ID> --display-name=angkop-ml \
-     --budget-amount=1USD --threshold-rule=percent=0.5 --threshold-rule=percent=1.0
-   ```
-3. Store the keys in Secret Manager, read from `ml/.env` without printing them:
-   ```
-   cd ml
-   for name in GEMINI_API_KEY YOUTUBE_API_KEY SUPABASE_SERVICE_KEY; do
-     grep "^$name=" .env | cut -d= -f2- | tr -d '"' | gcloud secrets create $name --data-file=-
-   done
-   PROJECT_NUMBER=$(gcloud projects describe angkop-ml-123 --format='value(projectNumber)')
-   gcloud projects add-iam-policy-binding angkop-ml-123 \
-     --member="serviceAccount:$PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
-     --role=roles/secretmanager.secretAccessor
-   ```
-4. Deploy. The limits keep it inside the free tier: one instance at most, none kept warm, 1 vCPU
-   and 2 GiB (Torch + Sentence-BERT will not fit in less):
-   ```
-   gcloud run deploy angkop-ml --source . --region us-central1 --allow-unauthenticated \
-     --memory 2Gi --cpu 1 --min-instances 0 --max-instances 1 --concurrency 8 \
-     --timeout 300 --cpu-boost --port 8080 \
-     --set-env-vars "SUPABASE_URL=<value from ml/.env>,NCF_WEIGHTS_BUCKET=ml-weights,GEMINI_MODEL=<value>,GEMINI_MODEL_FALLBACK=<value>" \
-     --set-secrets "GEMINI_API_KEY=GEMINI_API_KEY:latest,YOUTUBE_API_KEY=YOUTUBE_API_KEY:latest,SUPABASE_SERVICE_KEY=SUPABASE_SERVICE_KEY:latest"
-   ```
-   The first build takes several minutes. The NCF weights are fetched from the `ml-weights`
-   Supabase bucket on startup, as `weights_fetcher.py` already does.
-5. Check it, using the URL the deploy prints:
-   ```
-   curl https://<service-url>/health
-   curl -X POST https://<service-url>/embed -H 'Content-Type: application/json' -d '{"text":"hello"}'
-   ```
-6. In the Render dashboard, set `ML_SERVICE_URL` on `apps/server` to the Cloud Run URL, then stop
-   the local `uvicorn` and `ngrok`.
-
-Things to know:
-- **Cold starts.** After idle the first request waits for torch and the model to load (tens of
-  seconds). Keeping an instance warm (`--min-instances 1`) would use up the free tier, so it is
-  deliberately off.
-- **The URL is public**, as the ngrok one was. Anyone who finds it can call `/embed` and the
-  Gemini-backed endpoints, which spends the Gemini quota (not Cloud Run money, which
-  `--max-instances 1` caps). Adding a shared-secret header between `apps/server` and this service
-  is a worthwhile follow-up.
-- **Image storage** in Artifact Registry is about 1.5 to 2 GB, past its 0.5 GB free allowance, so
-  expect cents per month. Delete old images in the `cloud-run-source-deploy` repository after
-  redeploying.
 
 ---
 
