@@ -31,7 +31,7 @@ Angkop operates as **two coordinated services** plus a browser extension:
 - Sends the read job data and behavior events to the Express API
 
 ### 2. Data Sourcing Layer (Job Ingestion)
-- A scheduled ingestion process pulls job postings from **public, no-authentication job-listing APIs** (e.g. RemoteOK, Arbeitnow) — sources explicitly built for external reuse
+- A scheduled ingestion process pulls job postings from **public job-listing APIs** (e.g. RemoteOK, Arbeitnow, Headcount Labs) — sources explicitly built for external reuse
 - Ingested postings are written into Angkop's own PostgreSQL database and served through Angkop's own listing pages
 - Angkop does **not** scrape or otherwise access any third-party job platform (JobStreet, LinkedIn, Indeed, etc.) directly
 - Any candidate source is checked against the **Data Source Vetting Criteria** (below) before being added
@@ -68,7 +68,7 @@ Angkop operates as **two coordinated services** plus a browser extension:
 ## Data Source Vetting Criteria
 
 Any additional public API considered for the ingestion process is evaluated against every criterion below before it's added as a data source:
-- Publicly accessible, no login required to view
+- Publicly documented API built for external reuse (a free API key is acceptable; no end-user login or personal data involved)
 - No sensitive or personal information is collected
 - Where published, `robots.txt` permits automated access to the relevant endpoints
 - Terms of Service explicitly permit, or do not prohibit, automated/programmatic access
@@ -147,13 +147,14 @@ recommended_courses = CourseIndex.lookup(missing_skills)
 
 ## Job Data Sources
 
-Angkop never scrapes or accesses third-party job platforms directly. All job listings come from **public, no-authentication job-listing APIs**, vetted against the Data Source Vetting Criteria above, ingested into Angkop's own database, and served through Angkop's own listing pages — which is what the browser extension actually reads.
+Angkop never scrapes or accesses third-party job platforms directly. All job listings come from **public job-listing APIs**, vetted against the Data Source Vetting Criteria above, ingested into Angkop's own database, and served through Angkop's own listing pages — which is what the browser extension actually reads.
 
 Current sources (see `apps/server/src/scripts/ingest-jobs.ts`):
 1. RemoteOK
 2. Arbeitnow
+3. Headcount Labs (Philippine listings, free API key)
 
-Future expansion is limited to adding more vetted public, no-authentication APIs to this list — it does not involve visiting or scraping additional third-party websites.
+Future expansion is limited to adding more vetted public APIs to this list — it does not involve visiting or scraping additional third-party websites.
 
 ---
 
@@ -162,7 +163,7 @@ Future expansion is limited to adding more vetted public, no-authentication APIs
 **In scope:**
 - Hybrid semantic + collaborative recommendation
 - Browser extension with match-score overlay on Angkop's own listing pages
-- Job ingestion from vetted, public, no-authentication job-listing APIs
+- Job ingestion from vetted, public job-listing APIs
 - Web dashboard (desktop + mobile browser)
 - Skill gap detection mapped to course recommendations
 - Profile, application (status + custom tags), and interaction tracking
