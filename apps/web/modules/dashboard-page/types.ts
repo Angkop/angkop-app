@@ -2,7 +2,8 @@ import type { ApplicationStatus, Course, JobMatch, SkillGap } from '@angkop/shar
 import type { JobMatchSummary } from '@/lib/job-matches'
 
 export type DashboardMatch = Pick<JobMatch, 'hybridScore' | 'missingSkillCount'> & {
-  job: JobMatchSummary['job']
+  // The dashboard doesn't ask for the description.
+  job: Omit<JobMatchSummary['job'], 'description'>
 }
 
 export type DashboardMatchesQueryResult = {

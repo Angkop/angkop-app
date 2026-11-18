@@ -38,7 +38,9 @@ export const SAMPLE_JOB: JobMatchSummary['job'] = {
   id: 'playground-job',
   title: 'Junior Frontend Engineer',
   company: 'Sample Company',
-  requiredSkills: ['React', 'TypeScript'],
+  description:
+    'Build and ship customer-facing dashboards with a small product team. You will own features from first sketch to release, and pair with designers and backend engineers along the way.',
+  requiredSkills: ['React', 'TypeScript', 'Node.js', 'GraphQL'],
   sourceName: 'Arbeitnow'
 }
 

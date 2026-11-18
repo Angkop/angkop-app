@@ -10,6 +10,7 @@ export const JOB_MATCHES_QUERY = gql`
           id
           title
           company
+          description
           requiredSkills
           sourceName
         }
@@ -45,10 +46,11 @@ export type SavedJobIdsQueryResult = {
 }
 
 // What the list views read from jobMatches: the score and enough of the job to render a row.
-// The component scores and the job's description, url and platform are fetched on demand.
+// The description is only there to cut a one-line summary from; the component scores, url and
+// platform are fetched on demand.
 export type JobMatchSummary = {
   hybridScore: number
-  job: Pick<Job, 'id' | 'title' | 'company' | 'requiredSkills' | 'sourceName'>
+  job: Pick<Job, 'id' | 'title' | 'company' | 'description' | 'requiredSkills' | 'sourceName'>
 }
 
 export type JobMatchesPage = {

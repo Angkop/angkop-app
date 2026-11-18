@@ -2,7 +2,8 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { JobRow } from '@/components/job-row'
+import { MatchCard } from '@/components/match-card'
+import { MatchGrid } from '@/components/match-grid'
 import { SkillsComparison } from '@/components/skills-comparison'
 import { StatStrip } from '@/components/stat-strip'
 import { SAMPLE_JOB } from '../constants/sample-data'
@@ -13,7 +14,7 @@ export function CardsSection() {
     <PlaygroundSection
       id='cards'
       title='Cards'
-      description='Card is the base surface. StatStrip and JobRow are the shared compositions built on the same tokens.'
+      description='Card is the base surface. StatStrip and MatchCard are the shared compositions built on the same tokens.'
     >
       <Variant
         label='Card with header, content and footer'
@@ -43,17 +44,17 @@ export function CardsSection() {
           ]}
         />
       </Variant>
-      <Variant label='Job row' usage='<JobRow job score onSave onDismiss onViewInsight />' wide>
-        <div className='space-y-2'>
-          <JobRow
+      <Variant label='Match card' usage='<MatchGrid><MatchCard job score onSave onDismiss /></MatchGrid>' wide>
+        <MatchGrid>
+          <MatchCard
             job={SAMPLE_JOB}
             score={0.86}
             onSave={() => undefined}
-            onDismiss={async () => undefined}
-            onViewInsight={() => undefined}
+            onDismiss={async () => true}
           />
-          <JobRow job={SAMPLE_JOB} score={0.52} onSave={() => undefined} onViewInsight={() => undefined} isSaving />
-        </div>
+          <MatchCard job={SAMPLE_JOB} score={0.52} onSave={() => undefined} isSaving />
+          <MatchCard job={SAMPLE_JOB} score={0.21} />
+        </MatchGrid>
       </Variant>
       <Variant label='Skills comparison' usage='<SkillsComparison matching growing />' wide>
         <SkillsComparison
