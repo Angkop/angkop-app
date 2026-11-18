@@ -1,6 +1,7 @@
 import { FileText } from 'lucide-react'
 import { WORK_SETUP_LABELS } from '@angkop/shared'
 import { Badge } from '@/components/ui/badge'
+import { SectionEmpty } from './section-empty'
 import { formatSalaryRange } from '../utils'
 import type { MeProfile } from '../types'
 
@@ -18,13 +19,13 @@ export function PreferencesSection({
       {preferences && preferences.desiredRoles.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {preferences.desiredRoles.map((role) => (
-            <Badge key={role} variant="secondary">
+            <Badge key={role}>
               {role}
             </Badge>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No desired roles added yet.</p>
+        <SectionEmpty noun="desired roles" />
       )}
 
       {preferences ? (

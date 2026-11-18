@@ -6,26 +6,29 @@ import dynamic from 'next/dynamic'
 import { usePathname, useRouter } from 'next/navigation'
 import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
-import { LogOut, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { BrandMark } from '@/components/brand-mark'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
-import { Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { NAV_LINKS, WIDE_PAGE_PATHS } from '@/constants/nav'
 import { clearStoredToken, getStoredToken } from '@/lib/auth'
 import { supabaseClient } from '@/lib/supabase-client'
 import { cn, getInitials } from '@/lib/utils'
 
-// The profile editor (and everything it pulls in - its field sections, the resume import
-// dialog) only ever renders once the user opens this sheet, so its JS has no reason to
-// ship in app-shell's own bundle, which every single page pays for on load.
-const ProfilePage = dynamic(
-  () => import('@/modules/profile-page/profile-page').then((mod) => mod.ProfilePage),
-  { ssr: false }
-)
+const loadProfileSheet = () => import('@/modules/profile-page/profile-sheet').then((mod) => mod.ProfileSheet)
+
+// The profile sheet (and everything it pulls in - the editor, its field sections, the resume
+// import dialog) only ever renders once the user opens it, so its JS has no reason to ship in
+// app-shell's own bundle, which every single page pays for on load.
+const ProfileSheet = dynamic(loadProfileSheet, { ssr: false })
+
+// Starts the chunk download before the click lands, so the sheet doesn't open onto a wait.
+function preloadProfileSheet() {
+  void loadProfileSheet()
+}
 
 const ME_QUERY = gql`
   query AppShellMe {
@@ -61,6 +64,9 @@ export function AppShell({
   const [isChecking, setIsChecking] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  // The sheet (and its profile queries) mounts on first open and then stays mounted, so
+  // reopening it keeps the editor state and the close animation can play.
+  const [hasOpenedProfile, setHasOpenedProfile] = useState(false)
   // Starts false to match the server-rendered pass (localStorage doesn't exist there) —
   // only ever updated from the effect below, never read during render, so the client's
   // first render still matches the server's and React doesn't flag a hydration mismatch.
@@ -87,6 +93,11 @@ export function AppShell({
   const email = data?.me.email ?? ''
   const name = data?.me.name ?? null
   const initials = email ? getInitials(name, email) : ''
+
+  function handleOpenProfile() {
+    setHasOpenedProfile(true)
+    setIsProfileOpen(true)
+  }
 
   async function handleSignOut() {
     setIsSigningOut(true)
@@ -132,11 +143,15 @@ export function AppShell({
             ) : isAuthenticated ? (
               <button
                 type="button"
-                onClick={() => setIsProfileOpen(true)}
-                className="flex cursor-pointer flex-col items-center gap-0.5 rounded-md px-2 py-1 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={handleOpenProfile}
+                onPointerEnter={preloadProfileSheet}
+                onFocus={preloadProfileSheet}
+                aria-label="Account, open profile"
+                aria-haspopup="dialog"
+                className="flex min-h-11 min-w-11 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md px-2 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Avatar className="size-7">
-                  <AvatarFallback className="bg-primary/10 text-[10px] font-medium text-primary">
+                  <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
@@ -148,44 +163,14 @@ export function AppShell({
               </Link>
             )}
 
-            <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-              <SheetContent showCloseButton={false}>
-                <SheetHeader>
-                  <Avatar className="size-9">
-                    <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <SheetTitle className="truncate">{name ?? email}</SheetTitle>
-                    <p className="truncate text-xs text-muted-foreground">{email}</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSignOut}
-                    disabled={isSigningOut}
-                    aria-label={isSigningOut ? 'Signing out' : 'Sign out'}
-                    className="gap-1.5"
-                  >
-                    <LogOut className="size-3.5" />
-                    <span className="hidden sm:inline">{isSigningOut ? 'Signing out…' : 'Sign out'}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Close"
-                    onClick={() => setIsProfileOpen(false)}
-                    className="text-muted-foreground"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                </SheetHeader>
-                <SheetBody>
-                  <ProfilePage />
-                </SheetBody>
-              </SheetContent>
-            </Sheet>
+            {hasOpenedProfile ? (
+              <ProfileSheet
+                open={isProfileOpen}
+                onOpenChange={setIsProfileOpen}
+                isSigningOut={isSigningOut}
+                onSignOut={handleSignOut}
+              />
+            ) : null}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

@@ -1,12 +1,11 @@
 import { Award } from 'lucide-react'
 import { formatMonthYear } from '../utils'
+import { SectionEmpty } from './section-empty'
 import { Timeline, TimelineItem } from './timeline'
 import type { MeProfile } from '../types'
 
 export function CertificationsSection({ certifications }: { certifications: MeProfile['certifications'] }) {
-  if (certifications.length === 0) {
-    return <p className="text-sm text-muted-foreground">No certifications added yet.</p>
-  }
+  if (certifications.length === 0) return <SectionEmpty noun="certifications" />
 
   return (
     <Timeline>

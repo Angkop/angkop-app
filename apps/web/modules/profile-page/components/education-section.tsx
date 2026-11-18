@@ -1,10 +1,11 @@
 import { GraduationCap } from 'lucide-react'
 import { formatEducationPeriod } from '../utils'
+import { SectionEmpty } from './section-empty'
 import { Timeline, TimelineItem } from './timeline'
 import type { MeProfile } from '../types'
 
 export function EducationSection({ education }: { education: MeProfile['education'] }) {
-  if (education.length === 0) return <p className="text-sm text-muted-foreground">No education added yet.</p>
+  if (education.length === 0) return <SectionEmpty noun="education" />
 
   return (
     <Timeline>

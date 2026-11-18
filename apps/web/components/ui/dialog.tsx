@@ -41,7 +41,7 @@ export function DialogContent({
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
         className={cn(
-          'angkop-dialog-overlay fixed inset-0 z-50 bg-black/40',
+          'angkop-dialog-overlay fixed inset-0 z-50 bg-overlay/40',
           'data-[state=open]:[animation:angkop-fade-in_200ms_ease-out]',
           'data-[state=closed]:[animation:angkop-fade-out_150ms_ease-in]'
         )}

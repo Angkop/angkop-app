@@ -23,7 +23,7 @@ export function SheetContent({
     <SheetPrimitive.Portal>
       <SheetPrimitive.Overlay
         className={cn(
-          'angkop-sheet-overlay fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]',
+          'angkop-sheet-overlay fixed inset-0 z-50 bg-overlay/50 backdrop-blur-[2px]',
           'data-[state=open]:[animation:angkop-fade-in_200ms_ease-out]',
           'data-[state=closed]:[animation:angkop-fade-out_200ms_ease-in]'
         )}
@@ -76,4 +76,9 @@ export function SheetDescription({
 
 export function SheetBody({ className, ...props }: React.ComponentProps<'div'>) {
   return <div className={cn('flex-1 overflow-y-auto px-5 py-5', className)} {...props} />
+}
+
+// Sits outside the scrolling body, so its actions stay in view however long the body is.
+export function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
+  return <div className={cn('shrink-0 border-t border-border bg-card px-5 py-4', className)} {...props} />
 }

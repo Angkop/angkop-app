@@ -20,6 +20,8 @@
   --input: oklch(0.929 0.013 255.508);
   --ring: oklch(0.696 0.17 162.48);
   --radius: 0.625rem;
+  /* Scrim behind sheets and dialogs. */
+  --overlay: oklch(0 0 0);
 
   --match-strong: oklch(0.6 0.15 145);
   --match-strong-foreground: oklch(0.98 0.02 145);
@@ -52,6 +54,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
   --color-match-strong: var(--match-strong);
   --color-match-strong-foreground: var(--match-strong-foreground);
   --color-match-partial: var(--match-partial);

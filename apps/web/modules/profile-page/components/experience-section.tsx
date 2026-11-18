@@ -1,11 +1,12 @@
 import { Briefcase } from 'lucide-react'
 import { EMPLOYMENT_TYPE_LABELS } from '@angkop/shared'
 import { formatExperiencePeriod } from '../utils'
+import { SectionEmpty } from './section-empty'
 import { Timeline, TimelineItem } from './timeline'
 import type { MeProfile } from '../types'
 
 export function ExperienceSection({ experience }: { experience: MeProfile['experience'] }) {
-  if (experience.length === 0) return <p className="text-sm text-muted-foreground">No experience added yet.</p>
+  if (experience.length === 0) return <SectionEmpty noun="experience" />
 
   return (
     <Timeline>

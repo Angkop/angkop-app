@@ -1,9 +1,10 @@
 import { FolderGit2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { SectionEmpty } from './section-empty'
 import type { MeProfile } from '../types'
 
 export function ProjectsSection({ projects }: { projects: MeProfile['projects'] }) {
-  if (projects.length === 0) return <p className="text-sm text-muted-foreground">No projects added yet.</p>
+  if (projects.length === 0) return <SectionEmpty noun="projects" />
 
   return (
     <div className="flex flex-col gap-4">
@@ -16,7 +17,7 @@ export function ProjectsSection({ projects }: { projects: MeProfile['projects'] 
             {item.technologies.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {item.technologies.map((tech) => (
-                  <Badge key={tech} variant="secondary">
+                  <Badge key={tech}>
                     {tech}
                   </Badge>
                 ))}
