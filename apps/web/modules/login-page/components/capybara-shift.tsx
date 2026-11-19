@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
+import { disposeOf } from '@/components/capybara/dispose-scene'
+import { buildFoamyCapybara } from '@/components/capybara/foamy-capybara'
+import { readToken } from '@/components/capybara/read-token'
 import { cn } from '@/lib/utils'
 import { CapybaraHero } from './capybara-hero'
 import { buildDesks } from './desks'
-import { disposeOf } from './dispose-scene'
-import { buildFoamyCapybara } from './foamy-capybara'
 import { JobBubble } from './job-bubble'
-import { readToken } from './read-token'
 import { SETTLED_SECONDS, STATION_X, poseAt, type BubbleView } from './shift-model'
 
 // Where the capybara stands behind a desk, and how its arms hang while it walks between them.

@@ -10,7 +10,7 @@ export type FoamyCapybara = {
   body: THREE.Mesh
   head: THREE.Group
   lids: THREE.Mesh[]
-  // Puts the outfit at `index` on and the other one off; any other index takes both off.
+  // Puts the outfit at `index` on and the others off; any other index takes them all off.
   wear: (index: number) => void
   // Stretches an arm from its shoulder to a paw at `target` (in the capybara's own space).
   reach: (hand: number, target: THREE.Vector3) => void
@@ -27,7 +27,8 @@ const ellipsoid = (radii: [number, number, number], material: THREE.Material, at
 
 // A soft, round capybara in the Baymax mould: everything is a pillow, nothing has a corner. Its
 // head, body and paws are ellipsoids in the palette, with a foam-white sheen along the edges,
-// and it owns two outfits, one per desk, that it swaps in the middle.
+// and it owns three outfits: one per desk on the sign-in page, which it swaps in the middle, and a
+// graduation cap that only the loader (components/brand-loader.tsx) puts on.
 export function buildFoamyCapybara(): FoamyCapybara {
   const primary = readToken('--primary')
   const background = readToken('--background')
@@ -148,7 +149,23 @@ export function buildFoamyCapybara(): FoamyCapybara {
     construction.body.add(reflective)
   }
 
-  const outfits = [marketing, construction]
+  // Outfit 2, the fresh graduate (the loader's): a mortarboard with a tassel hanging off one corner
+  const graduate = { head: new THREE.Group(), body: new THREE.Group() }
+  const tassel = flat(readToken('--match-partial'), 0.6)
+  const skullcap = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.62, 0.3, 32), ink)
+  skullcap.position.set(0, 0.72, 0)
+  const board = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.08, 1.7, 3, 0.03), ink)
+  board.position.set(0, 0.92, 0)
+  board.rotation.y = Math.PI / 4
+  const button = ellipsoid([0.09, 0.07, 0.09], tassel, [0, 0.99, 0])
+  const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.1, 8), tassel)
+  cord.position.set(0.55, 0.97, 0)
+  cord.rotation.z = Math.PI / 2
+  const strand = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.5, 8), tassel)
+  strand.position.set(1.1, 0.7, 0)
+  graduate.head.add(skullcap, board, button, cord, strand, ellipsoid([0.07, 0.12, 0.07], tassel, [1.1, 0.4, 0]))
+
+  const outfits = [marketing, construction, graduate]
   for (const outfit of outfits) {
     head.add(outfit.head)
     root.add(outfit.body)

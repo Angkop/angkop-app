@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-import { readToken } from './read-token'
+import { readToken } from '@/components/capybara/read-token'
 
 // World height of a desk top, and the depth the capybara stands behind it.
 export const DESK_TOP = 0.95
