@@ -26,12 +26,34 @@ export class MlServiceError extends Error {
   }
 }
 
-async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
-  const response = await fetch(`${ML_SERVICE_URL}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  })
+// Without a deadline, a hung ML service (the deployed one is reached through a tunnel) holds every
+// request that needs it open until the platform gives up. The ML service's own Gemini calls time
+// out at 30s (insight) and 45s (resume parser) and may retry once on a fallback model, so the
+// Gemini-backed routes get room for both attempts; everything else is plain math.
+const ML_REQUEST_TIMEOUT_MS = 30_000
+const ML_GEMINI_REQUEST_TIMEOUT_MS = 100_000
+
+export async function postJson<TResponse>(
+  path: string,
+  body: unknown,
+  timeoutMs = ML_REQUEST_TIMEOUT_MS
+): Promise<TResponse> {
+  let response: Response
+  try {
+    response = await fetch(`${ML_SERVICE_URL}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs)
+    })
+  } catch (error) {
+    // Reported as a 504 so callers' existing "transient server error" handling (the resume
+    // route's retry and circuit breaker, the insight retry) treats it like any other 5xx.
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new MlServiceError(504, `ML service request to ${path} timed out after ${timeoutMs} ms`)
+    }
+    throw error
+  }
 
   if (!response.ok) {
     const detail = await response.text()
@@ -61,9 +83,9 @@ export function skillGap(request: SkillGapRequest): Promise<SkillGapResponse> {
 }
 
 export function parseResume(request: ResumeParseRequest): Promise<ParsedResumeProfile> {
-  return postJson<ParsedResumeProfile>('/resume/parse', request)
+  return postJson<ParsedResumeProfile>('/resume/parse', request, ML_GEMINI_REQUEST_TIMEOUT_MS)
 }
 
 export function matchInsight(request: MatchInsightRequest): Promise<MatchInsightResponse> {
-  return postJson<MatchInsightResponse>('/insight/explain', request)
+  return postJson<MatchInsightResponse>('/insight/explain', request, ML_GEMINI_REQUEST_TIMEOUT_MS)
 }
