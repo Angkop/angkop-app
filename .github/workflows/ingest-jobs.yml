@@ -1,7 +1,7 @@
 name: Ingest jobs
 
 # 11:30pm PHT (Asia/Manila, UTC+8) is 15:30 UTC. GitHub schedules in UTC only, and can start a
-# run a few minutes late when its runners are busy.
+# run late when its runners are busy (seen: several hours).
 on:
   schedule:
     - cron: '30 15 * * *'

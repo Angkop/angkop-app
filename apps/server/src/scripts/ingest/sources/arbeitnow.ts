@@ -52,6 +52,9 @@ export async function fetchArbeitnow(): Promise<SourceFetchResult> {
   // Complete only if the API ran out of pages by itself, not because a cap or a failure
   // stopped the walk — otherwise a job missing from `rawJobs` may just be on a page we never read.
   const complete = nextUrl === null && rawJobs.length <= JOBS_PER_SOURCE
+  // Stopped because JOBS_PER_SOURCE was reached with pages still left, as opposed to a page
+  // failing partway, which leaves us under the limit.
+  const capped = nextUrl !== null && rawJobs.length >= JOBS_PER_SOURCE
 
   const listings = rawJobs
     .filter((entry): entry is Record<string, unknown> & { slug: string; title: string } =>
@@ -80,5 +83,5 @@ export async function fetchArbeitnow(): Promise<SourceFetchResult> {
       }
     })
 
-  return { listings, complete }
+  return { listings, complete, capped }
 }

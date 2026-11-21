@@ -219,6 +219,12 @@ export class IngestJobsService {
       goneIds = expired
     } else {
       if (!result.complete) {
+        // Cutting the feed at our own limit is routine, so it skips the stale check without
+        // marking the run partial. Only a feed that lost pages to a failure does that.
+        if (result.capped) {
+          logger.info({ source: source.name }, 'Feed was cut at our own limit, skipping stale check')
+          return []
+        }
         logger.warn({ source: source.name }, 'Feed was only partly read, skipping stale check')
         return null
       }

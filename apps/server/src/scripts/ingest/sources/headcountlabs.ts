@@ -130,7 +130,7 @@ export async function fetchHeadcountLabs(): Promise<SourceFetchResult> {
   // Never "complete": Headcount Labs has tens of thousands of PH postings and we only read
   // the newest few hundred, so absence from this page says nothing. Whether a stored posting
   // is still live comes from checkHeadcountLabsJobs instead.
-  return { listings, complete: false }
+  return { listings, complete: false, capped: true }
 }
 
 export type HeadcountLabsCheck = {

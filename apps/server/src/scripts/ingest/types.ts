@@ -26,4 +26,9 @@ export type SourceFetchResult = {
   // is what lets the ingest remove stale jobs. A source that throws is a failed source,
   // never an empty one.
   complete: boolean
+  // True when the feed stopped short because of a limit we set on purpose (JOBS_PER_SOURCE, or
+  // the few hundred Headcount Labs postings we read), not because a request failed. A capped
+  // feed can't be used to remove stale jobs, but that is expected, so it is not a problem.
+  // An incomplete feed that is not capped lost pages to a failure and is reported as partial.
+  capped: boolean
 }

@@ -46,5 +46,5 @@ export async function fetchRemoteOk(): Promise<SourceFetchResult> {
     })
 
   // One request returns RemoteOK's whole feed, so it is complete unless JOBS_PER_SOURCE cut it.
-  return { listings, complete: entries.length <= JOBS_PER_SOURCE }
+  return { listings, complete: entries.length <= JOBS_PER_SOURCE, capped: entries.length > JOBS_PER_SOURCE }
 }
