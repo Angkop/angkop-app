@@ -1,12 +1,12 @@
 import * as THREE from 'three'
-import { disposeOf } from '@/components/capybara/dispose-scene'
-import { buildFoamyCapybara } from '@/components/capybara/foamy-capybara'
-import { readToken } from '@/components/capybara/read-token'
+import { disposeOf } from '@/components/beaver/dispose-scene'
+import { buildFoamyBeaver } from '@/components/beaver/foamy-beaver'
+import { readToken } from '@/components/beaver/read-token'
 
 // The 3D behind BrandLoader, kept apart so three.js is only fetched when a loader actually mounts
 // rather than landing in every page's bundle (NavLink is used app-wide).
 
-// Outfit indexes on the foamy capybara: the graduate first, then the two jobs from the sign-in page.
+// Outfit indexes on the foamy beaver: the graduate first, then the two jobs from the sign-in page.
 const OUTFITS = [2, 0, 1] as const
 const OUTFIT_SECONDS = 2.4
 // How long the puff of foam around each outfit change lasts, centred on the swap.
@@ -17,7 +17,7 @@ const HOP_HEIGHT = 0.3
 const HANG = [new THREE.Vector3(-1.45, 0.75, 0.55), new THREE.Vector3(1.45, 0.75, 0.55)]
 const ARM_SWING = 0.5
 
-// Mounts the running capybara into `host` and returns a cleanup. Throws when WebGL is missing so
+// Mounts the running beaver into `host` and returns a cleanup. Throws when WebGL is missing so
 // the caller can fall back. `onFirstFrame` fires once something has been drawn.
 export function mountBrandLoaderScene(host: HTMLElement, onFirstFrame: () => void): () => void {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -50,8 +50,8 @@ export function mountBrandLoaderScene(host: HTMLElement, onFirstFrame: () => voi
   shadow.position.y = 0.01
   scene.add(shadow)
 
-  const capybara = buildFoamyCapybara()
-  scene.add(capybara.root)
+  const beaver = buildFoamyBeaver()
+  scene.add(beaver.root)
 
   const resize = () => {
     const { width, height } = host.getBoundingClientRect()
@@ -66,7 +66,7 @@ export function mountBrandLoaderScene(host: HTMLElement, onFirstFrame: () => voi
 
   // Draws the loader at `time` seconds; a still frame passes isRunning false.
   const draw = (time: number, isRunning: boolean) => {
-    const { root, body, head, lids } = capybara
+    const { root, body, head, lids } = beaver
     const stride = isRunning ? Math.sin(time * STRIDE_RADIANS_PER_SECOND) : 0
     const hop = Math.abs(stride) * HOP_HEIGHT
 
@@ -82,7 +82,7 @@ export function mountBrandLoaderScene(host: HTMLElement, onFirstFrame: () => voi
     for (const hand of [0, 1]) {
       paws[hand].copy(HANG[hand])
       paws[hand].z += stride * ARM_SWING * (hand === 0 ? 1 : -1)
-      capybara.reach(hand, paws[hand])
+      beaver.reach(hand, paws[hand])
     }
 
     // A new outfit every OUTFIT_SECONDS, swapped at the peak of a puff of foam. The clock starts
@@ -90,8 +90,8 @@ export function mountBrandLoaderScene(host: HTMLElement, onFirstFrame: () => voi
     const cycle = isRunning ? time + OUTFIT_SECONDS / 2 : OUTFIT_SECONDS / 2
     const fromSwap = Math.min(cycle % OUTFIT_SECONDS, OUTFIT_SECONDS - (cycle % OUTFIT_SECONDS))
     const foam = Math.max(0, 1 - fromSwap / (FOAM_SECONDS / 2))
-    capybara.wear(OUTFITS[Math.floor(cycle / OUTFIT_SECONDS) % OUTFITS.length])
-    capybara.puff(Math.sin((foam * Math.PI) / 2))
+    beaver.wear(OUTFITS[Math.floor(cycle / OUTFIT_SECONDS) % OUTFITS.length])
+    beaver.puff(Math.sin((foam * Math.PI) / 2))
 
     shadow.scale.setScalar(1 - hop * 0.8)
     shadowMaterial.opacity = 0.14 - hop * 0.15

@@ -1,13 +1,13 @@
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-import { readToken } from '@/components/capybara/read-token'
+import { readToken } from '@/components/beaver/read-token'
 
-// World height of a desk top, and the depth the capybara stands behind it.
+// World height of a desk top, and the depth the beaver stands behind it.
 export const DESK_TOP = 0.95
 
 export type Desk = {
   group: THREE.Group
-  // Moves what is on the desk for `seconds` spent at it, and returns where the capybara's two
+  // Moves what is on the desk for `seconds` spent at it, and returns where the beaver's two
   // paws belong, in the desk's own space. `isActive` is false while it is at the other desk.
   work: (seconds: number, isActive: boolean) => [THREE.Vector3, THREE.Vector3]
 }
@@ -202,7 +202,7 @@ function buildConstructionDesk(): Desk {
   return {
     group,
     work: (seconds, isActive) => {
-      // One brick every half second once the capybara has settled, each popping in
+      // One brick every half second once the beaver has settled, each popping in
       bricks.forEach((brick, index) => {
         const age = isActive ? (seconds - 0.7 - index * 0.55) / 0.25 : 0
         brick.scale.setScalar(Math.min(1, Math.max(0, age)))

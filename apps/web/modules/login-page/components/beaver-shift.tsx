@@ -3,28 +3,28 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
-import { disposeOf } from '@/components/capybara/dispose-scene'
-import { buildFoamyCapybara } from '@/components/capybara/foamy-capybara'
-import { readToken } from '@/components/capybara/read-token'
+import { disposeOf } from '@/components/beaver/dispose-scene'
+import { buildFoamyBeaver } from '@/components/beaver/foamy-beaver'
+import { readToken } from '@/components/beaver/read-token'
 import { cn } from '@/lib/utils'
-import { CapybaraHero } from './capybara-hero'
+import { BeaverHero } from './beaver-hero'
 import { buildDesks } from './desks'
 import { JobBubble } from './job-bubble'
 import { SETTLED_SECONDS, STATION_X, poseAt, type BubbleView } from './shift-model'
 
-// Where the capybara stands behind a desk, and how its arms hang while it walks between them.
+// Where the beaver stands behind a desk, and how its arms hang while it walks between them.
 const STAND_Z = -0.6
 const HANG = [new THREE.Vector3(-1.4, 0.7, 0.55), new THREE.Vector3(1.4, 0.7, 0.55)]
 const HEAD_TOP = 3.35
 
-// The sign-in hero: one soft capybara and two desks, digital marketing and construction. It works
+// The sign-in hero: one soft beaver and two desks, digital marketing and construction. It works
 // one desk, tries that job on (the bubble over its head asks how well it fits and answers in
 // a percentage and the skill it lacks), then walks to the middle, takes its outfit off and shows
 // its skills against both jobs, then puts the next outfit on and goes to the other desk. The
 // same person scores very differently for each job, which is what Angkop measures.
 // It never mounts for reduced-motion users beyond one still frame. The stage stays empty until the
-// first frame is drawn, then fades in; without WebGL the flat CapybaraHero takes its place.
-export function CapybaraShift({ className }: { className?: string }) {
+// first frame is drawn, then fades in; without WebGL the flat BeaverHero takes its place.
+export function BeaverShift({ className }: { className?: string }) {
   const container = useRef<HTMLDivElement>(null)
   const bubble = useRef<HTMLDivElement>(null)
   const [isReady, setIsReady] = useState(false)
@@ -90,9 +90,9 @@ export function CapybaraShift({ className }: { className?: string }) {
       scene.add(desk.group)
     })
 
-    const capybara = buildFoamyCapybara()
-    capybara.root.position.z = STAND_Z
-    scene.add(capybara.root)
+    const beaver = buildFoamyBeaver()
+    beaver.root.position.z = STAND_Z
+    scene.add(beaver.root)
 
     const resize = () => {
       const { width, height } = host.getBoundingClientRect()
@@ -125,20 +125,20 @@ export function CapybaraShift({ className }: { className?: string }) {
       const stride = Math.sin(pose.walk * Math.PI * 4)
 
       // Body: breathes while it stands, hops and rolls a little while it walks
-      const { root, body, head, lids } = capybara
+      const { root, body, head, lids } = beaver
       root.position.x = pose.x
       root.position.y = isWalking ? Math.abs(stride) * 0.16 : 0
       root.rotation.z = isWalking ? stride * 0.06 : 0
       body.scale.y = 0.95 + Math.sin(time * 1.6) * 0.012 + (isWalking ? stride * 0.02 : 0)
-      capybara.wear(pose.outfit)
-      capybara.puff(pose.foam)
+      beaver.wear(pose.outfit)
+      beaver.puff(pose.foam)
 
       head.rotation.y += (pointer.x * 0.35 - head.rotation.y) * 0.06
       head.rotation.x += (pointer.y * 0.12 - head.rotation.x) * 0.06
       const blink = Math.max(0, 1 - Math.abs((time % 4.5) - 4.3) / 0.14)
       for (const lid of lids) lid.rotation.x = 0.15 + blink * 0.9
 
-      // Desks run their own props; the one the capybara is at also says where its paws go
+      // Desks run their own props; the one the beaver is at also says where its paws go
       desks.forEach((desk, index) => {
         const isAt = pose.atDesk && pose.job === index
         const targets = desk.work(isAt ? pose.working : 0, isAt)
@@ -153,8 +153,8 @@ export function CapybaraShift({ className }: { className?: string }) {
           if (isAt || index === pose.job) paws[hand].lerp(local, follow)
         }
       })
-      capybara.reach(0, paws[0])
-      capybara.reach(1, paws[1])
+      beaver.reach(0, paws[0])
+      beaver.reach(1, paws[1])
 
       renderer.render(scene, camera)
 
@@ -220,7 +220,7 @@ export function CapybaraShift({ className }: { className?: string }) {
 
   return (
     <div className={cn('relative aspect-[3/2] w-full', className)}>
-      {hasFailed && <CapybaraHero className="mx-auto h-full w-auto" />}
+      {hasFailed && <BeaverHero className="mx-auto h-full w-auto" />}
       <div
         ref={container}
         aria-hidden="true"

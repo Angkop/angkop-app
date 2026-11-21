@@ -3,7 +3,7 @@ import { ErrorMessage } from '@/components/error-message'
 import { Button } from '@/components/ui/button'
 import { Highlighter } from '@/components/ui/highlighter'
 import { cn } from '@/lib/utils'
-import { CapybaraStage } from './capybara-stage'
+import { BeaverStage } from './beaver-stage'
 import { GoogleIcon } from './google-icon'
 import { RISE } from './rise'
 
@@ -24,7 +24,7 @@ export function SignInPanel({
       </header>
 
       {/* Bottom padding on small screens keeps the form clear of the stage below it: the scene plus
-          the headroom its bubbles need above the capybara's head. */}
+          the headroom its bubbles need above the beaver's head. */}
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 items-center px-6 pb-[calc(min(80vw,30rem)*0.667+7rem)] sm:px-12 lg:pb-28">
         <div className="flex w-full max-w-2xl flex-col">
           <h1
@@ -64,7 +64,7 @@ export function SignInPanel({
       </div>
 
       <div className="pointer-events-none absolute right-1/2 bottom-0 w-[80vw] max-w-[30rem] translate-x-1/2 animate-[angkop-peek_0.9s_cubic-bezier(0.22,1,0.36,1)_both] [animation-delay:150ms] lg:right-[5vw] lg:w-[min(46vw,700px,88vh)] lg:max-w-none lg:translate-x-0">
-        <CapybaraStage className="pt-28 lg:pt-0" />
+        <BeaverStage className="pt-28 lg:pt-0" />
       </div>
     </main>
   )

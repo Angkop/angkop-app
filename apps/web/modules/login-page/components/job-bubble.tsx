@@ -10,10 +10,10 @@ import { ThinkingDots } from './thinking-dots'
 const BAR =
   'h-full origin-left rounded-full animate-[angkop-bar_1.2s_ease-out_both] motion-reduce:animate-none'
 
-// What the capybara is wondering over its head. At a desk: how well it fits that job. It thinks
+// What the beaver is wondering over its head. At a desk: how well it fits that job. It thinks
 // for a moment, then shows the match as a percentage with its label, and the one skill that
 // would close the gap. In the middle: its skills, set against both jobs, closest first.
-// Positioned over the head by CapybaraShift, which writes its transform.
+// Positioned over the head by BeaverShift, which writes its transform.
 export function JobBubble({
   job,
   view,

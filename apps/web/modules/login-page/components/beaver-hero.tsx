@@ -21,18 +21,18 @@ const FUR_TUFTS = [
   'M510 482 q12 -2 20 8'
 ]
 
-// The sign-in hero: BrandMark's capybara drawn large and face-on, in emerald, wearing a shirt
+// The sign-in hero: BrandMark's beaver drawn large and face-on, in emerald, wearing a shirt
 // collar and tie. The viewBox ends mid-chest so it rises out of the bottom edge of the viewport.
-export function CapybaraHero({ className }: { className?: string }) {
+export function BeaverHero({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 600 540" aria-hidden="true" className={cn('block', className)}>
-      <CapybaraArt />
+      <BeaverArt />
     </svg>
   )
 }
 
 // The drawing itself, in a 600 x 540 box, so MatcherMachine can lay it on a face of its standee.
-export function CapybaraArt() {
+export function BeaverArt() {
   return (
     <>
       {/* Shoulders, darker than the head, with the shadow the head casts on them */}
@@ -62,36 +62,36 @@ export function CapybaraArt() {
       <path d="M280 390 L320 390 L313 426 L287 426 Z" className="fill-foreground" />
       <path d="M287 426 L313 426 L311 434 L289 434 Z" className="fill-background opacity-20" />
 
-      {/* Ears: small, and set out at the corners of the head */}
+      {/* Ears: small and round, tucked into the sides of the head */}
       <g className="fill-primary">
-        <ellipse cx="176" cy="128" rx="26" ry="22" />
-        <ellipse cx="424" cy="128" rx="26" ry="22" />
+        <ellipse cx="184" cy="128" rx="22" ry="20" />
+        <ellipse cx="416" cy="128" rx="22" ry="20" />
       </g>
       <g className="fill-accent-foreground">
-        <ellipse cx="176" cy="130" rx="14" ry="12" />
-        <ellipse cx="424" cy="130" rx="14" ry="12" />
+        <ellipse cx="184" cy="130" rx="12" ry="11" />
+        <ellipse cx="416" cy="130" rx="12" ry="11" />
       </g>
       <g className="fill-none stroke-background opacity-30" strokeWidth="3" strokeLinecap="round">
-        <path d="M158 118 Q164 108 176 107" />
-        <path d="M442 118 Q436 108 424 107" />
+        <path d="M168 120 Q173 110 184 109" />
+        <path d="M432 120 Q427 110 416 109" />
       </g>
 
-      {/* Head: a tall block, flat on top and widest at the jaw, the way a capybara's is */}
+      {/* Head: broad and round, with full cheeks, the way a beaver's is */}
       <path
-        d="M300 84 C366 84 414 102 424 164 L446 296 C456 366 408 398 300 398 C192 398 144 366 154 296 L176 164 C186 102 234 84 300 84 Z"
+        d="M300 84 C380 84 436 128 444 206 L450 296 C454 366 408 398 300 398 C192 398 146 366 150 296 L156 206 C164 128 220 84 300 84 Z"
         className="fill-primary"
       />
       {/* Light from the upper left, shade along the right side and under the jaw */}
       <path
-        d="M300 84 C234 84 186 102 176 164 L154 296 C150 326 156 348 172 364 C166 338 170 312 176 280 L198 172 C208 124 244 100 300 96 Z"
+        d="M300 84 C220 84 164 128 156 206 L150 296 C148 326 154 348 172 364 C166 338 168 312 174 280 L192 206 C200 136 244 100 300 96 Z"
         className="fill-background opacity-10"
       />
       <path
-        d="M300 84 C366 84 414 102 424 164 L446 296 C450 326 444 348 428 364 C434 338 430 312 424 280 L402 172 C392 124 356 100 300 96 Z"
+        d="M300 84 C380 84 436 128 444 206 L450 296 C452 326 446 348 428 364 C434 338 432 312 426 280 L408 206 C400 136 356 100 300 96 Z"
         className="fill-accent-foreground opacity-15"
       />
       <path
-        d="M300 398 C192 398 144 366 154 296 C158 350 204 376 300 378 C396 376 442 350 446 296 C456 366 408 398 300 398 Z"
+        d="M300 398 C192 398 146 366 150 296 C156 350 204 376 300 378 C396 376 444 350 450 296 C454 366 408 398 300 398 Z"
         className="fill-accent-foreground opacity-25"
       />
 
@@ -129,22 +129,22 @@ export function CapybaraArt() {
         <ellipse cx="404" cy="246" rx="20" ry="11" />
       </g>
 
-      {/* Blunt snout: wide-set nostrils, a cleft, a small mouth and whiskers, low on the face */}
-      <ellipse cx="300" cy="322" rx="112" ry="62" className="fill-accent-foreground opacity-15" />
-      <path d="M210 296 Q300 248 390 296 Q300 272 210 296 Z" className="fill-background opacity-15" />
-      <g className="fill-foreground">
-        <ellipse cx="270" cy="296" rx="8" ry="11" transform="rotate(-24 270 296)" />
-        <ellipse cx="330" cy="296" rx="8" ry="11" transform="rotate(24 330 296)" />
-      </g>
+      {/* Snout: a pale muzzle pad, a big round nose, and two buck teeth hanging past the mouth */}
+      <ellipse cx="300" cy="322" rx="104" ry="68" className="fill-background opacity-25" />
+      <ellipse cx="300" cy="322" rx="104" ry="68" className="fill-accent-foreground opacity-10" />
+      <ellipse cx="300" cy="290" rx="36" ry="24" className="fill-foreground" />
+      <ellipse cx="289" cy="282" rx="10" ry="6" className="fill-background opacity-30" />
       <path
-        d="M300 318 L300 338 M276 346 Q290 358 300 338 Q310 358 324 346"
+        d="M300 314 L300 334 M270 340 Q286 354 300 334 Q314 354 330 340"
         className="fill-none stroke-foreground"
         strokeWidth="6"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M292 352 L308 352 L307 366 Q300 369 293 366 Z" className="fill-background" />
-      <path d="M300 352 L300 367" className="stroke-foreground opacity-30" strokeWidth="2" />
+      <g className="fill-background stroke-foreground" strokeWidth="2.5" strokeLinejoin="round">
+        <rect x="280" y="344" width="20" height="38" rx="5" />
+        <rect x="300" y="344" width="20" height="38" rx="5" />
+      </g>
       <g className="fill-accent-foreground opacity-50">
         <circle cx="236" cy="322" r="3" />
         <circle cx="248" cy="336" r="3" />

@@ -42,7 +42,7 @@ Matching on competencies, not keywords: Sentence-BERT semantic similarity blende
 ## Brand Commitments
 
 - Name: Angkop.
-- The capybara mascot is a binding brand asset (confirmed). It currently appears on the sign-in page as a 3D hero with thought bubbles and job try-on demos; future surfaces should keep it recognizable.
+- The beaver mascot is a binding brand asset (confirmed; it replaced the earlier capybara). It currently appears on the sign-in page as a 3D hero with thought bubbles and job try-on demos; future surfaces should keep it recognizable.
 - Copy rules from the project: buttons pair a verb with its object ("Save Profile", "View Matches"), and no exclamation points.
 
 ## Evidence on Hand

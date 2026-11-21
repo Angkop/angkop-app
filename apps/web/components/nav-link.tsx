@@ -26,7 +26,7 @@ function PendingOverlay({ label }: { label: string }) {
   )
 }
 
-// A next/link that shows the capybara loader from the click until the next page is ready,
+// A next/link that shows the beaver loader from the click until the next page is ready,
 // instead of leaving the screen unchanged while a slow route loads.
 export function NavLink({
   pendingLabel = 'Loading…',

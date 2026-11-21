@@ -88,7 +88,7 @@ body {
   animation: angkop-loader-in 0.2s ease-out 0.15s both;
 }
 
-/* Sign-in screen (modules/login-page) — the form rises in on a stagger and the hero capybara
+/* Sign-in screen (modules/login-page) — the form rises in on a stagger and the hero beaver
    rises up from the bottom edge, then blinks. Each job bubble fills its score bar (angkop-bar). */
 @keyframes angkop-rise {
   from {

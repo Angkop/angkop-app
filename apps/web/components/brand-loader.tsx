@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { BrandMark } from '@/components/brand-mark'
 import { cn } from '@/lib/utils'
 
-// Angkop's loading mark: a soft 3D capybara trotting in place, standing in for a generic spinner
+// Angkop's loading mark: a soft 3D beaver trotting in place, standing in for a generic spinner
 // wherever the app is working on a match. It is the same model as the sign-in hero, drawn live
 // with three.js (no images), and it tries on a new outfit every few seconds the way that hero tries
 // on jobs: a graduation cap for the fresh graduate, then the marketing and construction outfits.

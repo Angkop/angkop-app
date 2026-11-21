@@ -5,14 +5,14 @@ import { readToken } from './read-token'
 const SHOULDERS = [new THREE.Vector3(-1.05, 1.25, 0.25), new THREE.Vector3(1.05, 1.25, 0.25)]
 const UP = new THREE.Vector3(0, 1, 0)
 
-export type FoamyCapybara = {
+export type FoamyBeaver = {
   root: THREE.Group
   body: THREE.Mesh
   head: THREE.Group
   lids: THREE.Mesh[]
   // Puts the outfit at `index` on and the others off; any other index takes them all off.
   wear: (index: number) => void
-  // Stretches an arm from its shoulder to a paw at `target` (in the capybara's own space).
+  // Stretches an arm from its shoulder to a paw at `target` (in the beaver's own space).
   reach: (hand: number, target: THREE.Vector3) => void
   // The foam that covers an outfit change: 0 hides it, 1 is the full puff.
   puff: (amount: number) => void
@@ -25,11 +25,11 @@ const ellipsoid = (radii: [number, number, number], material: THREE.Material, at
   return mesh
 }
 
-// A soft, round capybara in the Baymax mould: everything is a pillow, nothing has a corner. Its
-// head, body and paws are ellipsoids in the palette, with a foam-white sheen along the edges,
+// A soft, round beaver in the Baymax mould: everything is a pillow, nothing has a corner. Its
+// head, body, paws and paddle tail are ellipsoids in the palette, with a foam-white sheen along the edges,
 // and it owns three outfits: one per desk on the sign-in page, which it swaps in the middle, and a
 // graduation cap that only the loader (components/brand-loader.tsx) puts on.
-export function buildFoamyCapybara(): FoamyCapybara {
+export function buildFoamyBeaver(): FoamyBeaver {
   const primary = readToken('--primary')
   const background = readToken('--background')
   const foam = (color: THREE.Color, mix = 0) =>
@@ -57,9 +57,12 @@ export function buildFoamyCapybara(): FoamyCapybara {
 
   const root = new THREE.Group()
 
-  // Torso, a pale belly, and two stubby feet
+  // Torso, a pale belly, a flat paddle tail tipped up behind, and two stubby feet
   const body = ellipsoid([1.2, 0.95, 0.95], coat, [0, 0.85, 0])
   root.add(body, ellipsoid([0.7, 0.62, 0.22], belly, [0, 0.8, 0.82]))
+  const tail = ellipsoid([0.78, 0.09, 1.0], coatDeep, [0, 0.38, -1.55])
+  tail.rotation.x = 0.3
+  root.add(tail)
   for (const side of [-1, 1]) root.add(ellipsoid([0.34, 0.2, 0.46], coat, [side * 0.55, 0.12, 0.45]))
 
   // Arms are a cylinder stretched shoulder to paw, with a ball at each end so it stays round
@@ -72,14 +75,17 @@ export function buildFoamyCapybara(): FoamyCapybara {
     return { limb, paw }
   })
 
-  // Head: a wide, soft block of a head with a round snout, sleepy eyes and a buck tooth
+  // Head: a wide, soft head with a round dark nose, sleepy eyes and two big front teeth
   const head = new THREE.Group()
   head.position.set(0, 2.0, 0.05)
   root.add(head)
   head.add(ellipsoid([1.02, 0.84, 0.9], coat, [0, 0, 0]), ellipsoid([0.56, 0.42, 0.42], muzzle, [0, -0.3, 0.74]))
-  const tooth = new THREE.Mesh(new RoundedBoxGeometry(0.1, 0.13, 0.05, 3, 0.02), paper)
-  tooth.position.set(0, -0.58, 1.12)
-  head.add(tooth)
+  for (const side of [-1, 1]) {
+    const tooth = new THREE.Mesh(new RoundedBoxGeometry(0.16, 0.26, 0.07, 3, 0.03), paper)
+    tooth.position.set(side * 0.085, -0.66, 1.1)
+    head.add(tooth)
+  }
+  head.add(ellipsoid([0.2, 0.13, 0.1], ink, [0, -0.1, 1.13]))
 
   const lids: THREE.Mesh[] = []
   for (const side of [-1, 1]) {
@@ -89,15 +95,13 @@ export function buildFoamyCapybara(): FoamyCapybara {
     lid.rotation.z = side * -0.18
     lids.push(lid)
 
-    const ear = ellipsoid([0.2, 0.17, 0.1], coat, [side * 0.8, 0.72, 0.08])
-    const innerEar = ellipsoid([0.11, 0.09, 0.06], coatDeep, [side * 0.8, 0.72, 0.15])
-    const nostril = ellipsoid([0.07, 0.1, 0.04], ink, [side * 0.2, -0.17, 1.13])
-    nostril.rotation.z = side * 0.4
+    const ear = ellipsoid([0.16, 0.14, 0.09], coat, [side * 0.78, 0.66, 0.08])
+    const innerEar = ellipsoid([0.09, 0.07, 0.06], coatDeep, [side * 0.78, 0.66, 0.14])
     const cheek = ellipsoid([0.17, 0.1, 0.04], blush, [side * 0.74, -0.05, 0.72])
     const smile = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.026, 10, 20, Math.PI), ink)
-    smile.position.set(side * 0.1, -0.5, 1.08)
+    smile.position.set(side * 0.1, -0.46, 1.08)
     smile.rotation.z = Math.PI
-    head.add(eye, lid, ear, innerEar, nostril, cheek, smile)
+    head.add(eye, lid, ear, innerEar, cheek, smile)
   }
 
   // Outfit 0, marketing: headphones over the ears and a lanyard with a badge
@@ -171,7 +175,7 @@ export function buildFoamyCapybara(): FoamyCapybara {
     root.add(outfit.body)
   }
 
-  // Foam: white balls that swell around the capybara while it changes clothes
+  // Foam: white balls that swell around the beaver while it changes clothes
   const bubbles = Array.from({ length: 10 }, (_, index) => {
     const angle = (index / 10) * Math.PI * 2
     const bubble = ellipsoid([1, 1, 1], paper, [Math.cos(angle) * 1.75, 0.8 + (index % 4) * 0.55, Math.sin(angle) * 0.5 - 0.35])

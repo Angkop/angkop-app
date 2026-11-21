@@ -7,17 +7,17 @@ import { cn } from '@/lib/utils'
 // fetched after the page is interactive instead of shipping inside it. The placeholder holds the
 // scene's 3:2 box so nothing shifts when it arrives (the scene itself stays empty until its first
 // frame is drawn, so this looks the same as before).
-const CapybaraShift = dynamic(() => import('./capybara-shift').then((mod) => mod.CapybaraShift), {
+const BeaverShift = dynamic(() => import('./beaver-shift').then((mod) => mod.BeaverShift), {
   ssr: false,
   loading: () => <div className="aspect-[3/2] w-full" />
 })
 
-// The hero: a soft 3D capybara works a digital marketing desk and a construction desk in turn
-// (CapybaraShift).
-export function CapybaraStage({ className }: { className?: string }) {
+// The hero: a soft 3D beaver works a digital marketing desk and a construction desk in turn
+// (BeaverShift).
+export function BeaverStage({ className }: { className?: string }) {
   return (
     <div className={cn('relative', className)}>
-      <CapybaraShift />
+      <BeaverShift />
     </div>
   )
 }

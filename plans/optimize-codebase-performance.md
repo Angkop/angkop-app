@@ -121,7 +121,7 @@ Redis was local, so the times above exclude network. On a remote Redis, every co
 - **Behavior to know:** a new ingest can take up to 5 minutes (filter options) or 60 seconds (listing pages) to show up.
 
 ### Phase 6: Web bundle (DONE 2026-11-21)
-- The login hero (`CapybaraStage`) loads its three.js scene with `next/dynamic` (`ssr: false`) behind a placeholder that holds the same 3:2 box. **Measured (`next build`):** `/` first-load JS 315 kB to 184 kB (-131 kB, -42%). Other routes unchanged. Not checked in a browser: open `/` and confirm the capybara still appears.
+- The login hero (`BeaverStage`) loads its three.js scene with `next/dynamic` (`ssr: false`) behind a placeholder that holds the same 3:2 box. **Measured (`next build`):** `/` first-load JS 315 kB to 184 kB (-131 kB, -42%). Other routes unchanged. Not checked in a browser: open `/` and confirm the beaver still appears.
 - `/onboarding` (315 kB) and `/auth/callback` (241 kB) were inspected and left alone: onboarding's weight is zod plus the form libraries for the wizard, and the callback's is the shared base plus Supabase and Apollo. `moment-timezone` only ships inside already-lazy chunks, so it was not replaced.
 - Apollo query batching stays rejected: `jobMatches` is the slow query and a batch would hold the fast ones until it finishes.
 

@@ -1,6 +1,6 @@
 import { JOBS } from '../constants'
 
-// The capybara works two desks in turn. Between them it stops in the middle for a few seconds,
+// The beaver works two desks in turn. Between them it stops in the middle for a few seconds,
 // takes its outfit off and shows its skills against both jobs, then puts the next outfit on and
 // walks to the other desk. One loop is both desks and both crossings.
 export const STATION_SECONDS = 5
@@ -9,7 +9,7 @@ const PAUSE_SECONDS = 3.4
 const CYCLE_SECONDS = STATION_SECONDS + WALK_SECONDS * 2 + PAUSE_SECONDS
 export const LOOP_SECONDS = CYCLE_SECONDS * JOBS.length
 
-// The desks stand either side of the middle; the capybara walks between these spots.
+// The desks stand either side of the middle; the beaver walks between these spots.
 export const STATION_X = [-2.1, 2.1] as const
 const MIDDLE_X = 0
 
@@ -17,7 +17,7 @@ const MIDDLE_X = 0
 export type BubbleView = 'thinking' | 'scored' | 'compare'
 
 export type ShiftPose = {
-  // the job whose desk the capybara is at, or is walking toward
+  // the job whose desk the beaver is at, or is walking toward
   job: number
   // where it is along x
   x: number
