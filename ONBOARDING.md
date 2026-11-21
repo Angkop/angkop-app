@@ -49,10 +49,10 @@ The project uses Python 3.12 for the ML microservice. We use pyenv to manage Pyt
 
 > The `.python-version` file in the repo root automatically tells pyenv to use 3.12 when you're inside the project folder.
 
-### Docker Desktop
+### Docker Desktop (optional)
 - Download from docker.com and install
 - Verify: `docker --version`
-- Used for running the ML microservice locally in a container
+- Only needed for a fully-offline local Postgres + Redis (`docker-compose.yml`). The normal setup uses the shared cloud ones
 
 ### Git
 - Verify: `git --version`
@@ -88,15 +88,14 @@ This installs dependencies for all apps and packages in one shot because of the 
 
 ## Step 4 — Environment Variables
 
-Each service needs a `.env` file. Ask a teammate for the values — never commit these to git.
+Each service needs a `.env` file. Values marked `ask Dre` are secrets for shared services — get them from Dre, don't create your own, and never commit them to git. The full table is in `README.md` under "Environment files".
 
 **`apps/server/.env`**
 ```
-DATABASE_URL=
-REDIS_URL=
-SUPABASE_URL=
-SUPABASE_SERVICE_KEY=
-JWT_SECRET=
+DATABASE_URL=        # ask Dre
+REDIS_URL=           # ask Dre
+SUPABASE_URL=        # ask Dre
+SUPABASE_SERVICE_KEY= # ask Dre
 ML_SERVICE_URL=http://localhost:8000
 WEB_URL=http://localhost:3000
 PORT=4000
@@ -105,37 +104,49 @@ PORT=4000
 **`apps/web/.env.local`**
 ```
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_URL=       # ask Dre
+NEXT_PUBLIC_SUPABASE_ANON_KEY=  # ask Dre
 ```
 
 **`ml/.env`**
 ```
-DATABASE_URL=
-REDIS_URL=
-MODEL_NAME=all-MiniLM-L6-v2
-NCF_WEIGHTS_PATH=./weights/ncf.pt
+GEMINI_API_KEY=       # ask Dre (service won't start without one; a dummy value boots it)
+SUPABASE_URL=         # ask Dre (downloads the NCF weights on first boot)
+SUPABASE_SERVICE_KEY= # ask Dre
+YOUTUBE_API_KEY=      # optional, ask Dre
 ```
+
+Sign-in is Google OAuth, and only accounts added as Test users in Google Cloud Console can use it. Ask Dre to add yours.
 
 ---
 
 ## Step 5 — Verify Everything Runs
 
-Once env vars are set, run all JS services from the root:
+First set up the ML virtualenv once:
 ```
-pnpm dev
+cd ml
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cd ..
 ```
 
-This starts the Next.js dashboard and Express API in parallel via Turborepo.
+Then, with env vars set, start everything from the root:
+```
+pnpm run dev:all
+```
+
+This starts the ML service, then the Next.js dashboard and Express API via Turborepo. To run only the JS services, use `pnpm dev` and start the ML service yourself (below).
 
 Check:
 - Dashboard → `http://localhost:3000`
 - GraphQL API → `http://localhost:4000/graphql`
 
-For the ML microservice (separate terminal):
+To run the ML microservice on its own (separate terminal):
 ```
 cd ml
-python3 -m uvicorn app.main:app --reload
+source .venv/bin/activate
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
 Check:
