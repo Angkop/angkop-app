@@ -273,6 +273,28 @@ export type RecommendResponse = {
   collaborativeWeight: number
 }
 
+// The collaborative score's share of the hybrid blend grows with the user's interaction count
+// up to a ceiling. ml/app/config.py holds the same three numbers for the ML service's own
+// /recommend responses - a server test fails if the two copies drift apart.
+export const COLLABORATIVE_WEIGHT_FLOOR = 0.1
+export const COLLABORATIVE_WEIGHT_CEILING = 0.6
+export const COLLABORATIVE_WEIGHT_STEP_PER_INTERACTION = 0.05
+
+// Same arithmetic, in the same order, as _hybrid in ml/app/routers/recommendations.py, so the
+// result is bit-identical to what the ML service would have returned for the same inputs.
+export function blendHybridScore(
+  semanticScore: number,
+  collaborativeScore: number,
+  interactionCount: number
+): RecommendResponse {
+  const collaborativeWeight = Math.min(
+    COLLABORATIVE_WEIGHT_FLOOR + COLLABORATIVE_WEIGHT_STEP_PER_INTERACTION * interactionCount,
+    COLLABORATIVE_WEIGHT_CEILING
+  )
+  const hybridScore = collaborativeWeight * collaborativeScore + (1 - collaborativeWeight) * semanticScore
+  return { semanticScore, collaborativeScore, hybridScore, collaborativeWeight }
+}
+
 // Scores many jobs against one user embedding in a single request instead of one HTTP
 // round-trip per job - what the job feed calls for every uncached job.
 export type RecommendBatchRequest = {

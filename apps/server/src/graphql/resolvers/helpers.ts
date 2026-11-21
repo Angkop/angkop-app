@@ -1,6 +1,7 @@
-import { EMBEDDING_DIMENSIONS, type JobMatch, type MatchInsight, type MatchInsightRequest, type MatchInsightResponse, type RecommendResponse } from '@angkop/shared'
+import { EMBEDDING_DIMENSIONS, blendHybridScore, type JobMatch, type MatchInsight, type MatchInsightRequest, type MatchInsightResponse, type RecommendResponse } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
-import { getOrSetMatchScores } from '../../lib/redis'
+import { getJobCatalog } from '../../lib/job-catalog'
+import { getOrSetMatchScoreComponents } from '../../lib/redis'
 import { MlServiceError, matchInsight as requestMatchInsight, recommend, recommendBatch } from '../../lib/ml-client'
 import { logger } from '../../lib/logger'
 import type {
@@ -152,18 +153,29 @@ export async function loadProfileForMe(userId: string) {
 // save), so this is cosine-similarity + NCF lookup, not live Sentence-BERT inference, and
 // the cache misses go out as a single /recommend/batch call instead of one request per job.
 //
-// Takes ids, not job rows: the 384-float embeddings (~9 MB across the whole catalog), the
-// profile, and the interaction count are only read from Postgres inside the cache-miss
-// callback, so a fully cached feed never pays to load them.
-async function scoreJobs(userId: string, jobIds: string[]): Promise<Map<string, RecommendResponse>> {
-  return getOrSetMatchScores(userId, jobIds, async (missingJobIds) => {
-    const [jobs, profile, interactionCount] = await Promise.all([
+// Takes ids, not job rows: the 384-float embeddings (~9 MB across the whole catalog) and the
+// profile are only read from Postgres inside the cache-miss callback, so a fully cached feed
+// never pays to load them.
+//
+// What is cached is the semantic and collaborative scores, not the hybrid. The hybrid is blended
+// here on every call from the user's current interaction count, so a view, save or dismiss
+// changes the next feed's scores without invalidating anything. The caller passes the count in
+// (a COUNT it runs alongside the queries it already makes) rather than this function issuing its
+// own, which would add a database round trip to every cached feed load.
+async function scoreJobs(
+  userId: string,
+  jobIds: string[],
+  interactionCount: number
+): Promise<Map<string, RecommendResponse>> {
+  if (jobIds.length === 0) return new Map()
+
+  const components = await getOrSetMatchScoreComponents(userId, jobIds, async (missingJobIds) => {
+    const [jobs, profile] = await Promise.all([
       prisma.job.findMany({
         where: { id: { in: missingJobIds }, deleted: false },
         select: { id: true, embedding: true }
       }),
-      prisma.userProfile.findUnique({ where: { userId }, select: { embedding: true } }),
-      prisma.interaction.count({ where: { userId, deleted: false } })
+      prisma.userProfile.findUnique({ where: { userId }, select: { embedding: true } })
     ])
 
     const { results } = await recommendBatch({
@@ -172,8 +184,19 @@ async function scoreJobs(userId: string, jobIds: string[]): Promise<Map<string, 
       userInteractionCount: interactionCount,
       jobs: jobs.map((job) => ({ jobId: job.id, jobEmbedding: job.embedding }))
     })
-    return new Map(results.map((result) => [result.jobId, result]))
+    return new Map(
+      results.map((result) => [
+        result.jobId,
+        { semanticScore: result.semanticScore, collaborativeScore: result.collaborativeScore }
+      ])
+    )
   })
+
+  const scores = new Map<string, RecommendResponse>()
+  for (const [jobId, { semanticScore, collaborativeScore }] of components) {
+    scores.set(jobId, blendHybridScore(semanticScore, collaborativeScore, interactionCount))
+  }
+  return scores
 }
 
 // The fields jobMatches needs to rank, filter (search/skill) and paginate every job - the
@@ -192,19 +215,16 @@ export type ScoredJob = {
 // Every non-hidden job with its score, best match first. Saved and dismissed jobs are
 // excluded before scoring so they're never scored (or cached) for nothing.
 export async function computeScoredJobs(userId: string): Promise<ScoredJob[]> {
-  const [jobs, savedJobs, dismissedInteractions] = await Promise.all([
-    prisma.job.findMany({
-      where: { deleted: false },
-      select: { id: true, title: true, company: true, requiredSkills: true },
-      // Without a tiebreaker, equal scores come back in whatever order Postgres returns them,
-      // so a job could appear on two pages (or none) as the user pages through.
-      orderBy: { id: 'asc' }
-    }),
+  const [jobs, savedJobs, dismissedInteractions, interactionCount] = await Promise.all([
+    getJobCatalog(),
     prisma.savedJob.findMany({ where: { userId, deleted: false }, select: { jobId: true } }),
     prisma.interaction.findMany({
       where: { userId, deleted: false, eventType: 'dismiss' },
       select: { jobId: true }
-    })
+    }),
+    // The blend weight scoreJobs applies to the cached scores; fetched here so it overlaps
+    // the catalog query instead of adding a round trip after it.
+    prisma.interaction.count({ where: { userId, deleted: false } })
   ])
 
   // Saved jobs move to the Applications page and dismissed jobs are a negative signal —
@@ -217,7 +237,8 @@ export async function computeScoredJobs(userId: string): Promise<ScoredJob[]> {
 
   const scoresByJobId = await scoreJobs(
     userId,
-    visibleJobs.map((job) => job.id)
+    visibleJobs.map((job) => job.id),
+    interactionCount
   )
 
   const scoredJobs: ScoredJob[] = []
@@ -287,11 +308,16 @@ export async function hydrateJobMatches(userId: string, scoredJobs: ScoredJob[])
 
 // Scores only the given jobs (e.g. a user's saved jobs) instead of every ingested job like
 // computeScoredJobs — cheap even though scores are cached, since saved-job lists are small
-// and this runs on every Applications page load. The caller already filtered out deleted jobs.
-export async function computeHybridScoresByJobId(userId: string, jobIds: string[]): Promise<Map<string, number>> {
+// and this runs on every Applications page load. The caller already filtered out deleted jobs,
+// and passes the user's interaction count (see scoreJobs for why it isn't fetched in here).
+export async function computeHybridScoresByJobId(
+  userId: string,
+  jobIds: string[],
+  interactionCount: number
+): Promise<Map<string, number>> {
   if (jobIds.length === 0) return new Map()
 
-  const scoresByJobId = await scoreJobs(userId, jobIds)
+  const scoresByJobId = await scoreJobs(userId, jobIds, interactionCount)
 
   return new Map(Array.from(scoresByJobId, ([jobId, scores]) => [jobId, scores.hybridScore]))
 }
@@ -348,7 +374,7 @@ export async function getJobMatchInsight(userId: string, jobId: string): Promise
   ])
 
   const userEmbedding = resolveUserEmbedding(profile)
-  const scoresByJobId = await getOrSetMatchScores(userId, [job.id], async () => {
+  const componentsByJobId = await getOrSetMatchScoreComponents(userId, [job.id], async () => {
     const score = await recommend({
       userId,
       jobId: job.id,
@@ -356,9 +382,10 @@ export async function getJobMatchInsight(userId: string, jobId: string): Promise
       jobEmbedding: job.embedding,
       userInteractionCount: interactionCount
     })
-    return new Map([[job.id, score]])
+    return new Map([[job.id, { semanticScore: score.semanticScore, collaborativeScore: score.collaborativeScore }]])
   })
-  const scores = scoresByJobId.get(job.id)!
+  const { semanticScore, collaborativeScore } = componentsByJobId.get(job.id)!
+  const scores = blendHybridScore(semanticScore, collaborativeScore, interactionCount)
 
   const insight = await requestMatchInsightWithRetry({
     jobTitle: job.title,

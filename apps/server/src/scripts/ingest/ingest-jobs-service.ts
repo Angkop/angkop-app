@@ -25,7 +25,6 @@ import { fetchRemoteOk } from './sources/remoteok'
 import type { NormalizedListing, SourceFetchResult } from './types'
 
 const MAX_REQUIRED_SKILLS = 8
-const MATCH_SCORE_KEY_PREFIX = 'match-score:'
 
 type Bucket = 'international' | 'ph'
 
@@ -291,22 +290,9 @@ export class IngestJobsService {
     // Soft delete, same as everywhere else in this schema. The job's sections stay as they
     // are; every read filters on the job's own `deleted` flag.
     await this.deps.prisma.job.updateMany({ where: { id: { in: jobIds }, deleted: false }, data: { deleted: true } })
-    await this.invalidateMatchScores(jobIds)
-  }
-
-  // Cached match scores for a removed job would otherwise sit in Redis until their 24h TTL.
-  // One SCAN over the match-score keys, filtered by job id, like invalidateMatchScoresForUser.
-  private async invalidateMatchScores(jobIds: string[]): Promise<void> {
-    const { redis } = this.deps
-    const targets = new Set(jobIds)
-    let cursor = '0'
-    do {
-      const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', `${MATCH_SCORE_KEY_PREFIX}*`, 'COUNT', 500)
-      cursor = nextCursor
-      // Key shape is match-score:<userId>:<jobId>.
-      const doomed = keys.filter((key) => targets.has(key.split(':').slice(2).join(':')))
-      if (doomed.length > 0) await redis.del(...doomed)
-    } while (cursor !== '0')
+    // Cached match scores for a removed job are left to expire with their 24h hash. They are
+    // never read: the feed only scores jobs that are still live, and scanning every user's
+    // cache for them would cost far more than the few stale fields they take up.
   }
 
   private async ingestBucket(

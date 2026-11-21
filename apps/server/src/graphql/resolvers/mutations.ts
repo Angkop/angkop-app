@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '../../lib/prisma'
 import { invalidateMatchScoresForUser, invalidateSkillGapsForUser } from '../../lib/redis'
 import { embed } from '../../lib/ml-client'
-import { VALID_EVENT_TYPES } from './constants'
+import { SAVED_JOB_JOB_SELECT, VALID_EVENT_TYPES } from './constants'
 import { buildSkillsText, loadProfileForMe, serializeSavedJob } from './helpers'
 import type { CompleteOnboardingInput, GraphQLContext } from './types'
 
@@ -320,10 +320,9 @@ export const mutationResolvers = {
       }
     })
 
-    // Interaction count feeds the collaborative/semantic blend weight (see
-    // ml/app/routers/recommendations.py), so it affects every job's hybrid score, not
-    // just this one.
-    await invalidateMatchScoresForUser(context.userId)
+    // No score-cache invalidation: the interaction count changes every job's hybrid score, but
+    // it is read live and applied to the cached semantic/collaborative scores on each read
+    // (see scoreJobs in helpers.ts), so the cached scores stay valid.
 
     return true
   },
@@ -335,7 +334,7 @@ export const mutationResolvers = {
       where: { userId_jobId: { userId: context.userId, jobId: job.id } },
       update: { deleted: false },
       create: { userId: context.userId, jobId: job.id },
-      include: { job: true }
+      include: { job: { select: SAVED_JOB_JOB_SELECT } }
     })
 
     // Saving also counts as the existing 'save' interaction signal the NCF model trains
@@ -349,7 +348,6 @@ export const mutationResolvers = {
         platform: job.platform
       }
     })
-    await invalidateMatchScoresForUser(context.userId)
     // The newly-saved job's required skills are an input to the skill-gap report.
     await invalidateSkillGapsForUser(context.userId)
 
@@ -374,7 +372,7 @@ export const mutationResolvers = {
     const savedJob = await prisma.savedJob.update({
       where: { userId_jobId: { userId: context.userId, jobId: args.jobId } },
       data: { status: args.status },
-      include: { job: true }
+      include: { job: { select: SAVED_JOB_JOB_SELECT } }
     })
     return serializeSavedJob(savedJob)
   },
@@ -387,7 +385,7 @@ export const mutationResolvers = {
     const savedJob = await prisma.savedJob.update({
       where: { userId_jobId: { userId: context.userId, jobId: args.jobId } },
       data: { interviewDate: args.interviewDate ? new Date(args.interviewDate) : null },
-      include: { job: true }
+      include: { job: { select: SAVED_JOB_JOB_SELECT } }
     })
     return serializeSavedJob(savedJob)
   },
@@ -400,7 +398,7 @@ export const mutationResolvers = {
     const savedJob = await prisma.savedJob.update({
       where: { userId_jobId: { userId: context.userId, jobId: args.jobId } },
       data: { tags },
-      include: { job: true }
+      include: { job: { select: SAVED_JOB_JOB_SELECT } }
     })
     return serializeSavedJob(savedJob)
   },
@@ -412,7 +410,7 @@ export const mutationResolvers = {
     const savedJob = await prisma.savedJob.update({
       where: { userId_jobId: { userId: context.userId, jobId: args.jobId } },
       data: { tags: existing.tags.filter((tag: string) => tag !== args.tag) },
-      include: { job: true }
+      include: { job: { select: SAVED_JOB_JOB_SELECT } }
     })
     return serializeSavedJob(savedJob)
   },

@@ -1,14 +1,56 @@
 import Redis from 'ioredis'
-import type { RecommendResponse, SkillGapResponse } from '@angkop/shared'
+import type { SkillGapResponse } from '@angkop/shared'
 import { logger } from './logger'
 
 export const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379')
 
 const MATCH_SCORE_TTL_SECONDS = 60 * 60 * 24
 const SKILL_GAPS_TTL_SECONDS = 60 * 60 * 24
+// Fields per HMGET / HSET. A whole catalog in one command grows with every ingested job and
+// would eventually trip a managed Redis's request-size limit, so large lists go out in chunks
+// (still one pipelined round trip).
+const MATCH_SCORE_FIELDS_PER_COMMAND = 1000
 
-function matchScoreCacheKey(userId: string, jobId: string): string {
-  return `match-score:${userId}:${jobId}`
+// What the cache holds for a (user, job) pair: the two scores the hybrid blend is made of, not
+// the blend itself. The blend's weight depends on the user's interaction count, so caching the
+// blended score meant every view/save/dismiss had to throw the user's whole cache away. The
+// ingredients only change when the profile does (semantic) or the model is retrained
+// (collaborative), so the count is read live and applied on every read instead
+// (see blendHybridScore in @angkop/shared).
+export type MatchScoreComponents = {
+  semanticScore: number
+  collaborativeScore: number
+}
+
+// One hash per user, one field per job, instead of one key per (user, job). Invalidating a
+// user is a single DEL rather than a SCAN across every key in Redis, and the key count stays
+// at "users" instead of "users x jobs".
+function matchScoresCacheKey(userId: string): string {
+  return `match-scores:${userId}`
+}
+
+// "<semantic>,<collaborative>" - number-to-string round-trips exactly in JS, so a cached score
+// reads back bit-identical to what was computed.
+function serializeComponents(components: MatchScoreComponents): string {
+  return `${components.semanticScore},${components.collaborativeScore}`
+}
+
+function parseComponents(value: string): MatchScoreComponents | null {
+  const [semantic, collaborative] = value.split(',')
+  const semanticScore = Number(semantic)
+  const collaborativeScore = Number(collaborative)
+  if (collaborative === undefined || !Number.isFinite(semanticScore) || !Number.isFinite(collaborativeScore)) {
+    return null
+  }
+  return { semanticScore, collaborativeScore }
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let start = 0; start < items.length; start += size) {
+    chunks.push(items.slice(start, start + size))
+  }
+  return chunks
 }
 
 function matchScoreInFlightKey(userId: string, jobId: string): string {
@@ -20,31 +62,43 @@ function matchScoreInFlightKey(userId: string, jobId: string): string {
 // would otherwise both pay for their own ML call for that job. Keyed by (userId, jobId)
 // rather than by batch, since two concurrent callers rarely ask for the exact same job
 // list - only the overlapping jobs should be shared, not the whole request.
-const inFlightMatchScores = new Map<string, Promise<RecommendResponse>>()
+const inFlightMatchScores = new Map<string, Promise<MatchScoreComponents>>()
 
-// Looks up every (userId, jobId) pair's cached score in one MGET, then hands only the
-// cache misses to `computeMissing` so the caller can score them in a single batched ML
+// Looks up every job's cached components for this user in one pipelined HMGET, then hands only
+// the cache misses to `computeMissing` so the caller can score them in a single batched ML
 // request instead of one request per job - this is what makes a feed-sized job list fast
 // on a cold cache. Callers scoring just one job (e.g. the match insight dialog) call this
 // with a single-element array instead of keeping a separate single-job code path.
-export async function getOrSetMatchScores(
+export async function getOrSetMatchScoreComponents(
   userId: string,
   jobIds: string[],
-  computeMissing: (missingJobIds: string[]) => Promise<Map<string, RecommendResponse>>
-): Promise<Map<string, RecommendResponse>> {
+  computeMissing: (missingJobIds: string[]) => Promise<Map<string, MatchScoreComponents>>
+): Promise<Map<string, MatchScoreComponents>> {
   if (jobIds.length === 0) return new Map()
 
-  const cached = await redis.mget(jobIds.map((jobId) => matchScoreCacheKey(userId, jobId)))
+  const key = matchScoresCacheKey(userId)
+  const readPipeline = redis.pipeline()
+  const jobIdChunks = chunk(jobIds, MATCH_SCORE_FIELDS_PER_COMMAND)
+  for (const jobIdChunk of jobIdChunks) {
+    readPipeline.hmget(key, ...jobIdChunk)
+  }
+  const replies = await readPipeline.exec()
+  if (!replies) throw new Error('Redis returned no reply for the match score read')
 
-  const results = new Map<string, RecommendResponse>()
+  const results = new Map<string, MatchScoreComponents>()
   const missingJobIds: string[] = []
-  jobIds.forEach((jobId, index) => {
-    const value = cached[index]
-    if (value) {
-      results.set(jobId, JSON.parse(value) as RecommendResponse)
-    } else {
-      missingJobIds.push(jobId)
-    }
+  jobIdChunks.forEach((jobIdChunk, chunkIndex) => {
+    const [error, values] = replies[chunkIndex]
+    if (error) throw error
+    jobIdChunk.forEach((jobId, index) => {
+      const value = (values as (string | null)[])[index]
+      const parsed = value ? parseComponents(value) : null
+      if (parsed) {
+        results.set(jobId, parsed)
+      } else {
+        missingJobIds.push(jobId)
+      }
+    })
   })
 
   if (missingJobIds.length === 0) return results
@@ -57,8 +111,8 @@ export async function getOrSetMatchScores(
     const existing = inFlightMatchScores.get(matchScoreInFlightKey(userId, jobId))
     if (existing) {
       waiters.push(
-        existing.then((score) => {
-          results.set(jobId, score)
+        existing.then((components) => {
+          results.set(jobId, components)
         })
       )
     } else {
@@ -80,17 +134,20 @@ export async function getOrSetMatchScores(
 
     try {
       const computed = await batchPromise
-      const pipeline = redis.pipeline()
-      for (const [jobId, score] of computed) {
-        results.set(jobId, score)
-        pipeline.set(
-          matchScoreCacheKey(userId, jobId),
-          JSON.stringify(score),
-          'EX',
-          MATCH_SCORE_TTL_SECONDS
-        )
+      const writePipeline = redis.pipeline()
+      const fields: [string, string][] = []
+      for (const [jobId, components] of computed) {
+        results.set(jobId, components)
+        fields.push([jobId, serializeComponents(components)])
       }
-      await pipeline.exec()
+      for (const fieldChunk of chunk(fields, MATCH_SCORE_FIELDS_PER_COMMAND)) {
+        writePipeline.hset(key, Object.fromEntries(fieldChunk))
+      }
+      // NX: only the first write starts the clock. Without it, every nightly ingest's new jobs
+      // would push the expiry out again and a profile's scores could outlive the 24h bound
+      // indefinitely (e.g. across a model retrain).
+      writePipeline.expire(key, MATCH_SCORE_TTL_SECONDS, 'NX')
+      await writePipeline.exec()
     } finally {
       for (const jobId of toCompute) {
         inFlightMatchScores.delete(matchScoreInFlightKey(userId, jobId))
@@ -103,20 +160,12 @@ export async function getOrSetMatchScores(
   return results
 }
 
-// Called after a profile update so the next jobMatches query recomputes fresh scores
-// instead of serving up to 24h of stale ones from before the edit. SCAN instead of KEYS
-// so invalidation never blocks the single-threaded Redis server while it walks the
-// keyspace, same pattern as scripts/reset-all-data.ts's deleteRedisKeys.
+// Called after a profile update, since the skills text feeds the semantic score of every job -
+// the next jobMatches query recomputes fresh scores instead of serving up to 24h of stale ones
+// from before the edit. A single DEL: interactions deliberately do NOT call this, because the
+// interaction count is applied to the cached components on every read.
 export async function invalidateMatchScoresForUser(userId: string): Promise<void> {
-  const pattern = matchScoreCacheKey(userId, '*')
-  let cursor = '0'
-  do {
-    const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 500)
-    cursor = nextCursor
-    if (keys.length > 0) {
-      await redis.del(...keys)
-    }
-  } while (cursor !== '0')
+  await redis.del(matchScoresCacheKey(userId))
 }
 
 function skillGapsCacheKey(userId: string): string {
@@ -126,7 +175,7 @@ function skillGapsCacheKey(userId: string): string {
 // The skill-gap report calls the ML service and persists a SkillGapRecord per missing
 // skill - without this cache, revisiting the page (or any refetch) re-runs both on every
 // single request even when nothing about the user's saved jobs or skills has changed.
-// Mirrors getOrSetMatchScores: cache the whole computed report, invalidate explicitly
+// Mirrors getOrSetMatchScoreComponents: cache the whole computed report, invalidate explicitly
 // wherever its inputs (saved jobs, skills) change, with a 24h TTL as a backstop.
 export async function getOrSetSkillGaps(
   userId: string,

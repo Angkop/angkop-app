@@ -469,15 +469,16 @@ and Redis, and passes whatever text/ids each route needs (see `ml/README.md`).
 
 ```ts
 const MATCH_SCORE_TTL_SECONDS = 60 * 60 * 24   // 24h
-const key = `match-score:${userId}:${jobId}`
-// cache miss -> call recommend() -> cache the full RecommendResponse under `key`
+const key = `match-scores:${userId}`           // one hash per user, one field per jobId
+// cache miss -> /recommend/batch -> cache { semanticScore, collaborativeScore } under the field
+// every read -> blendHybridScore(semanticScore, collaborativeScore, currentInteractionCount)
 ```
 
-The whole `RecommendResponse` (all four fields) is cached per `(userId, jobId)`, and
-explicitly invalidated — not just left to expire — whenever one of the hybrid formula's
-real inputs changes: on profile completion/edit (`skillsText` changed → `semanticScore`
-would change) and on every logged interaction (`userInteractionCount` changed →
-`collaborativeWeight` would change).
+Only the two ingredients, `semanticScore` and `collaborativeScore`, are cached per
+`(userId, jobId)`. The hybrid and its `collaborativeWeight` are blended on every read from the
+user's current interaction count, so a logged interaction never needs to invalidate anything.
+The cache is explicitly invalidated — not just left to expire — when the one remaining real
+input changes: on profile completion/edit (`skillsText` changed → `semanticScore` would change).
 
 **GraphQL resolvers** (`apps/server/src/graphql/resolvers/`) call this orchestration
 layer: `jobMatches` fans `recommend()` out over a user's job feed (3-way concurrency,

@@ -18,7 +18,7 @@ import { redis } from '../lib/redis'
 const prisma = new PrismaClient()
 const DRY_RUN = process.env.DRY_RUN !== 'false'
 
-const REDIS_KEY_PATTERNS = ['match-score:*', 'resume:*']
+const REDIS_KEY_PATTERNS = ['match-score:*', 'match-scores:*', 'resume:*']
 
 async function countRedisKeys(pattern: string): Promise<number> {
   let count = 0

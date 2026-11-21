@@ -1,7 +1,7 @@
-import { EMBEDDING_DIMENSIONS } from '@angkop/shared'
+import { EMBEDDING_DIMENSIONS, blendHybridScore } from '@angkop/shared'
 import { Router } from 'express'
 import { prisma } from '../lib/prisma'
-import { getOrSetMatchScores } from '../lib/redis'
+import { getOrSetMatchScoreComponents } from '../lib/redis'
 import { recommend } from '../lib/ml-client'
 
 const DEMO_USER_ID = 'demo-user-1'
@@ -29,7 +29,7 @@ matchScoreRouter.get('/:jobId', async (req, res) => {
   ])
 
   const userEmbedding = profile && profile.embedding.length > 0 ? profile.embedding : ZERO_EMBEDDING
-  const scoresByJobId = await getOrSetMatchScores(userId, [job.id], async () => {
+  const componentsByJobId = await getOrSetMatchScoreComponents(userId, [job.id], async () => {
     const score = await recommend({
       userId,
       jobId: job.id,
@@ -37,8 +37,9 @@ matchScoreRouter.get('/:jobId', async (req, res) => {
       jobEmbedding: job.embedding,
       userInteractionCount: interactionCount
     })
-    return new Map([[job.id, score]])
+    return new Map([[job.id, { semanticScore: score.semanticScore, collaborativeScore: score.collaborativeScore }]])
   })
+  const { semanticScore, collaborativeScore } = componentsByJobId.get(job.id)!
 
-  res.json(scoresByJobId.get(job.id))
+  res.json(blendHybridScore(semanticScore, collaborativeScore, interactionCount))
 })

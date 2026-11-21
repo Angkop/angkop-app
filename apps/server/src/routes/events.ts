@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto'
 import { Router } from 'express'
 import { INTERACTION_WEIGHTS, type InteractionEventType, type Platform } from '@angkop/shared'
 import { prisma } from '../lib/prisma'
-import { invalidateMatchScoresForUser } from '../lib/redis'
 import { embed } from '../lib/ml-client'
 import { logger } from '../lib/logger'
 
@@ -96,9 +95,9 @@ eventsRouter.post('/', async (req, res) => {
     }
   })
 
-  // Interaction count feeds the collaborative/semantic blend weight for every job, not
-  // just this one — see the same invalidation in the logInteraction GraphQL resolver.
-  await invalidateMatchScoresForUser(userId)
+  // No score-cache invalidation: the interaction count feeds the blend weight for every job,
+  // but it is read live and applied to the cached semantic/collaborative scores on each read
+  // (see scoreJobs in graphql/resolvers/helpers.ts), so the cached scores stay valid.
 
   logger.info({ userId, jobId: scorableJob.id, eventType: body.eventType }, 'Interaction logged')
   res.status(201).json({ interactionId: interaction.id, jobId: scorableJob.id })

@@ -11,7 +11,8 @@ import {
   IN_PROGRESS_SAVED_JOB_STATUSES,
   MAX_JOB_MATCHES_PAGE_SIZE,
   MAX_SAVED_JOBS_PAGE_SIZE,
-  MAX_SKILL_GAPS_PAGE_SIZE
+  MAX_SKILL_GAPS_PAGE_SIZE,
+  SAVED_JOB_JOB_SELECT
 } from './constants'
 import {
   computeHybridScoresByJobId,
@@ -104,7 +105,7 @@ export const queryResolvers = {
       const [savedJobs, userSkills] = await Promise.all([
         prisma.savedJob.findMany({
           where: { userId: context.userId, deleted: false, job: { deleted: false } },
-          include: { job: true },
+          include: { job: { select: { id: true, requiredSkills: true } } },
           orderBy: { createdAt: 'desc' }
         }),
         prisma.userSkill.findMany({
@@ -194,20 +195,23 @@ export const queryResolvers = {
     const page = Math.max(1, args.page ?? 1)
     const pageSize = Math.min(Math.max(1, args.pageSize ?? DEFAULT_SAVED_JOBS_PAGE_SIZE), MAX_SAVED_JOBS_PAGE_SIZE)
 
-    const [savedJobs, total] = await Promise.all([
+    const [savedJobs, total, interactionCount] = await Promise.all([
       prisma.savedJob.findMany({
         where,
-        include: { job: true },
+        include: { job: { select: SAVED_JOB_JOB_SELECT } },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize
       }),
-      prisma.savedJob.count({ where })
+      prisma.savedJob.count({ where }),
+      // The blend weight for the scores below, fetched alongside the page instead of after it.
+      prisma.interaction.count({ where: { userId: context.userId, deleted: false } })
     ])
 
     const scoresByJobId = await computeHybridScoresByJobId(
       context.userId,
-      savedJobs.map((savedJob) => savedJob.jobId)
+      savedJobs.map((savedJob) => savedJob.jobId),
+      interactionCount
     )
 
     return {

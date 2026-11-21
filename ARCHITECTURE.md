@@ -51,19 +51,24 @@ Redis has exactly one job: caching computed match scores, per the thesis's docum
 24h-TTL design.
 
 `apps/server/src/lib/redis.ts`:
-- `getOrSetMatchScore(userId, jobId, compute)` — key `match-score:{userId}:{jobId}`,
-  `EX 86400` (24h). Cache hit returns instantly; cache miss calls `compute()` (which hits
-  the ML service's `/recommend`) and stores the result.
-- `invalidateMatchScoresForUser(userId)` — deletes every `match-score:{userId}:*` key.
-  Called from three places whenever something that affects a user's scores changes:
-  - `updateProfile` GraphQL mutation (skills/skillsText feed the semantic score)
-  - `logInteraction` GraphQL mutation (interaction count feeds the hybrid blend weight)
-  - `POST /api/events` REST route (same reason — this is the extension's path, separate
-    from the dashboard's GraphQL path)
+- `getOrSetMatchScoreComponents(userId, jobIds, computeMissing)` — one Redis hash per user,
+  `match-scores:{userId}`, one field per job holding `"<semantic>,<collaborative>"`. It reads
+  every job in one pipelined `HMGET`, hands only the misses to `computeMissing()` (one batched
+  call to the ML service's `/recommend/batch`), and writes them back with `HSET`. The hash
+  expires 24h after its first write (`EXPIRE ... NX`).
+- What is cached is the semantic and collaborative scores, **not** the hybrid. The hybrid is
+  blended on every read from the user's current interaction count with `blendHybridScore`
+  (`@angkop/shared`, the same formula as the ML service's `/recommend`), so a view, save or
+  dismiss changes the next feed's scores without invalidating anything.
+- `invalidateMatchScoresForUser(userId)` — a single `DEL` of that user's hash. Called only
+  from the `updateProfile` GraphQL mutation, because skills/skillsText feed the semantic
+  score of every job.
+- Interactions (`logInteraction`, `saveJob`, `POST /api/events`) do not invalidate.
+- The weight constants live in `@angkop/shared` and `ml/app/config.py`;
+  `apps/server/src/lib/match-blend.test.ts` fails if the two drift apart.
 
-Without that invalidation, a profile edit or a Save/Dismiss click wouldn't be reflected
-in scores for up to 24h — this was a real bug found and fixed mid-session (see the git
-history / conversation for context), not part of the original design.
+Earlier versions cached one key per (user, job) and wiped it on every interaction. That meant
+every click triggered a full recompute, and each wipe scanned the whole keyspace.
 
 ---
 
