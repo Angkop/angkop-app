@@ -470,7 +470,8 @@ and Redis, and passes whatever text/ids each route needs (see `ml/README.md`).
 ```ts
 const MATCH_SCORE_TTL_SECONDS = 60 * 60 * 24   // 24h
 const key = `match-scores:${userId}`           // one hash per user, one field per jobId
-// cache miss -> /recommend/batch -> cache { semanticScore, collaborativeScore } under the field
+// cache miss -> semantic score in Node (in-memory job embeddings + cosine) and collaborative score
+//   from the ML service's /collaborative/batch -> cache { semanticScore, collaborativeScore } under the field
 // every read -> blendHybridScore(semanticScore, collaborativeScore, currentInteractionCount)
 ```
 

@@ -53,9 +53,15 @@ Redis has exactly one job: caching computed match scores, per the thesis's docum
 `apps/server/src/lib/redis.ts`:
 - `getOrSetMatchScoreComponents(userId, jobIds, computeMissing)` — one Redis hash per user,
   `match-scores:{userId}`, one field per job holding `"<semantic>,<collaborative>"`. It reads
-  every job in one pipelined `HMGET`, hands only the misses to `computeMissing()` (one batched
-  call to the ML service's `/recommend/batch`), and writes them back with `HSET`. The hash
-  expires 24h after its first write (`EXPIRE ... NX`).
+  every job in one pipelined `HMGET`, hands only the misses to `computeMissing()`, and writes
+  them back with `HSET`. The hash expires 24h after its first write (`EXPIRE ... NX`).
+- `computeMissing()` (`scoreJobs` in `graphql/resolvers/helpers.ts`) computes the semantic score
+  in Node: every live job's embedding is held in this process's memory (`lib/job-embeddings.ts`,
+  doubles, reloaded every 10 minutes, preloaded at boot, newly ingested jobs fetched on demand),
+  and `lib/cosine.ts` does the same cosine-and-clamp as the ML service. The ML service is asked
+  only for the collaborative half, `POST /collaborative/batch`, with job ids (about 150 kB for
+  the whole catalog) instead of every job's 384 numbers (about 17 MB). It answers with the scores
+  of the jobs the model was trained on and a `defaultScore` for the rest.
 - What is cached is the semantic and collaborative scores, **not** the hybrid. The hybrid is
   blended on every read from the user's current interaction count with `blendHybridScore`
   (`@angkop/shared`, the same formula as the ML service's `/recommend`), so a view, save or

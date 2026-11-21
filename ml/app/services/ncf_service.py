@@ -88,3 +88,24 @@ def predict_collaborative_scores_batch(user_id: str, job_ids: list[str]) -> list
 
     scores_by_job_id = dict(zip(known_job_ids, scores))
     return [scores_by_job_id.get(job_id, COLD_START_COLLABORATIVE_SCORE) for job_id in job_ids]
+
+
+def predict_known_collaborative_scores(user_id: str, job_ids: list[str]) -> dict[str, float]:
+    """The model's score for each job it was trained on, for this user. Jobs (or a user) the model
+    has never seen are left out, so a caller applies COLD_START_COLLABORATIVE_SCORE to anything
+    missing - same numbers as predict_collaborative_scores_batch, without sending a default back
+    for every job in the catalog."""
+    loaded = _load()
+    if loaded is None or user_id not in loaded.user_index:
+        return {}
+
+    known_job_ids = [job_id for job_id in job_ids if job_id in loaded.item_index]
+    if not known_job_ids:
+        return {}
+
+    user_idx = torch.tensor([loaded.user_index[user_id]] * len(known_job_ids))
+    item_idx = torch.tensor([loaded.item_index[job_id] for job_id in known_job_ids])
+    with _inference_lock, torch.no_grad():
+        scores = loaded.model(user_idx, item_idx).tolist()
+
+    return dict(zip(known_job_ids, scores))

@@ -29,6 +29,10 @@ Confirm it's up at `http://localhost:8000/docs`.
 ## Notes
 
 - `/embed` uses real Sentence-BERT (`all-MiniLM-L6-v2`, 384-dim).
+- `/collaborative/batch` is what the server's job feed calls: it takes a user id and job ids and returns the
+  NCF score for the jobs the model was trained on plus a `defaultScore` for the rest. The server computes the
+  semantic score itself from embeddings it holds in memory, so the feed never uploads job embeddings here.
+  `/recommend` and `/recommend/batch` still take embeddings and compute both halves.
 - `/recommend`'s collaborative score falls back to a neutral `0.5` for any user/job pair
   the NCF model wasn't trained on (`ml/weights/` missing, or an unseen id) — that's the
   documented cold-start behavior, not a bug.

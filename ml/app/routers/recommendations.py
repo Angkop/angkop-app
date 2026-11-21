@@ -2,12 +2,17 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.config import (
+    COLD_START_COLLABORATIVE_SCORE,
     COLLABORATIVE_WEIGHT_CEILING,
     COLLABORATIVE_WEIGHT_FLOOR,
     COLLABORATIVE_WEIGHT_STEP_PER_INTERACTION,
 )
 from app.services.embedder import cosine_similarity
-from app.services.ncf_service import predict_collaborative_score, predict_collaborative_scores_batch
+from app.services.ncf_service import (
+    predict_collaborative_score,
+    predict_collaborative_scores_batch,
+    predict_known_collaborative_scores,
+)
 
 router = APIRouter()
 
@@ -48,6 +53,17 @@ class RecommendBatchResult(RecommendResponse):
 
 class RecommendBatchResponse(BaseModel):
     results: list[RecommendBatchResult]
+
+
+class CollaborativeBatchRequest(BaseModel):
+    userId: str
+    jobIds: list[str]
+
+
+class CollaborativeBatchResponse(BaseModel):
+    # What any job missing from `scores` gets: the model has never seen it (or this user).
+    defaultScore: float
+    scores: dict[str, float]
 
 
 def _collaborative_weight(interaction_count: int) -> float:
@@ -105,3 +121,16 @@ def recommend_batch(request: RecommendBatchRequest) -> RecommendBatchResponse:
             )
         )
     return RecommendBatchResponse(results=results)
+
+
+# Only the collaborative half of the score. The server already holds every job's embedding in
+# memory and computes the semantic score itself, so it sends job ids here (a few kB) instead of
+# every job's 384 numbers (about 17 MB for the whole catalog) - which matters most when this
+# service is reached through a tunnel. Only the jobs the model knows come back; the rest get
+# `defaultScore`.
+@router.post("/collaborative/batch", response_model=CollaborativeBatchResponse)
+def collaborative_batch(request: CollaborativeBatchRequest) -> CollaborativeBatchResponse:
+    return CollaborativeBatchResponse(
+        defaultScore=COLD_START_COLLABORATIVE_SCORE,
+        scores=predict_known_collaborative_scores(request.userId, request.jobIds),
+    )

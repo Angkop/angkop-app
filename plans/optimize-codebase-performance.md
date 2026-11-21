@@ -86,11 +86,22 @@ Redis was local, so the times above exclude network. On a remote Redis, every co
 - **Not done in this phase:** the cold feed itself (read ~17 MB of embeddings, send to ML). It now only happens on first visit or a profile edit. See Phase 1b.
 
 
-### Phase 1b: Make the cold feed cheap (not started, needs approval)
-- **Evidence:** a cold feed still costs ~2.5-2.9 s locally: about 17 MB of job embeddings read from Postgres, then sent to the ML service for 170 ms of math. After Phase 1 it only happens on a user's first visit, a profile edit, or when their hash expires.
-- **Change:** keep job embeddings in Node's memory (refreshed after the nightly ingest or on a timer) and compute the semantic score in Node (one dot product per job, since embeddings are already normalized). The ML service is then only needed for the collaborative score, which today is a constant 0.5 for every real user and job.
-- **Cost:** moves the cosine math out of Python, so a parity test against the ML service's output is required. Do this only if the measured cold feed on the deployed app is still too slow after Phase 1.
-- **Optional later:** a nightly scheduler that pre-fills scores for recently active users, and only once the model is retrained on real interactions.
+### Phase 1b: Make the cold feed cheap (DONE 2026-11-21)
+- **Measured first:** a 17.1 MB cold-feed request through the ngrok tunnel took 5.35 s (runs 3.9, 5.4, 6.3 s) from the laptop, versus 180 ms on loopback; a 1.7 MB one took 612 ms versus 21 ms. The laptop's own line is 97 Mbps down and 11 Mbps up, so the deployed path (Render to ngrok to the laptop) is probably nearer 2-3 s for the upload, but swings with home Wi-Fi. At 40 users, every cold feed also spends 17 MB of ngrok's free-plan data cap (check the cap in the ngrok dashboard).
+- **What changed:** every live job's embedding is held in the server's memory (`lib/job-embeddings.ts`: doubles, reloaded every 10 minutes, preloaded at boot, listings ingested since the last load fetched on demand, jobs with no usable embedding skipped). The semantic score is computed in Node (`lib/cosine.ts`, same cosine and clamp as the ML service). The ML service is asked only for the collaborative score through a new `POST /collaborative/batch` that takes job ids and returns the scores of jobs the model knows plus a `defaultScore`. `/recommend` and `/recommend/batch` are unchanged.
+- **Checks:** type-check, lint and 32 server tests pass, including cosine fixtures generated from the real Python function and tests for the embedding store. `/collaborative/batch` checked against the model's known ids.
+- **Parity:** same job order for all 2,138 jobs. 581 scores are bit-identical and the largest difference is 4.4e-16, a one-rounding-step gap from NumPy and JavaScript adding the 384 products in a different order.
+
+| Benchmark (local Redis, real DB reads, local ML) | Before | After |
+|---|---|---|
+| Cold feed, typical | 2,552 ms | **418 ms** |
+| Cold feed, the very first in a fresh process | 2,552 ms | 2,467 ms (loads the 17 MB once; the server now preloads it at boot so users don't wait for it) |
+| Sent to the ML service on a cold feed | 17.12 MB | **0.148 MB** |
+| Warm feed | 246 ms | 185 ms |
+| Feed right after a click | 2,276 ms | 186 ms |
+
+- **Not measured:** the deployed path (this ran on loopback), so the real gain there is probably larger, since the ML request through the tunnel is what shrank by about 115 times.
+- **Behavior changes to know about:** (1) a job with no embedding yet is left out of the feed instead of failing it. (2) The server holds about 7-10 MB of embeddings now, roughly 100 MB at 20,000 jobs; watch this on a small Render instance. (3) An embedding changed by a re-ingest can be up to 10 minutes stale on the server. (4) The feed still needs the ML service for the collaborative score, so it still fails if the ML service is down. Falling back to the default score without caching it would fix that, and was left out on purpose.
 
 ### Phase 2: Trim payloads and selects (DONE 2026-11-21)
 - `include: { job: true }` became an explicit select without `embedding` (`SAVED_JOB_JOB_SELECT` in `resolvers/constants.ts`) at the five saved-job mutations and the `savedJobs` page; `skillGaps` now selects only `id` and `requiredSkills`. The GraphQL `Job` type never exposed the embedding, so this only removes wasted database transfer.

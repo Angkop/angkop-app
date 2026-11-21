@@ -1,8 +1,10 @@
 import { EMBEDDING_DIMENSIONS, blendHybridScore, type JobMatch, type MatchInsight, type MatchInsightRequest, type MatchInsightResponse, type RecommendResponse } from '@angkop/shared'
 import { prisma } from '../../lib/prisma'
+import { semanticScore, vectorNorm } from '../../lib/cosine'
 import { getJobCatalog } from '../../lib/job-catalog'
-import { getOrSetMatchScoreComponents } from '../../lib/redis'
-import { MlServiceError, matchInsight as requestMatchInsight, recommend, recommendBatch } from '../../lib/ml-client'
+import { getJobEmbeddings } from '../../lib/job-embeddings'
+import { getOrSetMatchScoreComponents, type MatchScoreComponents } from '../../lib/redis'
+import { MlServiceError, collaborativeBatch, matchInsight as requestMatchInsight, recommend } from '../../lib/ml-client'
 import { logger } from '../../lib/logger'
 import type {
   CertificationInput,
@@ -170,26 +172,25 @@ async function scoreJobs(
   if (jobIds.length === 0) return new Map()
 
   const components = await getOrSetMatchScoreComponents(userId, jobIds, async (missingJobIds) => {
-    const [jobs, profile] = await Promise.all([
-      prisma.job.findMany({
-        where: { id: { in: missingJobIds }, deleted: false },
-        select: { id: true, embedding: true }
-      }),
-      prisma.userProfile.findUnique({ where: { userId }, select: { embedding: true } })
+    // The semantic half is computed here from embeddings held in memory; the ML service is only
+    // asked for the collaborative half, with ids instead of every job's 384 numbers.
+    const [embeddings, profile, collaborative] = await Promise.all([
+      getJobEmbeddings(missingJobIds),
+      prisma.userProfile.findUnique({ where: { userId }, select: { embedding: true } }),
+      collaborativeBatch({ userId, jobIds: missingJobIds })
     ])
 
-    const { results } = await recommendBatch({
-      userId,
-      userEmbedding: resolveUserEmbedding(profile),
-      userInteractionCount: interactionCount,
-      jobs: jobs.map((job) => ({ jobId: job.id, jobEmbedding: job.embedding }))
-    })
-    return new Map(
-      results.map((result) => [
-        result.jobId,
-        { semanticScore: result.semanticScore, collaborativeScore: result.collaborativeScore }
-      ])
-    )
+    const userVector = Float64Array.from(resolveUserEmbedding(profile))
+    const userNorm = vectorNorm(userVector)
+    const trainedScores = new Map(Object.entries(collaborative.scores))
+    const computed = new Map<string, MatchScoreComponents>()
+    for (const [jobId, { vector, norm }] of embeddings) {
+      computed.set(jobId, {
+        semanticScore: semanticScore(userVector, userNorm, vector, norm),
+        collaborativeScore: trainedScores.get(jobId) ?? collaborative.defaultScore
+      })
+    }
+    return computed
   })
 
   const scores = new Map<string, RecommendResponse>()

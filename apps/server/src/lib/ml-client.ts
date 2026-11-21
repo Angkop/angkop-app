@@ -1,4 +1,6 @@
 import type {
+  CollaborativeBatchRequest,
+  CollaborativeBatchResponse,
   EmbedRequest,
   EmbedResponse,
   MatchInsightRequest,
@@ -76,6 +78,10 @@ export function recommend(request: RecommendRequest): Promise<RecommendResponse>
 
 export function recommendBatch(request: RecommendBatchRequest): Promise<RecommendBatchResponse> {
   return postJson<RecommendBatchResponse>('/recommend/batch', request)
+}
+
+export function collaborativeBatch(request: CollaborativeBatchRequest): Promise<CollaborativeBatchResponse> {
+  return postJson<CollaborativeBatchResponse>('/collaborative/batch', request)
 }
 
 export function skillGap(request: SkillGapRequest): Promise<SkillGapResponse> {

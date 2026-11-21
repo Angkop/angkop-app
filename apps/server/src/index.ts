@@ -12,6 +12,7 @@ import { jobsRouter } from './routes/jobs'
 import { resumeRouter } from './routes/resume'
 import { logger } from './lib/logger'
 import { prisma } from './lib/prisma'
+import { primeJobEmbeddings } from './lib/job-embeddings'
 
 const PORT = Number(process.env.PORT ?? 4000)
 
@@ -69,6 +70,12 @@ async function main() {
     logger.info(`Express API listening on http://localhost:${PORT}`)
     logger.info(`GraphQL endpoint at http://localhost:${PORT}/graphql`)
   })
+
+  // Loaded in the background so the first feed after a restart does not have to; if it fails, that
+  // feed loads them itself.
+  primeJobEmbeddings().catch((error) =>
+    logger.warn({ error }, 'Could not preload job embeddings, the first feed will load them')
+  )
 
   // Without this, a second `pnpm dev` instance started by accident fails to bind the
   // port but can sit around alive anyway, still able to open its own DB connections —

@@ -273,6 +273,20 @@ export type RecommendResponse = {
   collaborativeWeight: number
 }
 
+// Just the collaborative half of the score. The server computes the semantic half itself from the
+// embeddings it keeps in memory, so only ids go to the ML service, not every job's 384 numbers.
+export type CollaborativeBatchRequest = {
+  userId: string
+  jobIds: string[]
+}
+
+export type CollaborativeBatchResponse = {
+  // The score for any job missing from `scores`: the model has never seen it (or this user).
+  defaultScore: number
+  // Only the jobs the model was trained on.
+  scores: Record<string, number>
+}
+
 // The collaborative score's share of the hybrid blend grows with the user's interaction count
 // up to a ceiling. ml/app/config.py holds the same three numbers for the ML service's own
 // /recommend responses - a server test fails if the two copies drift apart.

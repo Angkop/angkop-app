@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit",
     "seed": "tsx prisma/seed.ts",
     "ingest:jobs": "tsx src/scripts/ingest-jobs.ts",
-    "test": "tsx --test src/scripts/ingest/ingest.test.ts src/lib/match-blend.test.ts src/lib/ml-client.test.ts src/lib/ttl-cache.test.ts src/lib/skill-search.test.ts"
+    "test": "tsx --test src/scripts/ingest/ingest.test.ts src/lib/match-blend.test.ts src/lib/ml-client.test.ts src/lib/ttl-cache.test.ts src/lib/skill-search.test.ts src/lib/cosine.test.ts src/lib/job-embeddings.test.ts"
   },
   "dependencies": {
     "@angkop/shared": "workspace:*",
