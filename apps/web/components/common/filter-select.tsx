@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 const DEFAULT_VISIBLE_COUNT = 6
 const MAX_SEARCH_RESULTS = 50
 const SEARCH_DEBOUNCE_MS = 300
-const LOADING_ROWS = 4
+const LOADING_ROWS = 6
 
 // A filter pill that opens a searchable option list. It starts inactive (label and arrow) and
 // turns active once a value is applied. By default it lists the first `visibleCount` options and
@@ -50,6 +50,9 @@ export function FilterSelect({
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  // True from the keystroke until the debounced search is sent: the list on screen is for the old
+  // text, so it is replaced by the loading rows right away instead of lingering for the debounce.
+  const [isDebouncing, setIsDebouncing] = useState(false)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => () => clearTimeout(searchTimer.current), [])
@@ -69,6 +72,7 @@ export function FilterSelect({
   const rows = [...pinned, ...shown]
   const hiddenCount = Math.max(0, matches.length - shown.length)
 
+  const isShowingLoading = isLoading || isDebouncing
   const isActive = value.length > 0
   const activeText = multiple ? undefined : (labelByValue.get(value[0]) ?? value[0])
 
@@ -76,13 +80,18 @@ export function FilterSelect({
     setQuery(next)
     if (!onSearch) return
     clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => onSearch(next), SEARCH_DEBOUNCE_MS)
+    setIsDebouncing(next.trim().length > 0)
+    searchTimer.current = setTimeout(() => {
+      setIsDebouncing(false)
+      onSearch(next)
+    }, SEARCH_DEBOUNCE_MS)
   }
 
   function handleOpenChange(next: boolean) {
     setOpen(next)
     if (next) return
     clearTimeout(searchTimer.current)
+    setIsDebouncing(false)
     if (query) {
       setQuery('')
       onSearch?.('')
@@ -132,10 +141,10 @@ export function FilterSelect({
           aria-label={`Search ${label}`}
         />
         <div className='max-h-60 overflow-y-auto'>
-          {isLoading ? (
+          {isShowingLoading ? (
             <div className='space-y-1.5 p-1' role='status' aria-label='Loading options'>
               {Array.from({ length: LOADING_ROWS }, (_, index) => (
-                <Skeleton key={index} className='h-7' />
+                <Skeleton key={index} className='h-9' />
               ))}
             </div>
           ) : rows.length === 0 ? (
@@ -167,7 +176,7 @@ export function FilterSelect({
             )
           )}
         </div>
-        {hiddenCount > 0 && !isLoading ? (
+        {hiddenCount > 0 && !isShowingLoading ? (
           <p className='px-2 text-xs text-muted-foreground'>
             {trimmedQuery
               ? `Showing the first ${shown.length} results. Type more to narrow them.`

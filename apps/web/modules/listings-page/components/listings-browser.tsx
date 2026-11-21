@@ -8,6 +8,7 @@ import { LoadingSkeleton } from '@/components/loading-skeleton'
 import { PaginationControls } from '@/components/pagination-controls'
 import { Button } from '@/components/ui/button'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
+import { useSkillSearch } from '@/hooks/use-skill-search'
 import { getStoredToken } from '@/lib/auth'
 import { SAVED_JOB_IDS_QUERY, type SavedJobIdsQueryResult } from '@/lib/job-matches'
 import { useListingsFilters } from '../hooks/use-listings-filters'
@@ -35,7 +36,12 @@ export function ListingsBrowser({
   const savedJobIds = useMemo(() => new Set(savedJobIdsData?.savedJobIds ?? []), [savedJobIdsData])
 
   const sourceOptions = useMemo(() => sources.map((name) => ({ value: name, label: name })), [sources])
-  const skillOptions = useMemo(() => skills.map((name) => ({ value: name, label: name })), [skills])
+  // `skills` is only the few most-asked ones the server rendered; the dropdown searches the rest.
+  const skillSearch = useSkillSearch({ initialSkills: skills })
+  const skillOptions = useMemo(
+    () => (skillSearch.searchResults ?? skillSearch.defaultSkills).map((name) => ({ value: name, label: name })),
+    [skillSearch.searchResults, skillSearch.defaultSkills]
+  )
 
   const pageCount = Math.max(1, Math.ceil(listings.total / pageSize))
 
@@ -64,6 +70,10 @@ export function ListingsBrowser({
             label="Skill"
             multiple={false}
             options={skillOptions}
+            searchPlaceholder="Search skills"
+            emptyMessage="No skills match this search. Try a different word."
+            onSearch={skillSearch.search}
+            isLoading={skillSearch.isSearching}
             value={filters.draftSkill === ALL_FILTER_VALUE ? [] : [filters.draftSkill]}
             onValueChange={(next) => filters.setDraftSkill(next[0] ?? ALL_FILTER_VALUE)}
           />

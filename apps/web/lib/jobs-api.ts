@@ -31,7 +31,10 @@ export async function getListings(params: GetListingsParams = {}): Promise<Listi
   if (params.source) search.set('source', params.source)
   if (params.skill) search.set('skill', params.skill)
 
-  const response = await fetch(`${API_URL}/api/jobs?${search.toString()}`, { cache: 'no-store' })
+  // Listings only change when the nightly ingest runs, so a minute-old page is as good as a live
+  // one - and every visitor asking for the same page shares one API call instead of each paying
+  // for their own (no-store meant none of it could ever be reused).
+  const response = await fetch(`${API_URL}/api/jobs?${search.toString()}`, { next: { revalidate: 60 } })
   // Throw instead of returning an empty page: a server error must not look like "no jobs
   // match", it should reach the route's error boundary with a way to reload.
   if (!response.ok) throw new Error(`Listings request failed (${response.status})`)
@@ -49,8 +52,24 @@ export async function getListingSources(): Promise<string[]> {
   return response.json()
 }
 
-export async function getListingSkills(): Promise<string[]> {
-  const response = await fetch(`${API_URL}/api/jobs/skills`, { next: { revalidate: 300 } })
+export type GetListingSkillsParams = {
+  // Only skills whose name contains this text.
+  q?: string
+  // How many to return. The server answers with the most-asked skills first and never with all
+  // of them (about 1,500), so a dropdown shows a few and searches for the rest.
+  limit?: number
+  signal?: AbortSignal
+}
+
+export async function getListingSkills(params: GetListingSkillsParams = {}): Promise<string[]> {
+  const search = new URLSearchParams()
+  if (params.q) search.set('q', params.q)
+  if (params.limit) search.set('limit', String(params.limit))
+
+  const response = await fetch(`${API_URL}/api/jobs/skills?${search.toString()}`, {
+    next: { revalidate: 300 },
+    signal: params.signal
+  })
   if (!response.ok) return []
   return response.json()
 }

@@ -2,12 +2,16 @@ import { Prisma } from '@prisma/client'
 import { Router } from 'express'
 import { prisma } from '../lib/prisma'
 import { detectMentionedLanguages } from '../lib/language-detection'
+import { pickSkills } from '../lib/skill-search'
+import { createTtlCache } from '../lib/ttl-cache'
 import { joinSections } from '../scripts/ingest/description-sections'
 
 export const jobsRouter = Router()
 
 const DEFAULT_PAGE_SIZE = 12
 const MAX_PAGE_SIZE = 50
+const DEFAULT_SKILL_LIMIT = 10
+const MAX_SKILL_LIMIT = 50
 
 function parsePositiveInt(value: unknown, fallback: number, max: number): number {
   const parsed = typeof value === 'string' ? Number.parseInt(value, 10) : NaN
@@ -62,31 +66,56 @@ jobsRouter.get('/', async (req, res) => {
   res.json({ items, total, page, pageSize })
 })
 
+// The filter dropdowns' options only change when the nightly ingest runs, so each is read from
+// Postgres at most once every few minutes per process instead of on every page load. The /matches
+// page asks for the skills straight from the browser, where Next's own fetch cache does not apply.
+const FILTER_OPTIONS_TTL_MS = 5 * 60 * 1000
+
 // Distinct source names for the listings page's source filter — queried rather than
 // hardcoded so a newly ingested source (see ingest-jobs.ts) shows up with no frontend change.
-jobsRouter.get('/sources', async (_req, res) => {
+const getSources = createTtlCache(async () => {
   const rows = await prisma.job.findMany({
     where: { platform: 'angkop', deleted: false, sourceName: { not: null } },
     select: { sourceName: true },
     distinct: ['sourceName']
   })
-  const sources = rows
+  return rows
     .map((row) => row.sourceName)
     .filter((sourceName): sourceName is string => sourceName !== null)
     .sort()
-  res.json(sources)
+}, FILTER_OPTIONS_TTL_MS)
+
+// Every distinct required-skill tag across the ingested listings, with how many listings ask for
+// it, most-asked first. Jobs don't have a normalized Skill table (unlike UserSkill), so this
+// flattens the String[] column rather than joining one. Postgres flattens and counts it, and the
+// result (about 1,500 skills) is held in memory, so searching it on each keystroke is a loop over
+// a small array, not a database query.
+const getSkillCounts = createTtlCache(async () => {
+  const rows = await prisma.$queryRaw<{ skill: string }[]>`
+    SELECT skill
+    FROM (
+      SELECT id, unnest("requiredSkills") AS skill
+      FROM "Job"
+      WHERE platform = 'angkop' AND deleted = false AND "sourceName" IS NOT NULL
+    ) AS listing_skills
+    GROUP BY skill
+    ORDER BY count(DISTINCT id) DESC, skill ASC
+  `
+  return rows.map((row) => row.skill)
+}, FILTER_OPTIONS_TTL_MS)
+
+jobsRouter.get('/sources', async (_req, res) => {
+  res.json(await getSources())
 })
 
-// Distinct required-skill tags across every ingested listing, for the skill filter on
-// /listings and /matches. Jobs don't have a normalized Skill table (unlike UserSkill), so
-// this flattens the String[] column rather than joining one.
-jobsRouter.get('/skills', async (_req, res) => {
-  const rows = await prisma.job.findMany({
-    where: { platform: 'angkop', deleted: false, sourceName: { not: null } },
-    select: { requiredSkills: true }
-  })
-  const skills = Array.from(new Set(rows.flatMap((row) => row.requiredSkills))).sort()
-  res.json(skills)
+// The skill filters on /listings and /matches. Never the whole list: the first `limit` skills
+// (default 10, most-asked first), or the first `limit` whose name contains `q` when the user is
+// searching the dropdown.
+jobsRouter.get('/skills', async (req, res) => {
+  const q = typeof req.query.q === 'string' ? req.query.q : ''
+  const limit = parsePositiveInt(req.query.limit, DEFAULT_SKILL_LIMIT, MAX_SKILL_LIMIT)
+
+  res.json(pickSkills(await getSkillCounts(), q, limit))
 })
 
 jobsRouter.get('/:id', async (req, res) => {

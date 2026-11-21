@@ -6,18 +6,20 @@ import { toast } from 'sonner'
 import { PageHeader } from '@/components/page-header'
 import { ErrorMessage } from '@/components/error-message'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
+import { SKILL_OPTION_COUNT } from '@/constants/skills'
 import { useJobTriage } from '@/hooks/use-job-triage'
+import { useSkillSearch } from '@/hooks/use-skill-search'
 import { AllMatchesSkeleton } from './components/all-matches-skeleton'
 import { MatchesBrowser } from './components/matches-browser'
-import { PAGE_SIZE } from './constants'
-import { useListingSkills } from './hooks/use-listing-skills'
+import { PAGE_SIZE, SKILL_PILL_COUNT } from './constants'
 import { useMatchFilters } from './hooks/use-match-filters'
 import { JOB_MATCHES_QUERY } from './queries'
 import type { JobMatchesQueryResult } from './types'
 
 export function AllMatchesPage() {
   const filters = useMatchFilters()
-  const skills = useListingSkills()
+  // The pills plus one dropdown's worth of skills, not the whole list; the dropdown searches the rest.
+  const skillSearch = useSkillSearch({ limit: SKILL_PILL_COUNT + SKILL_OPTION_COUNT })
   const triage = useJobTriage()
 
   const { data, loading, networkStatus, error, refetch } = useQuery<JobMatchesQueryResult>(JOB_MATCHES_QUERY, {
@@ -81,7 +83,10 @@ export function AllMatchesPage() {
           pageSize={PAGE_SIZE}
           query={filters.draftQuery}
           skill={filters.skill}
-          skills={skills}
+          skills={skillSearch.defaultSkills}
+          skillSearchResults={skillSearch.searchResults}
+          isSearchingSkills={skillSearch.isSearching}
+          onSearchSkills={skillSearch.search}
           isLoading={loading && !isRefilling}
           pendingSlots={isRefilling ? hiddenCount : 0}
           onQueryChange={filters.setDraftQuery}

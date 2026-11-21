@@ -1,7 +1,8 @@
-import { useEffect, useState, useTransition } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ALL_FILTER_VALUE } from '@/constants/filters'
 import { withSearchParams } from '@/lib/utils'
+import { SEARCH_DEBOUNCE_MS } from '../constants'
 
 export function useListingsFilters() {
   const router = useRouter()
@@ -25,22 +26,53 @@ export function useListingsFilters() {
   const hasPendingChanges =
     draftQuery !== appliedQuery || draftSource !== appliedSource || draftSkill !== appliedSkill
 
-  // Keep drafts in sync with the URL when it changes from outside this form — back/forward
-  // navigation, or a shared link that already has filters on it.
-  useEffect(() => {
-    setDraftQuery(appliedQuery)
-    setDraftSource(appliedSource)
-    setDraftSkill(appliedSkill)
-  }, [appliedQuery, appliedSource, appliedSkill])
+  // The title search this hook itself last put in the URL. The URL only catches up after the server
+  // has rendered the new page, and by then more letters may have been typed; without this, that
+  // late URL change would overwrite them with the older text.
+  const [pushedQuery, setPushedQuery] = useState(appliedQuery)
+  const [seenAppliedQuery, setSeenAppliedQuery] = useState(appliedQuery)
 
-  function updateParams(patch: Record<string, string | number | undefined>) {
-    const next = withSearchParams(searchParams, patch)
-    startTransition(() => {
-      router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false })
-    })
+  // The URL's title search changed. If it is the one this hook just pushed, the draft already has
+  // it (or newer); otherwise it came from outside this form — back/forward navigation, or a shared
+  // link that already has a search on it — and the draft follows. Adjusted during render, not in an
+  // effect, so it runs only when the URL value changes and not when pushedQuery does.
+  if (appliedQuery !== seenAppliedQuery) {
+    setSeenAppliedQuery(appliedQuery)
+    if (appliedQuery !== pushedQuery) {
+      setDraftQuery(appliedQuery)
+      setPushedQuery(appliedQuery)
+    }
   }
 
+  // Source and skill follow the URL the same way when it changes from outside this form.
+  useEffect(() => {
+    setDraftSource(appliedSource)
+    setDraftSkill(appliedSkill)
+  }, [appliedSource, appliedSkill])
+
+  const updateParams = useCallback(
+    (patch: Record<string, string | number | undefined>) => {
+      const next = withSearchParams(searchParams, patch)
+      startTransition(() => {
+        router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false })
+      })
+    },
+    [router, pathname, searchParams]
+  )
+
+  // The title search applies after a pause in typing, on its own. Source and skill stay staged
+  // behind "Apply Filters"; only the text reaches the URL here, so drafts of those two are untouched.
+  useEffect(() => {
+    if (draftQuery === pushedQuery) return
+    const timer = setTimeout(() => {
+      setPushedQuery(draftQuery)
+      updateParams({ q: draftQuery || undefined, page: undefined })
+    }, SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [draftQuery, pushedQuery, updateParams])
+
   function applyFilters() {
+    setPushedQuery(draftQuery)
     updateParams({
       q: draftQuery || undefined,
       source: draftSource === ALL_FILTER_VALUE ? undefined : draftSource,

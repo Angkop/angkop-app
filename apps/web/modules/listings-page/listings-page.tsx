@@ -1,4 +1,5 @@
 import { PageHeader } from '@/components/page-header'
+import { SKILL_OPTION_COUNT } from '@/constants/skills'
 import { ListingsBrowser } from './components/listings-browser'
 import { getListings, getListingSkills, getListingSources } from './queries'
 
@@ -17,7 +18,8 @@ export async function ListingsPage({
   const [listings, sources, skills] = await Promise.all([
     getListings({ page, pageSize: PAGE_SIZE, q, source, skill }),
     getListingSources(),
-    getListingSkills()
+    // Only the default few; the Skill dropdown searches the server for the rest.
+    getListingSkills({ limit: SKILL_OPTION_COUNT })
   ])
 
   return (

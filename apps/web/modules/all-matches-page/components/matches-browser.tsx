@@ -21,10 +21,13 @@ export function MatchesBrowser({
   query,
   skill,
   skills,
+  skillSearchResults,
+  isSearchingSkills,
   isLoading,
   pendingSlots,
   onQueryChange,
   onSkillChange,
+  onSearchSkills,
   onPageChange,
   onSave,
   onDismiss,
@@ -38,11 +41,15 @@ export function MatchesBrowser({
   query: string
   skill: string
   skills: string[]
+  // Skills matching what was typed in the "More skills" search, or null while nothing is searched.
+  skillSearchResults: string[] | null
+  isSearchingSkills: boolean
   isLoading: boolean
   // Jobs just saved or dismissed whose replacements are still loading, one empty cell each.
   pendingSlots: number
   onQueryChange: (value: string) => void
   onSkillChange: (value: string) => void
+  onSearchSkills: (query: string) => void
   onPageChange: (page: number) => void
   onSave: (jobId: string) => void
   onDismiss: (jobId: string) => Promise<boolean>
@@ -70,7 +77,14 @@ export function MatchesBrowser({
             {total} match{total === 1 ? '' : 'es'}
           </p>
         </div>
-        <SkillFilter skills={skills} selected={skill} onSelect={onSkillChange} />
+        <SkillFilter
+          skills={skills}
+          searchResults={skillSearchResults}
+          isSearching={isSearchingSkills}
+          selected={skill}
+          onSelect={onSkillChange}
+          onSearch={onSearchSkills}
+        />
       </div>
 
       {isLoading ? (
