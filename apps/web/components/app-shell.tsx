@@ -12,7 +12,9 @@ import { BrandMark } from '@/components/brand-mark'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { LoadingSkeleton } from '@/components/loading-skeleton'
+import { PageLoader } from '@/components/page-loader'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { SIGN_OUT_MIN_DURATION_MS } from '@/constants/auth'
 import { NAV_LINKS, WIDE_PAGE_PATHS } from '@/constants/nav'
 import { clearStoredToken, getStoredToken } from '@/lib/auth'
 import { supabaseClient } from '@/lib/supabase-client'
@@ -101,8 +103,16 @@ export function AppShell({
 
   async function handleSignOut() {
     setIsSigningOut(true)
+    // The profile sheet (where Sign out is) and the mobile menu render above the loader screen, so
+    // they would stay open on top of it for the whole wait.
+    setIsProfileOpen(false)
+    setMobileOpen(false)
     try {
-      await supabaseClient.auth.signOut()
+      // Held for a minimum so the brand loader below is actually seen, not flashed.
+      await Promise.all([
+        supabaseClient.auth.signOut(),
+        new Promise((resolve) => setTimeout(resolve, SIGN_OUT_MIN_DURATION_MS))
+      ])
       clearStoredToken()
       router.replace('/')
     } catch {
@@ -113,6 +123,11 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      {isSigningOut ? (
+        <div className="fixed inset-0 z-50">
+          <PageLoader label="Signing you out…" />
+        </div>
+      ) : null}
       <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="flex h-14 w-full items-center gap-2 px-4 sm:px-6 lg:px-8">
           <Link href="/dashboard" className="flex items-center gap-2">

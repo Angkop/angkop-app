@@ -18,6 +18,12 @@ export function useRouteAfterSignIn() {
         data: { session }
       } = await supabaseClient.auth.getSession()
       if (!isMounted) return
+
+      // getSession() resolving means Supabase has read the tokens out of the URL fragment, and it
+      // leaves a bare "#" behind ("/auth/callback#") that would sit in the address bar for the whole
+      // profile check below. Dropped now, so the bar shows a clean path while this page works.
+      window.history.replaceState(null, '', window.location.pathname)
+
       if (!session) {
         router.replace('/')
         return
